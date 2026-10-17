@@ -173,7 +173,7 @@ class McpHandler(
             // 4. set_camera_enabled
             add(buildJsonObject {
                 put("name", "set_camera_enabled")
-                put("description", "Enable or suspend camera service hardware access.")
+                put("description", "Device-only privacy control; remote calls are rejected. Change access on the device.")
                 putJsonObject("inputSchema") {
                     put("type", "object")
                     putJsonObject("properties") {
@@ -228,7 +228,7 @@ class McpHandler(
             ?: return buildErrorResponse(id, -32602, "Invalid params: missing tool name")
         val arguments = params["arguments"] as? JsonObject ?: JsonObject(emptyMap())
 
-        return when (toolName) {
+        return try { when (toolName) {
             "get_snapshot" -> executeGetSnapshot(id, arguments)
             "get_status" -> executeGetStatus(id)
             "set_camera_facing" -> executeSetFacing(id, arguments)
@@ -236,6 +236,8 @@ class McpHandler(
             "set_camera_config" -> executeSetConfig(id, arguments)
             "warmup_camera" -> executeWarmup(id, arguments)
             else -> buildErrorResponse(id, -32601, "Unknown tool: $toolName")
+        } } catch (e: SecurityException) {
+            buildErrorResponse(id, -32001, e.message ?: "Camera access denied")
         }
     }
 
@@ -329,8 +331,7 @@ class McpHandler(
         runBlocking {
             val current = cameraController.config.value
             val updated = current.copy(facing = facing)
-            val applied = cameraController.updateConfig(updated)
-            settingsRepository.updateConfig(applied)
+            cameraController.updateConfig(updated)
         }
 
         val result = buildJsonObject {
@@ -346,29 +347,14 @@ class McpHandler(
     }
 
     private fun executeSetEnabled(id: JsonElement, args: JsonObject): String {
-        val enabled = args["enabled"]?.jsonPrimitive?.booleanOrNull
+        args["enabled"]?.jsonPrimitive?.booleanOrNull
             ?: return buildErrorResponse(id, -32602, "Missing or invalid 'enabled' boolean argument")
 
-        runBlocking {
-            cameraController.setEnabled(enabled)
-            val current = cameraController.config.value.copy(enabled = enabled)
-            val applied = cameraController.updateConfig(current)
-            settingsRepository.updateConfig(applied)
-        }
-
-        val result = buildJsonObject {
-            putJsonArray("content") {
-                add(buildJsonObject {
-                    put("type", "text")
-                    put("text", "Camera enabled state set to $enabled")
-                })
-            }
-            put("isError", false)
-        }
-        return buildSuccessResponse(id, result)
+        return buildErrorResponse(id, -32001, "Camera enable/disable is device-only")
     }
 
     private fun executeSetConfig(id: JsonElement, args: JsonObject): String {
+        if ("enabled" in args) return buildErrorResponse(id, -32001, "Camera enable/disable is device-only")
         var current = cameraController.config.value
 
         args["targetWidth"]?.jsonPrimitive?.intOrNull?.let { current = current.copy(targetWidth = it) }
@@ -382,7 +368,6 @@ class McpHandler(
 
         val applied = runBlocking {
             val res = cameraController.updateConfig(current)
-            settingsRepository.updateConfig(res)
             res
         }
 

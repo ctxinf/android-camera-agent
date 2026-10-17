@@ -32,8 +32,8 @@ object DummyFrameGenerator {
     fun createDummyJpeg(
         width: Int = 1280,
         height: Int = 720,
-        title: String = "CAMERA SERVICE SUSPENDED",
-        subtitle: String = "服务已暂停 · 暂不提供实时画面"
+        title: String = "CAMERA DISABLED",
+        subtitle: String = "相机已在设备端禁用 · 暂不提供实时画面"
     ): ByteArray {
         cachedJpeg?.let { return it }
 

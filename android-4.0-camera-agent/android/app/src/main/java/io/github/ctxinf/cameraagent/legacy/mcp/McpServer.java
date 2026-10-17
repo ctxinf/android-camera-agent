@@ -429,6 +429,7 @@ public class McpServer {
         }
         if ("get_camera_facing".equals(name)) return cameraControlResult("Camera selection");
         if ("set_camera_facing".equals(name)) {
+            if (!settings.cameraEnabled()) return toolError("Camera is disabled locally; enable it on the device");
             String facing = args == null ? null : Json.str(args, "facing");
             if (!"front".equals(facing) && !"back".equals(facing)) return toolError("facing must be front or back");
             if ("front".equals(facing) && settings.frontCameraDisabled()) return toolError("Front camera is disabled by the highest-priority policy");
@@ -439,9 +440,7 @@ public class McpServer {
         if ("set_camera_enabled".equals(name)) {
             Object value = args == null ? null : args.get("enabled");
             if (!(value instanceof Boolean)) return toolError("enabled must be boolean");
-            settings.setCameraEnabled(((Boolean) value).booleanValue());
-            cameraManager.setAccessPolicy(settings.cameraEnabled(), settings.frontCameraDisabled());
-            return cameraControlResult("Camera service updated");
+            return toolError("Camera enable/disable is device-only");
         }
         return toolError("Unknown tool: " + name);
     }
@@ -527,6 +526,7 @@ public class McpServer {
     }
 
     private Map<String, Object> callSetConfig(Map<String, Object> args) {
+        if (args != null && args.containsKey("enabled")) return toolError("Camera enable/disable is device-only");
         if (args == null || args.isEmpty()) {
             return toolError("Nothing to change: pass resolution and/or quality.");
         }

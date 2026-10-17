@@ -4,6 +4,7 @@
 /docs/
 
 # Local tool configuration
+.scripts/
 .agents/
 .codex/
 .aws/

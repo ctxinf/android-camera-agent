@@ -72,6 +72,12 @@ public class AgentService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
+        settings = new Settings(this);
+        if (settings.manuallyExited() || (!settings.backgroundEnabled()
+                && !((CameraAgentApp) getApplication()).hasVisibleActivities())) {
+            stopSelf();
+            return;
+        }
         instance = this;
 
         // A partial wake lock keeps the CPU available for the network listeners
@@ -96,14 +102,15 @@ public class AgentService extends Service {
 
         settings = new Settings(this);
         cameraManager = new CameraManager(null);
+        cameraManager.setAccessSettings(settings);
         applyCameraSettings();
         deviceStatus = new DeviceStatus(this, cameraManager, settings);
 
         httpServer = new HttpServer(settings.httpPort(), cameraManager, settings, deviceStatus);
-        if (settings.serviceEnabled() && (settings.httpEnabled() || settings.mcpEnabled())) httpServer.start();
+        if ((settings.httpEnabled() || settings.mcpEnabled())) httpServer.start();
 
         mqttPublisher = new MqttStatusPublisher(this, settings, deviceStatus, cameraManager);
-        if (settings.serviceEnabled()) mqttPublisher.start();
+        mqttPublisher.start();
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         String gwHost = prefs.getString(PREF_GATEWAY_HOST, null);
@@ -189,7 +196,7 @@ public class AgentService extends Service {
                 synchronized (listenerLock) {
                 if (destroyed) return;
                 HttpServer old = httpServer;
-                boolean enabled = settings.serviceEnabled() && (settings.httpEnabled() || settings.mcpEnabled());
+                boolean enabled = (settings.httpEnabled() || settings.mcpEnabled());
                 if (old != null && enabled && old.isRunning() && old.getPort() == settings.httpPort()) {
                     old.closeDisabledConnections();
                     return;
@@ -206,7 +213,7 @@ public class AgentService extends Service {
                     return;
                 }
                 HttpServer fresh = new HttpServer(settings.httpPort(), cameraManager, settings, deviceStatus);
-                if (settings.serviceEnabled() && (settings.httpEnabled() || settings.mcpEnabled())) fresh.start();
+                if ((settings.httpEnabled() || settings.mcpEnabled())) fresh.start();
                 httpServer = fresh;
                 Log.i("http server restarted on :" + settings.httpPort());
                 refreshStatusNotification();
@@ -224,7 +231,7 @@ public class AgentService extends Service {
     public void restartMqtt() {
         if (mqttPublisher != null) {
             mqttPublisher.stop();
-            if (settings.serviceEnabled()) mqttPublisher.start();
+            mqttPublisher.start();
         }
     }
 
@@ -237,7 +244,13 @@ public class AgentService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        return START_STICKY;
+        if (settings.manuallyExited()) { stopSelf(); return START_NOT_STICKY; }
+        return settings.backgroundEnabled() ? START_STICKY : START_NOT_STICKY;
+    }
+
+    @Override public void onTaskRemoved(Intent intent) {
+        if (!settings.backgroundEnabled() || settings.manuallyExited()) stopSelf();
+        super.onTaskRemoved(intent);
     }
 
     @Override

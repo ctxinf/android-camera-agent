@@ -68,7 +68,7 @@ public class HttpServer implements Runnable {
             new java.util.concurrent.ConcurrentHashMap<Socket, Boolean>();
     public void closeDisabledConnections() {
         for (java.util.Map.Entry<Socket, Boolean> entry : clients.entrySet()) {
-            if (!settings.serviceEnabled() || (entry.getValue().booleanValue() ? !settings.mcpEnabled() : !settings.httpEnabled())) {
+            if (settings.manuallyExited() || (entry.getValue().booleanValue() ? !settings.mcpEnabled() : !settings.httpEnabled())) {
                 try { entry.getKey().close(); } catch (IOException ignored) {}
             }
         }
@@ -221,7 +221,7 @@ public class HttpServer implements Runnable {
             }
 
             boolean isMcp = MCP_PATH.equals(path);
-            if (!settings.serviceEnabled() || (isMcp ? !settings.mcpEnabled() : !settings.httpEnabled())) {
+            if (settings.manuallyExited() || (isMcp ? !settings.mcpEnabled() : !settings.httpEnabled())) {
                 sendError(out, 404, "Not Found");
                 return;
             }
@@ -399,6 +399,12 @@ public class HttpServer implements Runnable {
                     Thread.currentThread().interrupt();
                     break;
                 }
+                if (cameraManager.isAccessDenied()) {
+                    slot.clear();
+                    writeMjpegPart(out, delimiter, cameraManager.deniedJpeg(quality));
+                    emptyPolls = 0;
+                    continue;
+                }
                 if (nv21 == null) {
                     if (cameraManager.isAccessDenied()) {
                         byte[] denied = cameraManager.deniedJpeg(quality);
@@ -413,7 +419,7 @@ public class HttpServer implements Runnable {
                 // Upright, so the stream matches the preview and the snapshot.
                 byte[] jpeg = cameraManager.encodeJpegUpright(
                         nv21, frameDims[0], frameDims[1], quality);
-                if (jpeg == null) {
+                if (jpeg == null || cameraManager.isAccessDenied()) {
                     continue;
                 }
                 StringBuilder part = new StringBuilder();
@@ -479,10 +485,11 @@ public class HttpServer implements Runnable {
             Object enabled = data.get("enabled");
             if (enabled != null) {
                 if (!(enabled instanceof Boolean)) { sendError(out, 400, "enabled must be boolean"); return; }
-                settings.setCameraEnabled(((Boolean) enabled).booleanValue());
+                sendError(out, 403, "Camera enable/disable is device-only"); return;
             }
             String facing = io.github.ctxinf.cameraagent.legacy.json.Json.str(data, "facing");
             if (facing != null) {
+                if (!settings.cameraEnabled()) { sendError(out, 403, "Camera is disabled locally"); return; }
                 if (!"front".equals(facing) && !"back".equals(facing)) {
                     sendError(out, 400, "facing must be front or back"); return;
                 }
@@ -492,7 +499,6 @@ public class HttpServer implements Runnable {
                 settings.setCameraFacing("front".equals(facing) ? 1 : 0);
                 cameraManager.setFacing(settings.cameraFacing());
             }
-            cameraManager.setAccessPolicy(settings.cameraEnabled(), settings.frontCameraDisabled());
             cameraManager.reconfigure();
             serveCameraConfig(out);
         } catch (io.github.ctxinf.cameraagent.legacy.json.Json.JsonException e) {

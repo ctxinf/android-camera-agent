@@ -41,6 +41,11 @@ class AgentService : LifecycleService() {
 
     override fun onCreate() {
         super.onCreate()
+        if (appGraph.settingsRepository.manuallyExited ||
+            (!appGraph.settingsRepository.backgroundEnabled && !(application as CameraAgentApp).hasVisibleActivities)) {
+            stopSelf()
+            return
+        }
         AppLog.i("AgentService onCreate()")
         isRunning = true
         createNotificationChannel()
@@ -53,6 +58,7 @@ class AgentService : LifecycleService() {
         // Start HTTP Server
         lifecycleScope.launch {
             try {
+                appGraph.cameraAccess.restore()
                 appGraph.refreshNetworkListener()
                 updateNotificationWithCurrentState()
             } catch (e: Exception) {
@@ -93,27 +99,37 @@ class AgentService : LifecycleService() {
         AppLog.i("AgentService onStartCommand(action=${intent?.action})")
         when (intent?.action) {
             ACTION_STOP -> {
+                appGraph.settingsRepository.setBackgroundEnabled(false)
                 stopSelf()
                 return START_NOT_STICKY
             }
             ACTION_SWITCH_FACING -> {
                 lifecycleScope.launch {
                     val config = appGraph.coordinator.config.value
+                    if (!config.enabled || appGraph.settingsRepository.frontCameraDisabled) return@launch
                     val newFacing = if (config.facing == LensFacing.BACK) LensFacing.FRONT else LensFacing.BACK
-                    val updated = config.copy(facing = newFacing)
-                    appGraph.coordinator.updateConfig(updated)
-                    appGraph.settingsRepository.updateConfig(updated)
+                    try {
+                        appGraph.cameraAccess.updateLocal { if (it.enabled) it.copy(facing = newFacing) else it }
+                    } catch (e: SecurityException) {
+                        AppLog.w("Lens switch blocked by local policy", e)
+                    }
                     updateNotificationWithCurrentState()
                 }
             }
         }
-        return START_STICKY
+        if (appGraph.settingsRepository.manuallyExited) {
+            stopSelf()
+            return START_NOT_STICKY
+        }
+        return if (appGraph.settingsRepository.backgroundEnabled) START_STICKY else START_NOT_STICKY
     }
 
     override fun onTaskRemoved(rootIntent: Intent?) {
         super.onTaskRemoved(rootIntent)
         AppLog.i("AgentService onTaskRemoved() - ensuring service stays alive")
-        if (isRunning) {
+        if (!appGraph.settingsRepository.backgroundEnabled || appGraph.settingsRepository.manuallyExited) {
+            stopSelf()
+        } else if (isRunning) {
             val restartIntent = Intent(applicationContext, AgentService::class.java)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 startForegroundService(restartIntent)
@@ -131,6 +147,7 @@ class AgentService : LifecycleService() {
         appGraph.appScope.launch {
             try {
                 appGraph.refreshNetworkListener()
+                if (!isRunning) appGraph.cameraAccess.suspendHardware()
             } catch (e: Exception) {
                 AppLog.w("Error stopping HTTP server", e)
             }

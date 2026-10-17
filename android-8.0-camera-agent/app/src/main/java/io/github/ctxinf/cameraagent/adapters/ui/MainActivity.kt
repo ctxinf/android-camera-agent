@@ -56,6 +56,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tvMqttStatus: TextView
     private lateinit var btnFacingBack: Button
     private lateinit var btnFacingFront: Button
+    private lateinit var btnFacingDisabled: Button
 
     // Modern Endpoint Card
     private lateinit var tvBaseEndpoint: TextView
@@ -99,6 +100,7 @@ class MainActivity : AppCompatActivity() {
         tvMqttStatus = findViewById(R.id.tvMqttStatus)
         btnFacingBack = findViewById(R.id.btnFacingBack)
         btnFacingFront = findViewById(R.id.btnFacingFront)
+        btnFacingDisabled = findViewById(R.id.btnFacingDisabled)
 
         tvBaseEndpoint = findViewById(R.id.tvBaseEndpoint)
         tvAuthBadge = findViewById(R.id.tvAuthBadge)
@@ -134,7 +136,7 @@ class MainActivity : AppCompatActivity() {
             box.tag = name
             switches.addView(box, android.widget.LinearLayout.LayoutParams(0, 48.dp(), 1f))
         }
-        findViewById<LinearLayout>(R.id.topBar).addView(switches, 1)
+        findViewById<LinearLayout>(R.id.topBar).addView(switches, 0)
         setupListeners()
         ensureCameraPermission()
         ensureServiceStarted()
@@ -163,8 +165,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun serviceLine(name: String, enabled: Boolean, running: Boolean): String {
-        val master = (application as CameraAgentApp).appGraph.settingsRepository.serviceEnabled
-        val icon = if (running) "🟢" else if (enabled && master) "🟠" else "⚪"
+        val icon = if (running) "🟢" else if (enabled) "🟠" else "⚪"
         val state = if (!enabled) "已停用" else if (!running) "未运行" else "运行中"
         return "$icon $name · $state"
     }
@@ -208,14 +209,19 @@ class MainActivity : AppCompatActivity() {
             lifecycleScope.launch {
                 val appGraph = (application as CameraAgentApp).appGraph
                 val repo = appGraph.settingsRepository
-                repo.setServiceEnabled(isChecked)
-                try { appGraph.refreshNetworkListener() }
-                catch (e: Exception) { AppLog.e("Listener start failed", e) }
-                appGraph.mqttManager.restart()
+                repo.setBackgroundEnabled(isChecked)
+                (application as CameraAgentApp).refreshBackgroundPolicy()
                 refreshUi()
             }
         }
 
+        btnFacingDisabled.setOnClickListener {
+            wakeScreen()
+            lifecycleScope.launch {
+                (application as CameraAgentApp).appGraph.cameraAccess.updateLocal { it.copy(enabled = false) }
+                refreshUi()
+            }
+        }
         btnFacingBack.setOnClickListener {
             wakeScreen()
             setFacing(LensFacing.BACK)
@@ -355,13 +361,12 @@ class MainActivity : AppCompatActivity() {
     private fun setFacing(facing: LensFacing) {
         lifecycleScope.launch {
             val appGraph = (application as CameraAgentApp).appGraph
-            val current = appGraph.coordinator.config.value
-            if (current.facing != facing) {
-                val updated = current.copy(facing = facing)
-                appGraph.coordinator.updateConfig(updated)
-                appGraph.settingsRepository.updateConfig(updated)
-                refreshUi()
+            if (facing == LensFacing.FRONT && appGraph.settingsRepository.frontCameraDisabled) {
+                Toast.makeText(this@MainActivity, "前置摄像头已在设置中禁用", Toast.LENGTH_SHORT).show()
+                return@launch
             }
+            appGraph.cameraAccess.updateLocal { it.copy(facing = facing, enabled = true) }
+            refreshUi()
         }
     }
 
@@ -391,6 +396,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun ensureServiceStarted() {
+        if ((application as CameraAgentApp).appGraph.settingsRepository.manuallyExited) return
         if (!AgentService.isRunning) {
             AppLog.i("MainActivity: Starting AgentService in foreground...")
             val intent = Intent(this, AgentService::class.java)
@@ -440,29 +446,28 @@ class MainActivity : AppCompatActivity() {
         }
         // 1. Service Switch & Indicator
         isBinding = true
-        tbCameraEnable.isChecked = repo.serviceEnabled
+        tbCameraEnable.isChecked = repo.backgroundEnabled
         isBinding = false
 
-        if (!repo.serviceEnabled) {
+        if (!repo.backgroundEnabled) {
             statusLed.setBackgroundResource(R.drawable.led_grey)
-            tvStatusText.text = "整体服务 · 已关闭"
+            tvStatusText.text = "后台服务 · 关闭"
             tvStatusText.setTextColor(0xFFA3A8B7.toInt())
         } else {
             statusLed.setBackgroundResource(R.drawable.led_green)
-            tvStatusText.text = "整体服务 · 已开启"
+            tvStatusText.text = "后台服务 · 开启"
             tvStatusText.setTextColor(0xFFA8C7BA.toInt())
         }
 
         val listener = appGraph.httpServer
         setStatusIndicator(findViewById(R.id.tvHttpStatus),
-            serviceLine("HTTP", repo.httpEnabled, repo.serviceEnabled && listener.isRunning && repo.httpEnabled))
+            serviceLine("HTTP", repo.httpEnabled, listener.isRunning && repo.httpEnabled))
         setStatusIndicator(findViewById(R.id.tvMcpStatus),
-            serviceLine("MCP", repo.mcpEnabled, repo.serviceEnabled && listener.isRunning && repo.mcpEnabled))
+            serviceLine("MCP", repo.mcpEnabled, repo.backgroundEnabled && listener.isRunning && repo.mcpEnabled))
         findViewById<TextView>(R.id.tvHttpConnections).text = "${listener.httpConnections} 个连接"
         findViewById<TextView>(R.id.tvMcpConnections).text = "${listener.mcpConnections} 个连接"
         val mqttLine = when {
             !repo.mqttEnabled -> "⚪ MQTT · 已停用"
-            !repo.serviceEnabled -> "⚪ MQTT · 整体服务已关闭"
             appGraph.mqttManager.status.value is MqttStatus.Connected -> "🟢 MQTT · 已连接"
             appGraph.mqttManager.status.value is MqttStatus.Connecting -> "🟠 MQTT · 连接中"
             else -> "🟠 MQTT · 未连接"
@@ -497,21 +502,28 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // 3. Compact Segmented Facing Switch in Top Bar
-        if (config.facing == LensFacing.FRONT) {
-            btnFacingFront.backgroundTintList = android.content.res.ColorStateList.valueOf(0xFFBAC6EA.toInt())
-            btnFacingFront.setTextColor(0xFF111318.toInt())
-            btnFacingBack.backgroundTintList = android.content.res.ColorStateList.valueOf(0xFF303643.toInt())
-            btnFacingBack.setTextColor(0xFFFFFFFF.toInt())
-        } else {
-            btnFacingBack.backgroundTintList = android.content.res.ColorStateList.valueOf(0xFFBAC6EA.toInt())
-            btnFacingBack.setTextColor(0xFF111318.toInt())
-            btnFacingFront.backgroundTintList = android.content.res.ColorStateList.valueOf(0xFF303643.toInt())
-            btnFacingFront.setTextColor(0xFFFFFFFF.toInt())
+        // Lens selection doubles as the local privacy-state display.
+        listOf(btnFacingBack to (config.enabled && config.facing == LensFacing.BACK),
+            btnFacingFront to (config.enabled && config.facing == LensFacing.FRONT),
+            btnFacingDisabled to !config.enabled).forEach { (button, selected) ->
+            button.isSelected = selected
+            button.backgroundTintList = android.content.res.ColorStateList.valueOf(if (selected) 0xFFBAC6EA.toInt() else 0xFF303643.toInt())
+            button.setTextColor(if (selected) 0xFF111318.toInt() else 0xFFE0E0E0.toInt())
         }
-
+        btnFacingDisabled.setCompoundDrawablesWithIntrinsicBounds(
+            BanDrawable(resources.displayMetrics.density, if (!config.enabled) 0xFF111318.toInt() else 0xFFE0E0E0.toInt()), null, null, null)
+        btnFacingDisabled.compoundDrawablePadding = 2.dp()
+        tvCameraHardwareStatus.text = "镜头:"
+        tvCameraHardwareStatus.contentDescription = if (config.enabled) "镜头允许访问，当前状态：${state::class.simpleName}" else "镜头已在本机禁用"
         val hasFront = appGraph.capabilities.any { it.facing == LensFacing.FRONT }
-        btnFacingFront.isEnabled = hasFront
+        // Keep the view clickable for a useful policy explanation, but never perform the switch.
+        btnFacingFront.alpha = if (hasFront && !repo.frontCameraDisabled) 1f else 0.4f
+        btnFacingFront.setOnClickListener {
+            wakeScreen()
+            if (!hasFront || repo.frontCameraDisabled)
+                Toast.makeText(this, if (!hasFront) "设备没有前置摄像头" else "前置摄像头已在设置中禁用", Toast.LENGTH_SHORT).show()
+            else setFacing(LensFacing.FRONT)
+        }
 
         // 4. Modern Endpoint Card & Auth Status
         val ip = getIpAddress() ?: "127.0.0.1"
@@ -546,7 +558,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         val activeStreams = (state as? CameraState.Active)?.activeStreams ?: 0
-        val serviceStatus = if (repo.serviceEnabled) "Service: ON" else "Service: SUSPENDED (Dummy)"
+        val serviceStatus = if (repo.backgroundEnabled) "Background: ON" else "Background: OFF"
         tvDeviceStatus.text = "Device: ${Build.MODEL} | $serviceStatus | Cam: ${state::class.simpleName} | Streams: $activeStreams | IP: $ip"
     }
 

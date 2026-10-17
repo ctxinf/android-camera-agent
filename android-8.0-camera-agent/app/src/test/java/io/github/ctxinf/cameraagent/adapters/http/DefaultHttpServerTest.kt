@@ -34,13 +34,19 @@ class DefaultHttpServerTest {
         private var _dimTimeoutSec: Int = 30,
         private var _dimBrightness: Float = 0.01f,
     ) : SettingsRepository {
-        private var service = true
+        private var background = true
+        private var exited = false
+        private var frontDisabled = false
         private var http = true
         private var mcp = true
-        override val serviceEnabled get() = service
+        override val backgroundEnabled get() = background
+        override val manuallyExited get() = exited
+        override val frontCameraDisabled get() = frontDisabled
+        override fun setManuallyExited(exited: Boolean) { this.exited = exited }
+        override fun setFrontCameraDisabled(disabled: Boolean) { frontDisabled = disabled }
         override val httpEnabled get() = http
         override val mcpEnabled get() = mcp
-        override fun setServiceEnabled(enabled: Boolean) { service = enabled }
+        override fun setBackgroundEnabled(enabled: Boolean) { background = enabled }
         override fun setHttpEnabled(enabled: Boolean) { http = enabled }
         override fun setMcpEnabled(enabled: Boolean) { mcp = enabled }
         private val _config = MutableStateFlow(initialConfig)
@@ -207,7 +213,12 @@ class DefaultHttpServerTest {
                 assertEquals(path, if (mcp) 200 else 404, requestStatus(path))
             }
         }
-        settingsRepo.setServiceEnabled(false)
+        settingsRepo.setHttpEnabled(true)
+        settingsRepo.setMcpEnabled(true)
+        settingsRepo.setBackgroundEnabled(false)
+        assertEquals(200, requestStatus("/health"))
+        assertEquals(200, requestStatus("/mcp"))
+        settingsRepo.setManuallyExited(true)
         assertEquals(404, requestStatus("/health"))
         assertEquals(404, requestStatus("/mcp"))
     }

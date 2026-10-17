@@ -203,7 +203,12 @@ public class CameraManager {
         }
     }
 
+    private io.github.ctxinf.cameraagent.legacy.Settings accessSettings;
+    public void setAccessSettings(io.github.ctxinf.cameraagent.legacy.Settings settings) { accessSettings = settings; }
+
     public boolean isAccessDenied() {
+        if (accessSettings != null) return !accessSettings.cameraEnabled() || (accessSettings.frontCameraDisabled()
+                && facing == Camera.CameraInfo.CAMERA_FACING_FRONT);
         return !cameraEnabled || (frontCameraDisabled
                 && facing == Camera.CameraInfo.CAMERA_FACING_FRONT);
     }
@@ -337,6 +342,7 @@ public class CameraManager {
      */
     public List<String> getSupportedResolutions() {
         List<String> out = new ArrayList<String>();
+        if (isAccessDenied()) return out;
         Camera probe = null;
         try {
             List<Camera.Size> sizes;

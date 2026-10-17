@@ -59,7 +59,7 @@ public final class MqttStatusPublisher implements Runnable {
     public void run() {
         long backoff = 2000;
         while (running) {
-            if (!settings.serviceEnabled() || !settings.mqttEnabled() || settings.mqttHost().trim().length() == 0) {
+            if (settings.manuallyExited() || !settings.mqttEnabled() || settings.mqttHost().trim().length() == 0) {
                 sleep(5000);
                 continue;
             }
@@ -190,12 +190,8 @@ public final class MqttStatusPublisher implements Runnable {
                 "{{ value_json.storage_available_mb }}", true, true));
         components.put("camera", sensor("Camera state", deviceId + "_camera", null, null,
                 "{{ value_json.state }}", true, false));
-        Map<String, Object> gate = Json.map();
-        gate.put("p", "switch"); gate.put("name", "Camera service");
-        gate.put("unique_id", deviceId + "_camera_service"); gate.put("command_topic", commandTopic);
-        gate.put("payload_on", "{\"enabled\":true}"); gate.put("payload_off", "{\"enabled\":false}");
-        gate.put("value_template", "{{ 'ON' if value_json.camera_enabled else 'OFF' }}");
-        gate.put("state_topic", stateTopic); components.put("camera_service", gate);
+        components.put("camera_service", sensor("Camera access (device-only)", deviceId + "_camera_service",
+                null, null, "{{ value_json.camera_enabled }}", false, false));
         Map<String, Object> lens = Json.map();
         lens.put("p", "select"); lens.put("name", "Camera facing");
         lens.put("unique_id", deviceId + "_camera_facing"); lens.put("command_topic", commandTopic);
@@ -213,13 +209,15 @@ public final class MqttStatusPublisher implements Runnable {
         try {
             Map<String, Object> command = Json.parseObject(payload);
             Object enabled = command.get("enabled");
-            if (enabled instanceof Boolean) settings.setCameraEnabled(((Boolean) enabled).booleanValue());
+            if (enabled != null || !settings.cameraEnabled())
+                throw new SecurityException("Camera enable/disable is device-only");
             String facing = Json.str(command, "facing");
-            if ("back".equals(facing) || ("front".equals(facing) && !settings.frontCameraDisabled())) {
+            if ("front".equals(facing) && settings.frontCameraDisabled())
+                throw new SecurityException("Front camera is disabled on the device");
+            if ("back".equals(facing) || "front".equals(facing)) {
                 settings.setCameraFacing("front".equals(facing) ? 1 : 0);
                 cameraManager.setFacing(settings.cameraFacing());
             }
-            cameraManager.setAccessPolicy(settings.cameraEnabled(), settings.frontCameraDisabled());
             cameraManager.reconfigure();
             deviceStatus.invalidate();
         } catch (Exception e) {

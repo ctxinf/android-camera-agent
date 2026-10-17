@@ -55,13 +55,16 @@ class AppGraph(
         initialConfig = settingsRepository.config.value,
     )
 
-    val cameraController: CameraController = coordinator
+    val cameraAccess = io.github.ctxinf.cameraagent.application.CameraAccessController(coordinator, settingsRepository) {
+        AgentService.isRunning
+    }
+    val cameraController: CameraController = cameraAccess
 
     var capabilities: List<CameraCapabilities> = emptyList()
         private set
 
     val httpServer: HttpServer = DefaultHttpServer(
-        cameraController = coordinator,
+        cameraController = cameraController,
         frameEncoder = frameEncoder,
         settingsRepository = settingsRepository,
         getHardwareLevel = { capabilities.firstOrNull()?.hardwareLevel },
@@ -70,7 +73,7 @@ class AppGraph(
     val mqttManager: io.github.ctxinf.cameraagent.adapters.mqtt.MqttManager =
         io.github.ctxinf.cameraagent.adapters.mqtt.MqttManager(
             context = context,
-            cameraController = coordinator,
+            cameraController = cameraController,
             settingsRepository = settingsRepository,
             scope = appScope,
         )
@@ -81,7 +84,7 @@ class AppGraph(
     /** Serializes listener reconfiguration across startup, settings and shutdown. */
     suspend fun refreshNetworkListener() = withContext(Dispatchers.IO) {
         listenerMutex.withLock {
-            val enabled = AgentService.isRunning && settingsRepository.serviceEnabled &&
+            val enabled = AgentService.isRunning && !settingsRepository.manuallyExited &&
                 (settingsRepository.httpEnabled || settingsRepository.mcpEnabled)
             if (!enabled || listenerPort != settingsRepository.httpPort) {
                 httpServer.stop()
@@ -98,9 +101,6 @@ class AppGraph(
     init {
         AppLog.i("Initializing AppGraph...")
         refreshCapabilities()
-        if (settingsRepository.mqttEnabled) {
-            mqttManager.start()
-        }
     }
 
     fun refreshCapabilities(): List<CameraCapabilities> {

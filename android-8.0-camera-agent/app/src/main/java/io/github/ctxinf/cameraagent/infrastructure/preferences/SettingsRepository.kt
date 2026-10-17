@@ -9,8 +9,12 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 interface SettingsRepository {
-    val serviceEnabled: Boolean
-    fun setServiceEnabled(enabled: Boolean)
+    val backgroundEnabled: Boolean
+    fun setBackgroundEnabled(enabled: Boolean)
+    val manuallyExited: Boolean
+    fun setManuallyExited(exited: Boolean)
+    val frontCameraDisabled: Boolean
+    fun setFrontCameraDisabled(disabled: Boolean)
     val httpEnabled: Boolean
     val mcpEnabled: Boolean
     fun setHttpEnabled(enabled: Boolean)
@@ -55,8 +59,12 @@ class SharedPreferencesSettingsRepository(
 ) : SettingsRepository {
     private val prefs: SharedPreferences = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
 
-    override val serviceEnabled get() = prefs.getBoolean("service_enabled", true)
-    override fun setServiceEnabled(enabled: Boolean) { prefs.edit().putBoolean("service_enabled", enabled).apply() }
+    override val backgroundEnabled get() = prefs.getBoolean("background_enabled", true)
+    override fun setBackgroundEnabled(enabled: Boolean) { prefs.edit().putBoolean("background_enabled", enabled).commit() }
+    override val manuallyExited get() = prefs.getBoolean("manually_exited", false)
+    override fun setManuallyExited(exited: Boolean) { prefs.edit().putBoolean("manually_exited", exited).commit() }
+    override val frontCameraDisabled get() = prefs.getBoolean("front_camera_disabled", false)
+    override fun setFrontCameraDisabled(disabled: Boolean) { prefs.edit().putBoolean("front_camera_disabled", disabled).commit() }
     override val httpEnabled get() = prefs.getBoolean("http_enabled", true)
     override val mcpEnabled get() = prefs.getBoolean("mcp_enabled", false)
     override fun setHttpEnabled(enabled: Boolean) { prefs.edit().putBoolean("http_enabled", enabled).apply() }
@@ -192,7 +200,8 @@ class SharedPreferencesSettingsRepository(
     private fun loadConfig(): CameraConfig {
         val enabled = prefs.getBoolean(KEY_ENABLED, true)
         val facingName = prefs.getString(KEY_FACING, LensFacing.BACK.name) ?: LensFacing.BACK.name
-        val facing = try { LensFacing.valueOf(facingName) } catch (_: Exception) { LensFacing.BACK }
+        val requestedFacing = try { LensFacing.valueOf(facingName) } catch (_: Exception) { LensFacing.BACK }
+        val facing = if (requestedFacing == LensFacing.FRONT && frontCameraDisabled) LensFacing.BACK else requestedFacing
         val targetWidth = prefs.getInt(KEY_TARGET_WIDTH, 1280)
         val targetHeight = prefs.getInt(KEY_TARGET_HEIGHT, 720)
         val targetFps = prefs.getInt(KEY_TARGET_FPS, 15)

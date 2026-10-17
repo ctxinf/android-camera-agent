@@ -16,6 +16,11 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withTimeoutOrNull
+import io.github.ctxinf.cameraagent.domain.Frame
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.intOrNull
@@ -79,7 +84,7 @@ class DefaultHttpServer(
     private val clients = java.util.concurrent.ConcurrentHashMap<Socket, Boolean>()
     override fun closeDisabledConnections() {
         clients.forEach { (socket, mcp) ->
-            if (!settingsRepository.serviceEnabled ||
+            if (settingsRepository.manuallyExited ||
                 (if (mcp) !settingsRepository.mcpEnabled else !settingsRepository.httpEnabled)) {
                 try { socket.close() } catch (_: Exception) {}
             }
@@ -205,7 +210,7 @@ class DefaultHttpServer(
                 }
 
             val isMcp = path in setOf("/mcp", "/api/mcp", "/api/v1/mcp")
-            if (!settingsRepository.serviceEnabled || if (isMcp) !settingsRepository.mcpEnabled else !settingsRepository.httpEnabled) {
+            if (settingsRepository.manuallyExited || if (isMcp) !settingsRepository.mcpEnabled else !settingsRepository.httpEnabled) {
                 sendError(output, 404, "Not Found")
                 return
             }
@@ -380,105 +385,71 @@ class DefaultHttpServer(
     }
 
     private fun handleMjpegStream(client: Socket, out: OutputStream, isHead: Boolean = false) {
-        if (isHead) {
-            val header = "HTTP/1.1 200 OK\r\n" +
-                    "Content-Type: multipart/x-mixed-replace; boundary=$BOUNDARY\r\n" +
-                    "Cache-Control: no-cache, no-store, must-revalidate\r\n" +
-                    "Connection: close\r\n\r\n"
-            out.write(header.toByteArray(Charsets.US_ASCII))
-            out.flush()
-            return
-        }
-
-        if (!cameraController.config.value.enabled) {
-            handleDummyMjpegStream(client, out)
-            return
-        }
-
-        val token = "mjpeg_${UUID.randomUUID().toString().take(8)}"
-        AppLog.i("HttpServer: starting MJPEG stream token=$token")
-
-        // Send initial multipart header
         val header = "HTTP/1.1 200 OK\r\n" +
                 "Content-Type: multipart/x-mixed-replace; boundary=$BOUNDARY\r\n" +
                 "Cache-Control: no-cache, no-store, must-revalidate\r\n" +
                 "Connection: close\r\n\r\n"
         out.write(header.toByteArray(Charsets.US_ASCII))
         out.flush()
-
-        // Switch socket timeout to 0 (infinite) for streaming
+        if (isHead) return
         client.soTimeout = 0
-
-        var frameCount = 0
+        val token = "mjpeg_${UUID.randomUUID().toString().take(8)}"
         var lastSentTime = 0L
-
+        var lastFrameAt = SystemClock.elapsedRealtime()
         try {
             runBlocking {
-                val flow = cameraController.openStream(token)
-                flow.collect { frame ->
-                    val targetFps = cameraController.config.value.targetFps.coerceIn(1, 30)
-                    val minIntervalMs = 1000L / targetFps
-                    val now = SystemClock.elapsedRealtime()
-
-                    if (now - lastSentTime < minIntervalMs - 8) {
-                        return@collect // Skip to throttle FPS
+                val frames = Channel<Frame>(Channel.CONFLATED)
+                var collector: Job? = null
+                try {
+                    while (_isRunning && !client.isClosed) {
+                        val jpegBytes: ByteArray
+                        if (!cameraController.config.value.enabled) {
+                            collector?.cancelAndJoin()
+                            collector = null
+                            while (frames.tryReceive().isSuccess) { /* discard old real frames */ }
+                            jpegBytes = dummyFrameProvider?.invoke() ?: DummyFrameGenerator.createDummyJpeg()
+                        } else {
+                            if (collector == null) {
+                                val flow = try { cameraController.openStream(token) }
+                                catch (e: io.github.ctxinf.cameraagent.domain.CameraDisabledException) { continue }
+                                collector = launch { flow.collect { frames.trySend(it) } }
+                            }
+                            val frame = withTimeoutOrNull(500) { frames.receive() }
+                            if (frame == null) {
+                                // A local privacy transition may invalidate the coordinator's old stream.
+                                if (SystemClock.elapsedRealtime() - lastFrameAt > 5000) {
+                                    collector?.cancelAndJoin()
+                                    collector = null
+                                    lastFrameAt = SystemClock.elapsedRealtime()
+                                }
+                                continue
+                            }
+                            lastFrameAt = SystemClock.elapsedRealtime()
+                            if (!cameraController.config.value.enabled) continue
+                            val now = SystemClock.elapsedRealtime()
+                            val interval = 1000L / cameraController.config.value.targetFps.coerceIn(1, 30)
+                            if (now - lastSentTime < interval - 8) continue
+                            lastSentTime = now
+                            jpegBytes = frameEncoder.encodeToJpeg(frame, cameraController.config.value.jpegQuality)
+                            if (!cameraController.config.value.enabled) continue
+                        }
+                        val partHeader = "$DELIMITER\r\nContent-Type: image/jpeg\r\n" +
+                                "Content-Length: ${jpegBytes.size}\r\n\r\n"
+                        out.write(partHeader.toByteArray(Charsets.US_ASCII))
+                        out.write(jpegBytes)
+                        out.write("\r\n".toByteArray(Charsets.US_ASCII))
+                        out.flush()
+                        if (!cameraController.config.value.enabled) delay(500)
                     }
-                    lastSentTime = now
-
-                    val jpegBytes = frameEncoder.encodeToJpeg(frame, cameraController.config.value.jpegQuality)
-
-                    val partHeader = "$DELIMITER\r\n" +
-                            "Content-Type: image/jpeg\r\n" +
-                            "Content-Length: ${jpegBytes.size}\r\n\r\n"
-
-                    out.write(partHeader.toByteArray(Charsets.US_ASCII))
-                    out.write(jpegBytes)
-                    out.write("\r\n".toByteArray(Charsets.US_ASCII))
-                    out.flush()
-                    frameCount++
+                } finally {
+                    collector?.cancelAndJoin()
+                    frames.close()
+                    cameraController.closeStream(token)
                 }
             }
         } catch (e: Exception) {
-            // Client closed stream or socket error
-            AppLog.d("MJPEG stream token=$token terminated after $frameCount frames: ${e.message}")
-        } finally {
-            runBlocking {
-                cameraController.closeStream(token)
-            }
-            AppLog.i("HttpServer: closed MJPEG stream token=$token")
+            AppLog.d("MJPEG stream closed: ${e.message}")
         }
-    }
-
-    private fun handleDummyMjpegStream(client: Socket, out: OutputStream) {
-        val dummyBytes = dummyFrameProvider?.invoke() ?: DummyFrameGenerator.createDummyJpeg()
-        AppLog.i("HttpServer: starting dummy MJPEG stream (service suspended)")
-
-        val header = "HTTP/1.1 200 OK\r\n" +
-                "Content-Type: multipart/x-mixed-replace; boundary=$BOUNDARY\r\n" +
-                "Cache-Control: no-cache, no-store, must-revalidate\r\n" +
-                "Connection: close\r\n\r\n"
-        out.write(header.toByteArray(Charsets.US_ASCII))
-        out.flush()
-
-        client.soTimeout = 0
-
-        try {
-            while (_isRunning && !client.isClosed && !cameraController.config.value.enabled) {
-                val partHeader = "$DELIMITER\r\n" +
-                        "Content-Type: image/jpeg\r\n" +
-                        "Content-Length: ${dummyBytes.size}\r\n\r\n"
-
-                out.write(partHeader.toByteArray(Charsets.US_ASCII))
-                out.write(dummyBytes)
-                out.write("\r\n".toByteArray(Charsets.US_ASCII))
-                out.flush()
-
-                Thread.sleep(500) // 2 FPS placeholder feed
-            }
-        } catch (e: Exception) {
-            // Client hung up or connection closed
-        }
-        AppLog.i("HttpServer: finished dummy MJPEG stream")
     }
 
     private fun handleStatus(out: OutputStream) {
@@ -524,9 +495,9 @@ class DefaultHttpServer(
             val jsonElement = json.parseToJsonElement(body).jsonObject
             var current = cameraController.config.value
 
-            val newEnabled = jsonElement["enabled"]?.jsonPrimitive?.booleanOrNull
-            if (newEnabled != null) {
-                current = current.copy(enabled = newEnabled)
+            if ("enabled" in jsonElement) {
+                sendError(out, 403, "Camera enable/disable is device-only")
+                return
             }
             jsonElement["facing"]?.jsonPrimitive?.content?.let { facingStr ->
                 try {
@@ -556,16 +527,14 @@ class DefaultHttpServer(
             }
 
             val updated = runBlocking {
-                if (newEnabled != null) {
-                    cameraController.setEnabled(newEnabled)
-                }
                 val res = cameraController.updateConfig(current)
-                settingsRepository.updateConfig(res)
                 res
             }
 
             val jsonStr = json.encodeToString(io.github.ctxinf.cameraagent.domain.CameraConfig.serializer(), updated)
             sendJson(out, 200, jsonStr)
+        } catch (e: SecurityException) {
+            sendError(out, 403, e.message ?: "Camera access denied")
         } catch (e: Exception) {
             sendError(out, 400, "Invalid JSON: ${e.message}")
         }

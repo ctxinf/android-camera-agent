@@ -18,8 +18,10 @@ public final class Settings {
     public static final String KEY_HTTP_PATH_PREFIX = "http_path_prefix";
     public static final String KEY_HTTP_ENABLED = "http_enabled";
     public boolean httpEnabled() { return prefs.getBoolean(KEY_HTTP_ENABLED, true); }
-    public boolean serviceEnabled() { return prefs.getBoolean("service_enabled", true); }
-    public void setServiceEnabled(boolean enabled) { prefs.edit().putBoolean("service_enabled", enabled).commit(); }
+    public boolean backgroundEnabled() { return prefs.getBoolean("background_enabled", true); }
+    public void setBackgroundEnabled(boolean enabled) { prefs.edit().putBoolean("background_enabled", enabled).commit(); }
+    public boolean manuallyExited() { return prefs.getBoolean("manually_exited", false); }
+    public void setManuallyExited(boolean exited) { prefs.edit().putBoolean("manually_exited", exited).commit(); }
 
     public static final String KEY_HTTP_PORT = "http_port";
     public static final String KEY_AUTH_ENABLED = "auth_enabled";

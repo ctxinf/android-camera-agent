@@ -19,43 +19,7 @@
                 <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="Camera Agent · Legacy" android:textSize="26sp" android:textColor="@color/ui_text" android:textStyle="bold" />
                 <Button android:id="@+id/settings" android:layout_width="64dp" android:layout_height="48dp" android:text="设置" android:textColor="@color/control_text" android:background="@drawable/control_button" />
             </LinearLayout>
-            <LinearLayout
-                android:id="@+id/service_bar"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:background="@drawable/surface_card">
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center_vertical">
-                    <View
-                        android:id="@+id/status_led"
-                        android:layout_width="16dp"
-                        android:layout_height="16dp"
-                        android:background="@drawable/led_green"
-                        android:layout_marginRight="10dp" />
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:text="整体服务 · 已开启"
-                        android:textStyle="bold"
-                        android:textSize="18sp"
-                        android:textColor="@color/ui_text"
-                        android:id="@+id/status_text"
-                        android:layout_weight="1"
-                        android:layout_marginRight="12dp" />
-                    <ToggleButton
-                        android:id="@+id/camera_service_toggle"
-                        android:layout_width="64dp"
-                        android:layout_height="48dp"
-                        android:background="@drawable/control_button"
-                        android:textOn="开启"
-                        android:textOff="关闭"
-                        android:textSize="14sp"
-                        android:textColor="@color/control_text"
-                        android:checked="true" />
-                </LinearLayout>
+            <LinearLayout android:id="@+id/service_bar" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:background="@drawable/surface_card">
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:paddingTop="12dp">
                     <TextView android:id="@+id/http_status" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:textColor="@color/ui_text" android:textSize="14sp" />
                     <TextView android:id="@+id/http_connections" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="@color/ui_text_secondary" android:textSize="12sp" />
@@ -65,40 +29,16 @@
                     <TextView android:id="@+id/mcp_connections" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="@color/ui_text_secondary" android:textSize="12sp" />
                 </LinearLayout>
                 <TextView android:id="@+id/mqtt_status" android:layout_width="match_parent" android:layout_height="wrap_content" android:paddingTop="12dp" android:textColor="@color/ui_text" android:textSize="14sp" />
-                <TextView android:id="@+id/camera_status" android:layout_width="match_parent" android:layout_height="wrap_content" android:paddingTop="12dp" android:textColor="@color/ui_text" android:textSize="14sp" />
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="选择镜头"
-                    android:textSize="12sp"
-                    android:textColor="@color/ui_text_secondary"
-                    android:layout_marginTop="16dp"
-                    android:layout_marginBottom="8dp" />
-                <LinearLayout
-                    android:id="@+id/facing_row"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal">
-                    <Button
-                        android:id="@+id/facing_back"
-                        android:layout_width="0dp"
-                        android:layout_weight="1"
-                        android:layout_height="48dp"
-                        android:layout_marginRight="4dp"
-                        android:text="后置"
-                        android:textSize="14sp"
-                        android:textColor="@color/control_text"
-                        android:background="@drawable/control_button" />
-                    <Button
-                        android:id="@+id/facing_front"
-                        android:layout_width="0dp"
-                        android:layout_weight="1"
-                        android:layout_height="48dp"
-                        android:layout_marginRight="4dp"
-                        android:text="前置"
-                        android:textSize="14sp"
-                        android:textColor="@color/control_text"
-                        android:background="@drawable/control_button" />
+                <LinearLayout android:id="@+id/facing_row" android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:layout_marginTop="16dp">
+                    <TextView android:id="@+id/camera_status" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="镜头:" android:textColor="@color/ui_text" android:textSize="14sp" />
+                    <Button android:id="@+id/facing_back" android:layout_width="56dp" android:layout_height="48dp" android:layout_marginLeft="4dp" android:padding="4dp" android:minWidth="0dp" android:text="后置" android:textSize="14sp" android:textColor="@color/control_text" android:background="@drawable/control_button"  />
+                    <Button android:id="@+id/facing_front" android:layout_width="56dp" android:layout_height="48dp" android:layout_marginLeft="4dp" android:padding="4dp" android:minWidth="0dp" android:text="前置" android:textSize="14sp" android:textColor="@color/control_text" android:background="@drawable/control_button"  />
+                    <Button android:id="@+id/facing_disabled" android:layout_width="64dp" android:layout_height="48dp" android:layout_marginLeft="4dp" android:padding="4dp" android:minWidth="0dp" android:text="禁用" android:textSize="14sp" android:textColor="@color/control_text" android:background="@drawable/control_button"  />
+                </LinearLayout>
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:layout_marginTop="16dp">
+                    <View android:id="@+id/status_led" android:layout_width="16dp" android:layout_height="16dp" android:layout_marginRight="10dp" android:background="@drawable/led_green" />
+                    <TextView android:id="@+id/status_text" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="后台服务 · 开启" android:textColor="@color/ui_text" android:textStyle="bold" android:textSize="16sp" android:layout_marginRight="8dp" />
+                    <ToggleButton android:id="@+id/camera_service_toggle" android:layout_width="64dp" android:layout_height="48dp" android:textOn="开启" android:textOff="关闭" android:checked="true" android:background="@drawable/control_button" android:textColor="@color/control_text" />
                 </LinearLayout>
             </LinearLayout>
             <LinearLayout

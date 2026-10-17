@@ -48,11 +48,25 @@ escapes are rejected. Clear the setting to restore the original root URLs.
 
 ## Service controls
 
-Both editions provide a master service switch and independent HTTP, MCP and MQTT
-checkboxes on the homepage and in settings. HTTP defaults to enabled; MCP and
-MQTT default to disabled. The master switch pauses network services without
-clearing the individual choices. Camera access remains a separate camera setting;
-the camera indicator reports actual hardware use, including preview and warmup.
+Both editions provide independent HTTP, MCP and MQTT checkboxes on the homepage
+and in settings. HTTP defaults to enabled; MCP and MQTT default to disabled.
+There is no master network switch. The background-service switch below the lens
+controls decides whether the agent stays running after all app screens leave the
+foreground. Turning it off does not interrupt services while the app is visible,
+but stops them and releases camera/power resources after leaving the app.
+Background-disabled and explicitly exited apps do not start on boot.
+
+The lens row has highlighted Back / Front / Disabled controls. Disabled is a
+device-only privacy gate: HTTP, MCP and MQTT cannot change camera access or
+switch lenses while it is disabled. Snapshot requests return a static disabled
+image, and MJPEG requests stream placeholder images without opening the camera.
+The front-camera prohibition in settings also blocks remote front-lens changes.
+The lens indicator reports actual hardware use, including preview and warmup.
+
+The red Force Exit button at the bottom of settings stops the service and process
+and persistently suppresses automatic restarts until a manual launcher open.
+The launcher animation lasts 900 ms and distinguishes a resident background
+service from a fresh service launch.
 
 HTTP and MCP share the configured port and authentication, but their routes and
 active connections are controlled independently. Disabling one leaves the other

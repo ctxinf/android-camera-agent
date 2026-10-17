@@ -55,11 +55,26 @@ class SettingsActivity : PreferenceActivity() {
         toggle(camera, "camera_enabled", R.string.pref_camera_access, repo.config.value.enabled) { enabled ->
             updateCamera { it.copy(enabled = enabled) }
         }
+        toggle(camera, "front_camera_disabled", R.string.pref_disable_front, repo.frontCameraDisabled) { disabled ->
+            graph.appScope.launch(Dispatchers.Main.immediate) {
+                graph.cameraAccess.setFrontDisabled(disabled)
+                (findPreference("camera_facing") as? ListPreference)?.let {
+                    it.value = repo.config.value.facing.name
+                    it.summary = it.entry
+                }
+                refreshResolutions(repo.config.value.facing)
+            }
+            if (disabled) toast("前置摄像头已禁用")
+        }
         val caps = graph.capabilities.ifEmpty { graph.refreshCapabilities() }
         val facings = caps.map { it.facing }.distinct().ifEmpty { listOf(LensFacing.BACK) }
         choice(camera, "camera_facing", R.string.pref_default_facing,
             facings.map { if (it == LensFacing.FRONT) getString(R.string.facing_front) else getString(R.string.facing_back) },
             facings.map { it.name }, repo.config.value.facing.name) { value ->
+            if (value == LensFacing.FRONT.name && repo.frontCameraDisabled) {
+                toast("前置摄像头已在设置中禁用")
+                throw IllegalArgumentException("前置摄像头已禁用")
+            }
             updateCamera { it.copy(facing = LensFacing.valueOf(value)) }
             refreshResolutions(LensFacing.valueOf(value))
         }
@@ -126,6 +141,22 @@ class SettingsActivity : PreferenceActivity() {
         val tools = category(R.string.cat_tools)
         action(tools, "preview", R.string.btn_preview) { startActivity(Intent(this, PreviewActivity::class.java)) }
         action(tools, "diagnostics", R.string.btn_open_diagnostics) { startActivity(Intent(this, DiagnosticsActivity::class.java)) }
+        val exit = android.widget.Button(this).apply {
+            text = "强制退出程序"
+            setTextColor(android.graphics.Color.WHITE)
+            backgroundTintList = android.content.res.ColorStateList.valueOf(0xffb3261e.toInt())
+            setCompoundDrawablesWithIntrinsicBounds(android.R.drawable.ic_lock_power_off, 0, 0, 0)
+            setPadding(24, 16, 24, 16)
+            setOnClickListener {
+                android.app.AlertDialog.Builder(this@SettingsActivity)
+                    .setTitle("强制退出程序")
+                    .setMessage("停止所有连接和相机，退出进程并禁止自启动，直到你再次手动打开应用。")
+                    .setNegativeButton(android.R.string.cancel, null)
+                    .setPositiveButton("退出") { _, _ -> (application as CameraAgentApp).forceExit() }
+                    .show()
+            }
+        }
+        listView.addFooterView(exit, null, false)
     }
 
     private fun refreshNetworkServices() {
@@ -228,9 +259,11 @@ class SettingsActivity : PreferenceActivity() {
         pref.summary = pref.entry
         parent.addPreference(pref)
         pref.setOnPreferenceChangeListener { _, value ->
-            save(value.toString())
-            pref.value = value.toString()
-            pref.summary = pref.entry
+            try {
+                save(value.toString())
+                pref.value = value.toString()
+                pref.summary = pref.entry
+            } catch (_: IllegalArgumentException) { /* policy toast already shown */ }
             false
         }
     }
@@ -250,9 +283,8 @@ class SettingsActivity : PreferenceActivity() {
     private fun updateCamera(change: (CameraConfig) -> CameraConfig) {
         // Application scope lets an accepted setting finish applying even after Back is pressed.
         graph.appScope.launch(Dispatchers.Main.immediate) {
-            val config = change(repo.config.value)
-            repo.updateConfig(config)
-            graph.coordinator.updateConfig(config)
+            try { graph.cameraAccess.updateLocal(change) }
+            catch (e: SecurityException) { toast(e.message ?: "相机访问被禁用") }
         }
     }
 

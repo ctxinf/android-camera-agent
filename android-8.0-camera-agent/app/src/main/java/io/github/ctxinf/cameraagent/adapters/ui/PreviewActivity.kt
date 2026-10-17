@@ -123,8 +123,7 @@ class PreviewActivity : AppCompatActivity() {
                 val currentConfig = appGraph.coordinator.config.value
                 val nextRotation = (currentConfig.rotationOffset + 90) % 360
                 val updatedConfig = currentConfig.copy(rotationOffset = nextRotation)
-                appGraph.coordinator.updateConfig(updatedConfig)
-                appGraph.settingsRepository.updateConfig(updatedConfig)
+                appGraph.cameraAccess.updateLocal { it.copy(rotationOffset = nextRotation) }
                 AppLog.i("Rotation updated to $nextRotation°")
             } catch (e: Exception) {
                 AppLog.e("Failed to rotate camera: ${e.message}", e)

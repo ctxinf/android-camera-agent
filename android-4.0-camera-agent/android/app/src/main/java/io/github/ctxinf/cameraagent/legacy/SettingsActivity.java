@@ -35,6 +35,27 @@ public class SettingsActivity extends PreferenceActivity
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        android.widget.Button exit = new android.widget.Button(this);
+        exit.setText("强制退出程序");
+        exit.setTextColor(android.graphics.Color.WHITE);
+        exit.setBackgroundColor(0xffb3261e);
+        exit.setCompoundDrawablesWithIntrinsicBounds(android.R.drawable.ic_lock_power_off, 0, 0, 0);
+        exit.setPadding(24, 16, 24, 16);
+        exit.setOnClickListener(new android.view.View.OnClickListener() {
+            @Override public void onClick(android.view.View view) {
+                new AlertDialog.Builder(SettingsActivity.this).setTitle("强制退出程序")
+                        .setMessage("停止所有连接和相机，退出进程并禁止自启动，直到你再次手动打开应用。")
+                        .setNegativeButton(android.R.string.cancel, null)
+                        .setPositiveButton("退出", new android.content.DialogInterface.OnClickListener() {
+                            @Override public void onClick(android.content.DialogInterface dialog, int which) {
+                                ((CameraAgentApp) getApplication()).forceExit();
+                            }
+                        }).show();
+            }
+        });
+        // Footer must be registered before the preference adapter on older Android releases.
+        getListView().addFooterView(exit, null, false);
+
         addPreferencesFromResource(R.xml.preferences);
         getListView().setBackgroundColor(android.graphics.Color.rgb(17, 19, 24));
         getListView().setPadding(16, 0, 16, 0);
@@ -62,6 +83,24 @@ public class SettingsActivity extends PreferenceActivity
             facing.setSummary(getString(R.string.pref_facing_single));
         }
 
+        if (facing != null) facing.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+            @Override public boolean onPreferenceChange(Preference preference, Object value) {
+                if ("1".equals(value.toString()) && settings.frontCameraDisabled()) {
+                    android.widget.Toast.makeText(SettingsActivity.this, "前置摄像头已在设置中禁用", android.widget.Toast.LENGTH_SHORT).show();
+                    return false;
+                }
+                return true;
+            }
+        });
+        findPreference(Settings.KEY_FRONT_CAMERA_DISABLED).setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+            @Override public boolean onPreferenceChange(Preference preference, Object value) {
+                if (Boolean.TRUE.equals(value)) {
+                    if (settings.cameraFacing() == 1) settings.setCameraFacing(0);
+                    android.widget.Toast.makeText(SettingsActivity.this, "前置摄像头已禁用", android.widget.Toast.LENGTH_SHORT).show();
+                }
+                return true;
+            }
+        });
         findPreference("preview").setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
             @Override public boolean onPreferenceClick(Preference p) {
                 startActivity(new android.content.Intent(SettingsActivity.this, PreviewActivity.class));
