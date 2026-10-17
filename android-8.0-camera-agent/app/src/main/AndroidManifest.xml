@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-feature
+        android:name="android.hardware.camera2"
+        android:required="true" />
+
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CAMERA" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+
+    <application
+        android:name=".bootstrap.CameraAgentApp"
+        android:allowBackup="false"
+        android:icon="@android:drawable/ic_menu_camera"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.CameraAgent">
+
+        <!-- Standby / Home Main Screen -->
+        <activity
+            android:name=".adapters.ui.MainActivity"
+            android:exported="true"
+            android:launchMode="singleTop">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- Settings Screen -->
+        <activity
+            android:name=".adapters.ui.SettingsActivity"
+            android:exported="true"
+            android:windowSoftInputMode="stateHidden|adjustResize"
+            android:label="@string/settings_title" />
+
+        <!-- Live Diagnostics & Logs Screen -->
+        <activity
+            android:name=".adapters.ui.DiagnosticsActivity"
+            android:exported="true"
+            android:label="@string/diagnostics_title" />
+
+        <!-- Local Preview & Rotation Screen -->
+        <activity
+            android:name=".adapters.ui.PreviewActivity"
+            android:exported="true"
+            android:label="@string/preview_title" />
+
+        <!-- Background Camera & HTTP Agent Service -->
+        <service
+            android:name=".bootstrap.AgentService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="camera" />
+
+        <!-- Boot Completed Receiver -->
+        <receiver
+            android:name=".bootstrap.BootReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+
+    </application>
+
+</manifest>

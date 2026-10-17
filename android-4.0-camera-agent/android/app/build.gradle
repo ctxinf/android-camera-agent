@@ -1,0 +1,37 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'io.github.ctxinf.cameraagent.legacy'
+    compileSdk 36
+
+    defaultConfig {
+        applicationId 'io.github.ctxinf.cameraagent.legacy'
+        // API 14 floor per the compatibility target; the test device is API 18.
+        minSdk 14
+        targetSdk 18
+        versionCode 9
+        versionName '0.5.4'
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    lint {
+        // Old-API surfaces (Camera, MediaRecorder) are deliberate, not oversights.
+        disable 'UnusedAttribute'
+    }
+}
+
+// No dependencies on purpose: everything used is Android framework API.
+dependencies {
+}

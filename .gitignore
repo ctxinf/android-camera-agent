@@ -1,0 +1,36 @@
+# Local planning and audit documents
+*.md
+!README*
+
+# Local tool configuration
+.agents/
+.codex/
+.aws/
+.idea/
+.vscode/
+.DS_Store
+*.iml
+
+# Android local configuration and build output
+local.properties
+.gradle/
+.kotlin/
+build/
+bin/
+captures/
+.externalNativeBuild/
+.cxx/
+*.apk
+*.aab
+
+# Local secrets and signing material
+.env
+.env.*
+!.env.example
+*.jks
+*.keystore
+*.p12
+*.pfx
+*.key
+*.pem
+*.log

@@ -1,0 +1,62 @@
+<resources>
+    <string name="app_name">Camera Agent</string>
+    <string name="camera_permission_required">Camera permission is required to capture images and stream video.</string>
+
+    <!-- Main / Standby screen -->
+    <string name="title_standby">Camera Agent</string>
+    <string name="service_running">Service: RUNNING</string>
+    <string name="service_stopped">Service: STOPPED</string>
+    <string name="camera_enabled">服务开启 (Service ON)</string>
+    <string name="camera_disabled">服务暂停 (Service OFF)</string>
+    <string name="service_enabled">服务开启</string>
+    <string name="service_disabled">服务暂停</string>
+    <string name="cam_hardware_active">CAM 运行中</string>
+    <string name="cam_hardware_opening">CAM 启动中</string>
+    <string name="cam_hardware_idle">CAM 空闲</string>
+    <string name="state_on">开</string>
+    <string name="state_off">关</string>
+    <string name="camera_facing_label">Lens:</string>
+    <string name="facing_back">Back (后置)</string>
+    <string name="facing_front">Front (前置)</string>
+    <string name="btn_preview">实时预览与画面 (Preview)</string>
+    <string name="btn_settings">设置</string>
+    <string name="endpoints_title">HTTP Endpoints:</string>
+
+    <!-- Settings screen -->
+    <string name="settings_title">设置 (Settings)</string>
+    <string name="pref_http_port">HTTP 端口 (Port)</string>
+    <string name="pref_default_facing">默认摄像头 (Default Lens)</string>
+    <string name="pref_resolution">目标分辨率 (Resolution)</string>
+    <string name="pref_target_fps">目标帧率 (MJPEG FPS)</string>
+    <string name="pref_jpeg_quality">JPEG 质量 (Quality: 10-100)</string>
+    <string name="pref_dim_timeout">息屏待机超时 (Dim Timeout: s)</string>
+    <string name="pref_retention_grace_period">拍照后相机保活时长 (Retention Grace Period: s, 0=不保活)</string>
+    <string name="btn_save_settings">保存设置 (Save)</string>
+    <string name="btn_open_diagnostics">进入调试页 (Live Diagnostics &amp; Logs)</string>
+
+    <!-- Diagnostics screen -->
+    <string name="diagnostics_title">调试与实时日志 (Diagnostics)</string>
+    <string name="btn_probe_cameras">Probe Cameras</string>
+    <string name="btn_test_snapshot">Test Snapshot</string>
+    <string name="btn_clear_logs">Clear</string>
+
+    <!-- Preview screen -->
+    <string name="preview_title">实时预览与画面 (Local Preview)</string>
+    <string name="preview_on">关闭预览 (Stop Preview)</string>
+    <string name="preview_off">开启预览 (Start Preview)</string>
+    <string name="btn_rotate">旋转 90° (Rotate)</string>
+
+    <!-- Auth & HA & MQTT -->
+    <string name="pref_auth_enabled">启用 HTTP Basic 鉴权 (Basic Auth)</string>
+    <string name="pref_auth_username">用户名 (Username)</string>
+    <string name="pref_auth_password">密码 (Password)</string>
+    <string name="pref_mqtt_title">MQTT 接入配置 (MQTT Broker)</string>
+    <string name="pref_mqtt_enabled">启用 MQTT 接入 (Enable MQTT)</string>
+    <string name="pref_mqtt_host">服务器地址 (Broker Host / IP)</string>
+    <string name="pref_mqtt_port">端口 (Port: 默认 1883)</string>
+    <string name="pref_mqtt_client_id">客户端 ID (Client ID)</string>
+    <string name="pref_mqtt_topic_prefix">主题前缀 (Topic Prefix)</string>
+    <string name="btn_test_mqtt">⚡ 测试 MQTT 连接 (Test)</string>
+    <string name="btn_battery_opt">锁屏常驻保活 (忽略电池优化)</string>
+    <string name="battery_opt_hint">将应用加入电池优化白名单，防止熄屏或锁屏后系统休眠网络与相机。</string>
+</resources>

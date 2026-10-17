@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/root" android:layout_width="match_parent"
+    android:layout_height="match_parent" android:background="#000000">
+    <LinearLayout android:id="@+id/service_bar" android:layout_width="wrap_content"
+        android:layout_height="wrap_content" android:layout_alignParentTop="true"
+        android:layout_alignParentLeft="true" android:layout_margin="10dp"
+        android:gravity="center_vertical" android:orientation="horizontal">
+        <View android:id="@+id/status_led" android:layout_width="20dp"
+            android:layout_height="20dp" android:layout_marginRight="8dp"
+            android:background="@drawable/led_grey" />
+        <TextView android:id="@+id/status_text" android:layout_width="wrap_content"
+            android:layout_height="wrap_content" android:layout_marginRight="8dp"
+            android:text="@string/camera_service_switch" android:textColor="#FFFFFF"
+            android:textSize="18sp" android:textStyle="bold" />
+        <ToggleButton android:id="@+id/camera_service_toggle" android:layout_width="72dp"
+            android:layout_height="44dp" android:textOn="@string/state_on"
+            android:textOff="@string/state_off" />
+    </LinearLayout>
+    <TextView android:id="@+id/info" android:layout_width="match_parent"
+        android:layout_height="wrap_content" android:layout_below="@id/service_bar"
+        android:layout_marginLeft="14dp" android:layout_marginRight="14dp"
+        android:layout_marginTop="16dp" android:gravity="left"
+        android:lineSpacingExtra="7dp" android:text="@string/app_name"
+        android:textColor="#55C8FF" android:textIsSelectable="true"
+        android:textSize="18sp" android:textStyle="bold" />
+    <LinearLayout android:id="@+id/facing_row" android:layout_width="match_parent"
+        android:layout_height="wrap_content" android:layout_below="@id/info"
+        android:layout_margin="14dp" android:gravity="center_vertical"
+        android:orientation="horizontal">
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="@string/camera_facing_label" android:textColor="#FFFFFF"
+            android:textSize="18sp" />
+        <Button android:id="@+id/facing_front" android:layout_width="70dp"
+            android:layout_height="48dp" android:layout_marginLeft="8dp"
+            android:text="@string/facing_front_short" android:textSize="18sp" />
+        <Button android:id="@+id/facing_back" android:layout_width="70dp"
+            android:layout_height="48dp" android:layout_marginLeft="6dp"
+            android:text="@string/facing_back_short" android:textSize="18sp" />
+    </LinearLayout>
+    <LinearLayout android:id="@+id/controls" android:layout_width="match_parent"
+        android:layout_height="wrap_content" android:layout_alignParentBottom="true"
+        android:layout_margin="12dp" android:orientation="horizontal">
+        <Button android:id="@+id/preview_page" android:layout_width="0dp"
+            android:layout_height="56dp" android:layout_weight="1"
+            android:text="@string/preview_page_button" android:textSize="17sp" />
+        <Button android:id="@+id/settings" android:layout_width="0dp"
+            android:layout_height="56dp" android:layout_marginLeft="10dp"
+            android:layout_weight="1" android:text="@string/settings_button"
+            android:textSize="17sp" />
+    </LinearLayout>
+</RelativeLayout>

@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#000000"
+    android:orientation="vertical"
+    android:padding="12dp">
+
+    <!-- Header -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/btnBack"
+            android:layout_width="wrap_content"
+            android:layout_height="38dp"
+            android:background="#2E2E2E"
+            android:text="← 返回"
+            android:textColor="#FFFFFF"
+            android:textSize="14sp" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_weight="1"
+            android:text="@string/preview_title"
+            android:textColor="#FFFFFF"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <!-- Preview Frame -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginTop="12dp"
+        android:layout_weight="1"
+        android:background="#181818">
+
+        <SurfaceView
+            android:id="@+id/previewSurface"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <TextView
+            android:id="@+id/tvPreviewStatus"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:text="Preview Stopped"
+            android:textColor="#FFFFFF"
+            android:textSize="18sp"
+            android:visibility="gone" />
+    </FrameLayout>
+
+    <!-- Preview Info -->
+    <TextView
+        android:id="@+id/tvPreviewInfo"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:textColor="#55C8FF"
+        android:textSize="13sp"
+        android:text="Camera: Initializing..." />
+
+    <!-- Controls Row -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/btnTogglePreview"
+            android:layout_width="0dp"
+            android:layout_height="52dp"
+            android:layout_weight="1"
+            android:backgroundTint="#00E05A"
+            android:text="@string/preview_on"
+            android:textColor="#000000"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/btnRotate"
+            android:layout_width="0dp"
+            android:layout_height="52dp"
+            android:layout_marginStart="10dp"
+            android:layout_weight="1"
+            android:backgroundTint="#2E2E2E"
+            android:text="@string/btn_rotate"
+            android:textColor="#FFFFFF"
+            android:textSize="14sp" />
+    </LinearLayout>
+
+</LinearLayout>

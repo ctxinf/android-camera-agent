@@ -1,0 +1,27 @@
+<resources>
+    <style name="Theme.CameraAgent" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="colorPrimary">#1976D2</item>
+        <item name="colorPrimaryVariant">#0D47A1</item>
+        <item name="colorOnPrimary">#FFFFFF</item>
+        <item name="colorSecondary">#00E05A</item>
+        <item name="colorSecondaryVariant">#00B347</item>
+        <item name="colorOnSecondary">#000000</item>
+        <item name="android:windowBackground">#121212</item>
+    </style>
+
+    <style name="Widget.CameraAgent.PathChip" parent="Widget.MaterialComponents.Chip.Action">
+        <item name="chipBackgroundColor">@color/chip_bg_color</item>
+        <item name="chipStrokeColor">@color/chip_stroke_color</item>
+        <item name="chipStrokeWidth">1dp</item>
+        <item name="chipCornerRadius">4dp</item>
+        <item name="chipMinHeight">26dp</item>
+        <item name="ensureMinTouchTargetSize">false</item>
+        <item name="android:textColor">@color/chip_text_color</item>
+        <item name="android:textSize">11sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="chipStartPadding">4dp</item>
+        <item name="chipEndPadding">4dp</item>
+        <item name="textStartPadding">2dp</item>
+        <item name="textEndPadding">2dp</item>
+    </style>
+</resources>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Plain shape drawable: avoids shipping binary assets and works on API 14. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="oval">
+    <solid android:color="#2196F3" />
+    <size android:width="48dp" android:height="48dp" />
+</shape>

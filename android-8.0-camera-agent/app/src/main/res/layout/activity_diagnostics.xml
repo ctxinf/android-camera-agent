@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#121212"
+    android:orientation="vertical"
+    android:padding="12dp">
+
+    <!-- Header -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/btnBack"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:background="#2E2E2E"
+            android:text="← 返回"
+            android:textColor="#FFFFFF"
+            android:textSize="13sp" />
+
+        <TextView
+            android:id="@+id/tvTitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_weight="1"
+            android:text="@string/diagnostics_title"
+            android:textColor="#FFFFFF"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/tvDeviceInfo"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:textColor="#AAAAAA"
+        android:textSize="12sp"
+        android:text="Device: Loading..." />
+
+    <!-- Status Section -->
+    <TextView
+        android:id="@+id/tvStatus"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:background="#222222"
+        android:padding="8dp"
+        android:text="Status: Ready"
+        android:textColor="#00FF66"
+        android:textSize="13sp" />
+
+    <TextView
+        android:id="@+id/tvCameraInfo"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:background="#1A1A1A"
+        android:padding="8dp"
+        android:text="Cameras: Probing..."
+        android:textColor="#DDDDDD"
+        android:textSize="11sp" />
+
+    <!-- Controls Row -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/btnProbe"
+            android:layout_width="0dp"
+            android:layout_height="44dp"
+            android:layout_weight="1"
+            android:text="Probe"
+            android:textSize="12sp" />
+
+        <Button
+            android:id="@+id/btnStartService"
+            android:layout_width="0dp"
+            android:layout_height="44dp"
+            android:layout_marginStart="6dp"
+            android:layout_weight="1"
+            android:text="Service"
+            android:textSize="12sp" />
+
+        <Button
+            android:id="@+id/btnSnapshot"
+            android:layout_width="0dp"
+            android:layout_height="44dp"
+            android:layout_marginStart="6dp"
+            android:layout_weight="1"
+            android:text="Snapshot"
+            android:textSize="12sp" />
+
+        <Button
+            android:id="@+id/btnClearLogs"
+            android:layout_width="wrap_content"
+            android:layout_height="44dp"
+            android:layout_marginStart="6dp"
+            android:text="Clear"
+            android:textSize="12sp" />
+    </LinearLayout>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="Live Diagnostic Logs:"
+        android:textColor="#CCCCCC"
+        android:textSize="12sp"
+        android:textStyle="bold" />
+
+    <!-- Diagnostic Log Console -->
+    <ScrollView
+        android:id="@+id/svLogs"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginTop="4dp"
+        android:layout_weight="1"
+        android:background="#050505"
+        android:padding="8dp">
+
+        <TextView
+            android:id="@+id/tvLogs"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:fontFamily="monospace"
+            android:textColor="#00FF66"
+            android:textSize="11sp" />
+    </ScrollView>
+
+</LinearLayout>

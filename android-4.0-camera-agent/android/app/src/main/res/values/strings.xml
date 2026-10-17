@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Camera Agent legacy</string>
+
+    <string name="settings_button">设置</string>
+    <string name="rotate_button">旋转</string>
+    <string name="rotate_button_fmt">旋转 %1$d°</string>
+    <string name="settings_title">设置 / Settings</string>
+    <string name="preview_on">预览中 · 点击关闭</string>
+    <string name="preview_off">打开实时预览</string>
+    <string name="camera_service_switch">摄像头服务</string>
+    <string name="state_on">打开</string>
+    <string name="state_off">关闭</string>
+    <string name="camera_facing_label">前置/后置：</string>
+    <string name="facing_front_short">前</string>
+    <string name="facing_back_short">后</string>
+    <string name="preview_page_button">预览与画面设置</string>
+    <string name="preview_page_title">实时预览与画面</string>
+    <string name="camera_facing_switch">前置摄像头</string>
+    <string name="camera_denied">当前禁止访问</string>
+    <string name="front_camera_denied">当前禁止访问前置摄像头</string>
+
+    <string name="status_idle">camera idle</string>
+    <string name="status_open">camera open</string>
+    <string name="status_opening">opening…</string>
+
+    <string name="cat_display">显示 / Display</string>
+    <string name="cat_camera">摄像头 / Camera</string>
+    <string name="cat_network">网络 / Network</string>
+    <string name="cat_mcp">MCP</string>
+    <string name="cat_mqtt">Home Assistant / MQTT</string>
+    <string name="pref_mcp">启用 MCP 服务</string>
+    <string name="pref_mcp_sum">在 /mcp 提供 Model Context Protocol 接口，供 AI 客户端拍照和查询状态</string>
+
+    <string name="pref_dim_brightness">静息亮度</string>
+    <string name="pref_dim_brightness_sum">息屏待机时的屏幕亮度百分比</string>
+    <string name="pref_dim_brightness_dlg">0–100。越低越省电，0 为最暗（部分机型仍会保留微弱背光）。</string>
+    <string name="pref_wake_seconds">亮屏保持时间</string>
+    <string name="pref_wake_seconds_sum">触摸后保持正常亮度的秒数</string>
+
+    <string name="pref_facing">摄像头选择</string>
+    <string name="pref_facing_sum">前置 / 后置</string>
+    <string name="pref_facing_single">本机只有一个摄像头</string>
+    <string name="pref_disable_front">禁用前置摄像头</string>
+    <string name="pref_disable_front_sum">最高优先级安全策略；启用后任何通路都不能打开前置摄像头</string>
+    <string name="pref_resolution">分辨率</string>
+    <string name="pref_resolution_sum">预览分辨率，影响快照与 MJPEG</string>
+    <string name="pref_quality">JPEG 质量</string>
+    <string name="pref_quality_sum">10–100，越高越清晰也越占带宽</string>
+    <string name="pref_fps">MJPEG 帧率</string>
+    <string name="pref_fps_sum">1–30，老设备建议 5–10</string>
+
+    <string name="pref_port">HTTP 端口</string>
+    <string name="pref_port_sum">修改后立即重启服务</string>
+    <string name="pref_auth">启用 Basic 认证</string>
+    <string name="pref_auth_sum">对所有 HTTP 接口要求用户名和密码</string>
+    <string name="pref_auth_user">用户名</string>
+    <string name="pref_auth_pass">密码</string>
+    <string name="pref_unset">未设置</string>
+
+    <string name="pref_mqtt_enabled">启用 MQTT</string>
+    <string name="pref_mqtt_enabled_sum">连接 MQTT Broker，并自动在 Home Assistant 中发现设备</string>
+    <string name="pref_mqtt_host">Broker 地址</string>
+    <string name="pref_mqtt_host_sum">例如 192.168.1.10 或 mqtt.local</string>
+    <string name="pref_mqtt_port">Broker 端口</string>
+    <string name="pref_mqtt_port_sum">默认 1883（局域网 TCP）</string>
+    <string name="pref_mqtt_user">MQTT 用户名</string>
+    <string name="pref_mqtt_user_sum">可选，按 Broker 配置填写</string>
+    <string name="pref_mqtt_pass">MQTT 密码</string>
+    <string name="pref_mqtt_pass_sum">可选，按 Broker 配置填写</string>
+    <string name="pref_mqtt_prefix">主题前缀</string>
+    <string name="pref_mqtt_prefix_sum">默认 camera_agent；不要包含斜杠</string>
+    <string name="pref_mqtt_verify">验证连接</string>
+    <string name="pref_mqtt_verify_sum">使用当前设置连接 Broker，并显示验证结果</string>
+    <string name="pref_mqtt_verify_running">正在连接…</string>
+    <string name="mqtt_verify_success">MQTT 连接成功</string>
+    <string name="mqtt_verify_failed">MQTT 连接失败</string>
+
+    <string name="notif_channel">Camera Agent 状态</string>
+    <string name="notif_title_idle">待机中 · 摄像头关闭</string>
+    <string name="notif_title_open">● 摄像头开启中</string>
+    <string name="notif_no_network">无网络</string>
+</resources>

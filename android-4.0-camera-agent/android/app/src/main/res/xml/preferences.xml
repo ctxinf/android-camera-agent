@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <PreferenceCategory android:title="@string/cat_display">
+        <EditTextPreference
+            android:key="dim_brightness"
+            android:title="@string/pref_dim_brightness"
+            android:summary="@string/pref_dim_brightness_sum"
+            android:defaultValue="2"
+            android:inputType="number"
+            android:dialogMessage="@string/pref_dim_brightness_dlg" />
+        <EditTextPreference
+            android:key="wake_seconds"
+            android:title="@string/pref_wake_seconds"
+            android:summary="@string/pref_wake_seconds_sum"
+            android:defaultValue="15"
+            android:inputType="number" />
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="@string/cat_camera">
+        <CheckBoxPreference
+            android:key="front_camera_disabled"
+            android:title="@string/pref_disable_front"
+            android:summary="@string/pref_disable_front_sum"
+            android:defaultValue="false" />
+        <ListPreference
+            android:key="camera_facing"
+            android:title="@string/pref_facing"
+            android:summary="@string/pref_facing_sum"
+            android:defaultValue="0"
+            android:entries="@array/facing_entries"
+            android:entryValues="@array/facing_values" />
+        <ListPreference
+            android:key="resolution"
+            android:title="@string/pref_resolution"
+            android:summary="@string/pref_resolution_sum"
+            android:defaultValue="640x480" />
+        <EditTextPreference
+            android:key="jpeg_quality"
+            android:title="@string/pref_quality"
+            android:summary="@string/pref_quality_sum"
+            android:defaultValue="80"
+            android:inputType="number" />
+        <EditTextPreference
+            android:key="mjpeg_fps"
+            android:title="@string/pref_fps"
+            android:summary="@string/pref_fps_sum"
+            android:defaultValue="10"
+            android:inputType="number" />
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="@string/cat_mcp">
+        <CheckBoxPreference
+            android:key="mcp_enabled"
+            android:title="@string/pref_mcp"
+            android:summary="@string/pref_mcp_sum"
+            android:defaultValue="false" />
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="@string/cat_network">
+        <EditTextPreference
+            android:key="http_port"
+            android:title="@string/pref_port"
+            android:summary="@string/pref_port_sum"
+            android:defaultValue="8080"
+            android:inputType="number" />
+        <CheckBoxPreference
+            android:key="auth_enabled"
+            android:title="@string/pref_auth"
+            android:summary="@string/pref_auth_sum"
+            android:defaultValue="false" />
+        <EditTextPreference
+            android:key="auth_user"
+            android:title="@string/pref_auth_user"
+            android:dependency="auth_enabled"
+            android:defaultValue=""
+            android:inputType="text" />
+        <EditTextPreference
+            android:key="auth_pass"
+            android:title="@string/pref_auth_pass"
+            android:dependency="auth_enabled"
+            android:defaultValue=""
+            android:inputType="textPassword" />
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="@string/cat_mqtt">
+        <CheckBoxPreference
+            android:key="mqtt_enabled"
+            android:title="@string/pref_mqtt_enabled"
+            android:summary="@string/pref_mqtt_enabled_sum"
+            android:defaultValue="false" />
+        <EditTextPreference
+            android:key="mqtt_host"
+            android:title="@string/pref_mqtt_host"
+            android:summary="@string/pref_mqtt_host_sum"
+            android:defaultValue=""
+            android:dependency="mqtt_enabled"
+            android:inputType="text" />
+        <EditTextPreference
+            android:key="mqtt_port"
+            android:title="@string/pref_mqtt_port"
+            android:summary="@string/pref_mqtt_port_sum"
+            android:defaultValue="1883"
+            android:dependency="mqtt_enabled"
+            android:inputType="number" />
+        <EditTextPreference
+            android:key="mqtt_user"
+            android:title="@string/pref_mqtt_user"
+            android:summary="@string/pref_mqtt_user_sum"
+            android:defaultValue=""
+            android:dependency="mqtt_enabled"
+            android:inputType="text" />
+        <EditTextPreference
+            android:key="mqtt_pass"
+            android:title="@string/pref_mqtt_pass"
+            android:summary="@string/pref_mqtt_pass_sum"
+            android:defaultValue=""
+            android:dependency="mqtt_enabled"
+            android:inputType="textPassword" />
+        <EditTextPreference
+            android:key="mqtt_prefix"
+            android:title="@string/pref_mqtt_prefix"
+            android:summary="@string/pref_mqtt_prefix_sum"
+            android:defaultValue="camera_agent"
+            android:dependency="mqtt_enabled"
+            android:inputType="text" />
+        <Preference
+            android:key="mqtt_verify"
+            android:title="@string/pref_mqtt_verify"
+            android:summary="@string/pref_mqtt_verify_sum" />
+    </PreferenceCategory>
+
+</PreferenceScreen>
