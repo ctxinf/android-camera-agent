@@ -14,6 +14,8 @@ import io.github.ctxinf.cameraagent.bootstrap.CameraAgentApp;
 
 /** A short launcher-only animation: distinguishes a resident service from a cold launch. */
 public class LaunchActivity extends Activity {
+    private static boolean hasLaunched;
+    private boolean showAnimation;
     private final Handler handler = new Handler();
     private final Runnable open = new Runnable() {
         @Override public void run() {
@@ -24,11 +26,19 @@ public class LaunchActivity extends Activity {
     };
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
-        ((CameraAgentApp) getApplication()).getAppGraph().getSettingsRepository().setManuallyExited(false);
+        CameraAgentApp app = (CameraAgentApp) getApplication();
+        showAnimation = app.getAppGraph().getSettingsRepository().getManuallyExited()
+                || (!hasLaunched && !AgentService.Companion.isRunning());
+        hasLaunched = true;
+        app.getAppGraph().getSettingsRepository().setManuallyExited(false);
         getPackageManager().setComponentEnabledSetting(new android.content.ComponentName(this,
                 io.github.ctxinf.cameraagent.bootstrap.BootReceiver.class),
                 android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DEFAULT,
                 android.content.pm.PackageManager.DONT_KILL_APP);
+        if (!showAnimation) {
+            open.run();
+            return;
+        }
         LinearLayout panel = new LinearLayout(this);
         panel.setOrientation(LinearLayout.VERTICAL);
         panel.setGravity(Gravity.CENTER);
@@ -49,6 +59,6 @@ public class LaunchActivity extends Activity {
         panel.setScaleY(0.96f);
         panel.animate().alpha(1f).scaleX(1f).scaleY(1f).setDuration(350).start();
     }
-    @Override public void onResume() { super.onResume(); handler.postDelayed(open, 900); }
+    @Override public void onResume() { super.onResume(); if (showAnimation) handler.postDelayed(open, 900); }
     @Override public void onPause() { handler.removeCallbacks(open); super.onPause(); }
 }
