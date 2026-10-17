@@ -36,6 +36,8 @@ public class SettingsActivity extends PreferenceActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         addPreferencesFromResource(R.xml.preferences);
+        getListView().setBackgroundColor(android.graphics.Color.rgb(17, 19, 24));
+        getListView().setPadding(16, 0, 16, 0);
         settings = new Settings(this);
 
         // Only offer lenses the device actually has, so picking "front" on a

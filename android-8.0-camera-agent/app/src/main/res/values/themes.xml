@@ -1,26 +1,30 @@
 <resources>
-    <style name="Theme.CameraAgent" parent="Theme.MaterialComponents.DayNight.NoActionBar">
-        <item name="colorPrimary">#1976D2</item>
-        <item name="colorPrimaryVariant">#0D47A1</item>
-        <item name="colorOnPrimary">#FFFFFF</item>
-        <item name="colorSecondary">#00E05A</item>
-        <item name="colorSecondaryVariant">#00B347</item>
-        <item name="colorOnSecondary">#000000</item>
-        <item name="android:windowBackground">#121212</item>
+    <style name="Theme.CameraAgent" parent="Theme.MaterialComponents.NoActionBar">
+        <item name="colorPrimary">@color/ui_primary</item>
+        <item name="colorPrimaryVariant">@color/ui_primary_container</item>
+        <item name="colorOnPrimary">@color/ui_background</item>
+        <item name="colorSecondary">@color/ui_primary</item>
+        <item name="colorSecondaryVariant">@color/ui_primary_container</item>
+        <item name="colorOnSecondary">@color/ui_background</item>
+        <item name="android:statusBarColor">@color/ui_background</item>
+        <item name="android:navigationBarColor">@color/ui_background</item>
+        <item name="android:colorAccent">@color/ui_primary</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowBackground">@color/ui_background</item>
     </style>
 
     <style name="Widget.CameraAgent.PathChip" parent="Widget.MaterialComponents.Chip.Action">
         <item name="chipBackgroundColor">@color/chip_bg_color</item>
         <item name="chipStrokeColor">@color/chip_stroke_color</item>
         <item name="chipStrokeWidth">1dp</item>
-        <item name="chipCornerRadius">4dp</item>
-        <item name="chipMinHeight">26dp</item>
+        <item name="chipCornerRadius">12dp</item>
+        <item name="chipMinHeight">48dp</item>
         <item name="ensureMinTouchTargetSize">false</item>
         <item name="android:textColor">@color/chip_text_color</item>
-        <item name="android:textSize">11sp</item>
+        <item name="android:textSize">12sp</item>
         <item name="android:textStyle">bold</item>
-        <item name="chipStartPadding">4dp</item>
-        <item name="chipEndPadding">4dp</item>
+        <item name="chipStartPadding">12dp</item>
+        <item name="chipEndPadding">12dp</item>
         <item name="textStartPadding">2dp</item>
         <item name="textEndPadding">2dp</item>
     </style>

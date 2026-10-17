@@ -2,7 +2,6 @@ package io.github.ctxinf.cameraagent.legacy;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.MotionEvent;
@@ -99,8 +98,8 @@ public class StandbyActivity extends Activity {
         statusLed.setBackgroundResource(settings.cameraEnabled()
                 ? R.drawable.led_green : R.drawable.led_grey);
         boolean front = settings.cameraFacing() == 1;
-        frontButton.setTextColor(front ? Color.rgb(0, 220, 90) : Color.LTGRAY);
-        backButton.setTextColor(!front ? Color.rgb(0, 220, 90) : Color.LTGRAY);
+        frontButton.setSelected(front);
+        backButton.setSelected(!front);
         frontButton.setEnabled(CameraManager.hasFacing(1) && !settings.frontCameraDisabled());
         refreshInfo();
     }
@@ -112,11 +111,11 @@ public class StandbyActivity extends Activity {
         if (ip == null) { infoView.setText("no network"); return; }
         String base = "http://" + ip + ":" + port;
         StringBuilder text = new StringBuilder();
-        text.append(base).append("/snapshot.jpg\n")
-                .append(base).append("/video.mjpeg\n")
-                .append(base).append("/api/status\n")
-                .append(base).append("/api/camera");
-        if (settings.mcpEnabled()) text.append("\n").append(base).append("/mcp  (MCP)");
+        text.append(base).append("\n\n/snapshot.jpg\n")
+                .append("/video.mjpeg\n")
+                .append("/api/status\n")
+                .append("/api/camera");
+        if (settings.mcpEnabled()) text.append("\n/mcp  (MCP)");
         infoView.setText(text.toString());
     }
 

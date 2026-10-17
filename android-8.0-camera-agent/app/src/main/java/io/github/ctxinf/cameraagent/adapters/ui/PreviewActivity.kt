@@ -87,7 +87,7 @@ class PreviewActivity : AppCompatActivity() {
                 isPreviewAttached = true
                 tvPreviewStatus.visibility = View.GONE
                 btnTogglePreview.text = getString(R.string.preview_on)
-                btnTogglePreview.setBackgroundColor(0xFF00E05A.toInt())
+                btnTogglePreview.backgroundTintList = android.content.res.ColorStateList.valueOf(0xFF404D70.toInt())
             } catch (e: Exception) {
                 AppLog.e("Failed to attach preview: ${e.message}", e)
                 tvPreviewStatus.text = "Preview Error: ${e.message}"
@@ -109,7 +109,7 @@ class PreviewActivity : AppCompatActivity() {
                 tvPreviewStatus.text = "Preview Stopped"
                 tvPreviewStatus.visibility = View.VISIBLE
                 btnTogglePreview.text = getString(R.string.preview_off)
-                btnTogglePreview.setBackgroundColor(0xFF2E2E2E.toInt())
+                btnTogglePreview.backgroundTintList = android.content.res.ColorStateList.valueOf(0xFF303643.toInt())
             } catch (e: Exception) {
                 AppLog.w("Error detaching preview", e)
             }

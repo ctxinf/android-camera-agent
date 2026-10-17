@@ -1,29 +1,68 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent" android:layout_height="match_parent"
-    android:background="#000000" android:orientation="vertical"
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/ui_background"
+    android:orientation="vertical"
     android:padding="12dp">
-    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-        android:text="@string/preview_page_title" android:textColor="#FFFFFF"
-        android:textSize="22sp" android:textStyle="bold" />
-    <FrameLayout android:layout_width="match_parent" android:layout_height="260dp"
-        android:layout_marginTop="12dp" android:background="#181818">
-        <SurfaceView android:id="@+id/preview_surface" android:layout_width="match_parent"
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/preview_page_title"
+        android:textColor="@color/ui_text"
+        android:textSize="22sp"
+        android:textStyle="bold" />
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="260dp"
+        android:layout_marginTop="12dp"
+        android:background="#181818">
+        <SurfaceView
+            android:id="@+id/preview_surface"
+            android:layout_width="match_parent"
             android:layout_height="match_parent" />
-        <TextView android:id="@+id/preview_denied" android:layout_width="match_parent"
-            android:layout_height="match_parent" android:gravity="center"
-            android:textColor="#FFFFFF" android:textSize="22sp" android:visibility="gone" />
+        <TextView
+            android:id="@+id/preview_denied"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:textColor="@color/ui_text"
+            android:textSize="22sp"
+            android:visibility="gone" />
     </FrameLayout>
-    <TextView android:id="@+id/preview_info" android:layout_width="match_parent"
-        android:layout_height="wrap_content" android:layout_marginTop="12dp"
-        android:textColor="#55C8FF" android:textSize="17sp" />
-    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-        android:layout_marginTop="12dp" android:orientation="horizontal">
-        <ToggleButton android:id="@+id/preview_toggle" android:layout_width="0dp"
-            android:layout_height="56dp" android:layout_weight="1"
-            android:textOn="@string/preview_on" android:textOff="@string/preview_off" />
-        <Button android:id="@+id/rotate" android:layout_width="0dp"
-            android:layout_height="56dp" android:layout_marginLeft="8dp"
-            android:layout_weight="1" android:text="@string/rotate_button" />
+    <TextView
+        android:id="@+id/preview_info"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:textColor="@color/ui_primary"
+        android:textSize="17sp" />
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:orientation="horizontal">
+        <ToggleButton
+            android:id="@+id/preview_toggle"
+            android:layout_width="0dp"
+            android:layout_height="56dp"
+            android:layout_weight="1"
+            android:textOn="@string/preview_on"
+            android:textOff="@string/preview_off"
+            android:background="@drawable/control_button"
+            android:minHeight="48dp"
+            android:textColor="@color/control_text" />
+        <Button
+            android:id="@+id/rotate"
+            android:layout_width="0dp"
+            android:layout_height="56dp"
+            android:layout_marginLeft="8dp"
+            android:layout_weight="1"
+            android:text="@string/rotate_button"
+            android:background="@drawable/control_button"
+            android:minHeight="48dp"
+            android:textColor="@color/control_text" />
     </LinearLayout>
 </LinearLayout>

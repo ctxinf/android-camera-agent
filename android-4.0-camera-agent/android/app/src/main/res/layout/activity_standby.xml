@@ -1,52 +1,166 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/root" android:layout_width="match_parent"
-    android:layout_height="match_parent" android:background="#000000">
-    <LinearLayout android:id="@+id/service_bar" android:layout_width="wrap_content"
-        android:layout_height="wrap_content" android:layout_alignParentTop="true"
-        android:layout_alignParentLeft="true" android:layout_margin="10dp"
-        android:gravity="center_vertical" android:orientation="horizontal">
-        <View android:id="@+id/status_led" android:layout_width="20dp"
-            android:layout_height="20dp" android:layout_marginRight="8dp"
-            android:background="@drawable/led_grey" />
-        <TextView android:id="@+id/status_text" android:layout_width="wrap_content"
-            android:layout_height="wrap_content" android:layout_marginRight="8dp"
-            android:text="@string/camera_service_switch" android:textColor="#FFFFFF"
-            android:textSize="18sp" android:textStyle="bold" />
-        <ToggleButton android:id="@+id/camera_service_toggle" android:layout_width="72dp"
-            android:layout_height="44dp" android:textOn="@string/state_on"
-            android:textOff="@string/state_off" />
-    </LinearLayout>
-    <TextView android:id="@+id/info" android:layout_width="match_parent"
-        android:layout_height="wrap_content" android:layout_below="@id/service_bar"
-        android:layout_marginLeft="14dp" android:layout_marginRight="14dp"
-        android:layout_marginTop="16dp" android:gravity="left"
-        android:lineSpacingExtra="7dp" android:text="@string/app_name"
-        android:textColor="#55C8FF" android:textIsSelectable="true"
-        android:textSize="18sp" android:textStyle="bold" />
-    <LinearLayout android:id="@+id/facing_row" android:layout_width="match_parent"
-        android:layout_height="wrap_content" android:layout_below="@id/info"
-        android:layout_margin="14dp" android:gravity="center_vertical"
-        android:orientation="horizontal">
-        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:text="@string/camera_facing_label" android:textColor="#FFFFFF"
-            android:textSize="18sp" />
-        <Button android:id="@+id/facing_front" android:layout_width="70dp"
-            android:layout_height="48dp" android:layout_marginLeft="8dp"
-            android:text="@string/facing_front_short" android:textSize="18sp" />
-        <Button android:id="@+id/facing_back" android:layout_width="70dp"
-            android:layout_height="48dp" android:layout_marginLeft="6dp"
-            android:text="@string/facing_back_short" android:textSize="18sp" />
-    </LinearLayout>
-    <LinearLayout android:id="@+id/controls" android:layout_width="match_parent"
-        android:layout_height="wrap_content" android:layout_alignParentBottom="true"
-        android:layout_margin="12dp" android:orientation="horizontal">
-        <Button android:id="@+id/preview_page" android:layout_width="0dp"
-            android:layout_height="56dp" android:layout_weight="1"
-            android:text="@string/preview_page_button" android:textSize="17sp" />
-        <Button android:id="@+id/settings" android:layout_width="0dp"
-            android:layout_height="56dp" android:layout_marginLeft="10dp"
-            android:layout_weight="1" android:text="@string/settings_button"
-            android:textSize="17sp" />
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/ui_background">
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_above="@+id/controls"
+        android:fillViewport="true">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="20dp">
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Camera Agent"
+                android:textSize="28sp"
+                android:textColor="@color/ui_text"
+                android:textStyle="bold"
+                android:layout_marginTop="8dp" />
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="设备控制台 · Legacy"
+                android:textSize="13sp"
+                android:textColor="@color/ui_text_secondary"
+                android:layout_marginTop="6dp"
+                android:layout_marginBottom="24dp" />
+            <LinearLayout
+                android:id="@+id/service_bar"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@drawable/surface_card">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical">
+                    <View
+                        android:id="@+id/status_led"
+                        android:layout_width="8dp"
+                        android:layout_height="8dp"
+                        android:background="@drawable/led_green"
+                        android:layout_marginRight="10dp" />
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:text="摄像头服务"
+                        android:textSize="16sp"
+                        android:textColor="@color/ui_text"
+                        android:id="@+id/status_text"
+                        android:layout_weight="1"
+                        android:layout_marginRight="12dp" />
+                    <ToggleButton
+                        android:id="@+id/camera_service_toggle"
+                        android:layout_width="64dp"
+                        android:layout_height="48dp"
+                        android:background="@drawable/control_button"
+                        android:textOn="开启"
+                        android:textOff="关闭"
+                        android:textSize="14sp"
+                        android:textColor="@color/control_text"
+                        android:checked="true" />
+                </LinearLayout>
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="选择镜头"
+                    android:textSize="12sp"
+                    android:textColor="@color/ui_text_secondary"
+                    android:layout_marginTop="16dp"
+                    android:layout_marginBottom="8dp" />
+                <LinearLayout
+                    android:id="@+id/facing_row"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+                    <Button
+                        android:id="@+id/facing_back"
+                        android:layout_width="0dp"
+                        android:layout_weight="1"
+                        android:layout_height="48dp"
+                        android:layout_marginRight="4dp"
+                        android:text="后置"
+                        android:textSize="14sp"
+                        android:textColor="@color/control_text"
+                        android:background="@drawable/control_button" />
+                    <Button
+                        android:id="@+id/facing_front"
+                        android:layout_width="0dp"
+                        android:layout_weight="1"
+                        android:layout_height="48dp"
+                        android:layout_marginRight="4dp"
+                        android:text="前置"
+                        android:textSize="14sp"
+                        android:textColor="@color/control_text"
+                        android:background="@drawable/control_button" />
+                </LinearLayout>
+            </LinearLayout>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@drawable/surface_card"
+                android:layout_marginTop="16dp">
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="连接与接口"
+                    android:textSize="18sp"
+                    android:textColor="@color/ui_text"
+                    android:textStyle="bold" />
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="同一局域网内可访问以下服务"
+                    android:textSize="12sp"
+                    android:textColor="@color/ui_text_secondary"
+                    android:layout_marginTop="6dp"
+                    android:layout_marginBottom="16dp" />
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text=""
+                    android:textSize="14sp"
+                    android:textColor="@color/ui_primary"
+                    android:id="@+id/info"
+                    android:fontFamily="monospace"
+                    android:lineSpacingExtra="6dp"
+                    android:textIsSelectable="true" />
+            </LinearLayout>
+        </LinearLayout>
+    </ScrollView>
+    <LinearLayout
+        android:id="@+id/controls"
+        android:layout_width="match_parent"
+        android:layout_height="72dp"
+        android:layout_alignParentBottom="true"
+        android:padding="12dp"
+        android:background="@color/ui_surface">
+        <Button
+            android:id="@+id/preview_page"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="48dp"
+            android:layout_marginRight="8dp"
+            android:text="画面预览"
+            android:textColor="@color/control_text"
+            android:background="@drawable/control_button" />
+        <Button
+            android:id="@+id/settings"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="48dp"
+            android:layout_marginRight="8dp"
+            android:text="设置"
+            android:textColor="@color/control_text"
+            android:background="@drawable/control_button" />
     </LinearLayout>
 </RelativeLayout>

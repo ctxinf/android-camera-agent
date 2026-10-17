@@ -1,0 +1,8 @@
+<resources>
+<style name="Theme.CameraAgent" parent="android:style/Theme.Holo.NoActionBar">
+<item name="android:windowBackground">@color/ui_background</item>
+<item name="android:colorBackground">@color/ui_background</item>
+<item name="android:textColorPrimary">@color/ui_text</item>
+<item name="android:textColorSecondary">@color/ui_text_secondary</item>
+</style>
+</resources>

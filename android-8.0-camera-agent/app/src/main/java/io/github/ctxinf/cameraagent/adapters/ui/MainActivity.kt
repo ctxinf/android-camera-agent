@@ -393,20 +393,20 @@ class MainActivity : AppCompatActivity() {
             appGraph.mqttManager.status.collect { mqttStatus ->
                 when (mqttStatus) {
                     is MqttStatus.Disabled -> {
-                        tvMqttStatus.text = "⚪ MQTT"
-                        tvMqttStatus.setTextColor(0xFF888888.toInt())
+                        tvMqttStatus.text = "MQTT · 未连接"
+                        tvMqttStatus.setTextColor(0xFFA3A8B7.toInt())
                     }
                     is MqttStatus.Connecting -> {
-                        tvMqttStatus.text = "🟡 MQTT"
-                        tvMqttStatus.setTextColor(0xFFFFB300.toInt())
+                        tvMqttStatus.text = "MQTT · 连接中"
+                        tvMqttStatus.setTextColor(0xFFD7BE8E.toInt())
                     }
                     is MqttStatus.Connected -> {
-                        tvMqttStatus.text = "🟢 MQTT"
-                        tvMqttStatus.setTextColor(0xFF00E05A.toInt())
+                        tvMqttStatus.text = "MQTT · 已连接"
+                        tvMqttStatus.setTextColor(0xFFA8C7BA.toInt())
                     }
                     is MqttStatus.Disconnected -> {
-                        tvMqttStatus.text = "🔴 MQTT"
-                        tvMqttStatus.setTextColor(0xFFFF5252.toInt())
+                        tvMqttStatus.text = "MQTT · 连接失败"
+                        tvMqttStatus.setTextColor(0xFFE6A5A5.toInt())
                     }
                 }
             }
@@ -426,11 +426,11 @@ class MainActivity : AppCompatActivity() {
 
         if (!config.enabled) {
             statusLed.setBackgroundResource(R.drawable.led_grey)
-            tvStatusText.text = "服务"
-            tvStatusText.setTextColor(0xFF888888.toInt())
+            tvStatusText.text = "摄像头服务"
+            tvStatusText.setTextColor(0xFFA3A8B7.toInt())
         } else {
             statusLed.setBackgroundResource(R.drawable.led_green)
-            tvStatusText.text = "服务"
+            tvStatusText.text = "摄像头服务"
             tvStatusText.setTextColor(0xFFE0E0E0.toInt())
         }
 
@@ -438,36 +438,36 @@ class MainActivity : AppCompatActivity() {
         when (state) {
             is CameraState.Active -> {
                 cameraHardwareLed.setBackgroundResource(R.drawable.led_green)
-                tvCameraHardwareStatus.text = "CAM活动"
-                tvCameraHardwareStatus.setTextColor(0xFF00E05A.toInt())
+                tvCameraHardwareStatus.text = "相机传输中"
+                tvCameraHardwareStatus.setTextColor(0xFFA8C7BA.toInt())
             }
             is CameraState.Opening -> {
                 cameraHardwareLed.setBackgroundResource(R.drawable.led_amber)
-                tvCameraHardwareStatus.text = "CAM开启"
-                tvCameraHardwareStatus.setTextColor(0xFFFFB300.toInt())
+                tvCameraHardwareStatus.text = "相机已开启"
+                tvCameraHardwareStatus.setTextColor(0xFFD7BE8E.toInt())
             }
             is CameraState.Failed -> {
                 cameraHardwareLed.setBackgroundResource(R.drawable.led_grey)
-                tvCameraHardwareStatus.text = "CAM错误"
-                tvCameraHardwareStatus.setTextColor(0xFFFF5252.toInt())
+                tvCameraHardwareStatus.text = "相机异常"
+                tvCameraHardwareStatus.setTextColor(0xFFE6A5A5.toInt())
             }
             else -> {
                 cameraHardwareLed.setBackgroundResource(R.drawable.led_grey)
-                tvCameraHardwareStatus.text = "CAM空闲"
-                tvCameraHardwareStatus.setTextColor(0xFF888888.toInt())
+                tvCameraHardwareStatus.text = "相机空闲"
+                tvCameraHardwareStatus.setTextColor(0xFFA3A8B7.toInt())
             }
         }
 
         // 3. Compact Segmented Facing Switch in Top Bar
         if (config.facing == LensFacing.FRONT) {
-            btnFacingFront.setBackgroundColor(0xFF00E05A.toInt())
-            btnFacingFront.setTextColor(0xFF000000.toInt())
-            btnFacingBack.setBackgroundColor(0xFF262F3D.toInt())
+            btnFacingFront.backgroundTintList = android.content.res.ColorStateList.valueOf(0xFFBAC6EA.toInt())
+            btnFacingFront.setTextColor(0xFF111318.toInt())
+            btnFacingBack.backgroundTintList = android.content.res.ColorStateList.valueOf(0xFF303643.toInt())
             btnFacingBack.setTextColor(0xFFFFFFFF.toInt())
         } else {
-            btnFacingBack.setBackgroundColor(0xFF00E05A.toInt())
-            btnFacingBack.setTextColor(0xFF000000.toInt())
-            btnFacingFront.setBackgroundColor(0xFF262F3D.toInt())
+            btnFacingBack.backgroundTintList = android.content.res.ColorStateList.valueOf(0xFFBAC6EA.toInt())
+            btnFacingBack.setTextColor(0xFF111318.toInt())
+            btnFacingFront.backgroundTintList = android.content.res.ColorStateList.valueOf(0xFF303643.toInt())
             btnFacingFront.setTextColor(0xFFFFFFFF.toInt())
         }
 
@@ -482,17 +482,17 @@ class MainActivity : AppCompatActivity() {
 
         if (repo.authEnabled) {
             tvAuthBadge.visibility = View.VISIBLE
-            tvAuthBadge.text = "🔒 Basic Auth: ${repo.authUsername}"
-            tvAuthBadge.setTextColor(0xFFFFB300.toInt())
+            tvAuthBadge.text = "认证 · ${repo.authUsername}"
+            tvAuthBadge.setTextColor(0xFFD7BE8E.toInt())
             tvAuthBadge.setBackgroundColor(0xFF2E2415.toInt())
 
-            chipSnapshot.text = "🔒 [/snapshot.jpg]"
-            chipStream.text = "🔒 [/video.mjpeg]"
-            chipStatus.text = "🔒 [/api/status]"
-            chipMcp.text = "🔒 [/mcp]"
-            chipCameraConfig.text = "🔒 [/api/camera]"
-            chipWarmup.text = "🔒 [/api/v1/warmup]"
-            chipHealth.text = "🔓 [/health]"
+            chipSnapshot.text = "[/snapshot.jpg]"
+            chipStream.text = "[/video.mjpeg]"
+            chipStatus.text = "[/api/status]"
+            chipMcp.text = "[/mcp]"
+            chipCameraConfig.text = "[/api/camera]"
+            chipWarmup.text = "[/api/v1/warmup]"
+            chipHealth.text = "[/health]"
         } else {
             tvAuthBadge.visibility = View.GONE
 

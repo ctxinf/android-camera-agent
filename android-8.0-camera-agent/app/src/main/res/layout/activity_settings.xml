@@ -1,523 +1,466 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#121212"
+    android:background="@color/ui_background"
     android:orientation="vertical"
     android:focusable="true"
     android:focusableInTouchMode="true"
     android:padding="16dp">
-
-    <!-- Header -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
         android:orientation="horizontal">
-
         <Button
             android:id="@+id/btnBack"
             android:layout_width="wrap_content"
-            android:layout_height="38dp"
-            android:background="#2E2E2E"
+            android:layout_height="48dp"
+            android:background="@drawable/control_button"
             android:text="← 返回"
-            android:textColor="#FFFFFF"
-            android:textSize="14sp" />
-
+            android:textColor="@color/control_text"
+            android:textSize="14sp"
+            android:minHeight="48dp"
+            app:backgroundTint="@color/ui_control" />
         <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
             android:layout_weight="1"
             android:text="@string/settings_title"
-            android:textColor="#FFFFFF"
+            android:textColor="@color/ui_text"
             android:textSize="20sp"
             android:textStyle="bold" />
     </LinearLayout>
-
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_marginTop="16dp"
         android:layout_weight="1">
-
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical">
-
-            <!-- HTTP Port -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/pref_http_port"
-                android:textColor="#55C8FF"
+                android:textColor="@color/ui_primary"
                 android:textSize="14sp"
                 android:textStyle="bold" />
-
             <EditText
                 android:id="@+id/etHttpPort"
                 android:layout_width="match_parent"
-                android:layout_height="44dp"
+                android:layout_height="56dp"
                 android:layout_marginTop="4dp"
-                android:background="#222222"
+                android:background="@drawable/surface_field"
                 android:inputType="number"
                 android:paddingStart="10dp"
                 android:paddingEnd="10dp"
                 android:text="8080"
-                android:textColor="#FFFFFF"
+                android:textColor="@color/ui_text"
                 android:textSize="14sp" />
-
-            <!-- Lens Facing -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="14dp"
                 android:text="@string/pref_default_facing"
-                android:textColor="#55C8FF"
+                android:textColor="@color/ui_primary"
                 android:textSize="14sp"
                 android:textStyle="bold" />
-
             <RadioGroup
                 android:id="@+id/rgFacing"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
                 android:orientation="horizontal">
-
                 <RadioButton
                     android:id="@+id/rbFacingBack"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:checked="true"
                     android:text="Back (后置)"
-                    android:textColor="#FFFFFF" />
-
+                    android:textColor="@color/ui_text" />
                 <RadioButton
                     android:id="@+id/rbFacingFront"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="24dp"
                     android:text="Front (前置)"
-                    android:textColor="#FFFFFF" />
+                    android:textColor="@color/ui_text" />
             </RadioGroup>
-
-            <!-- Resolution -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="14dp"
                 android:text="@string/pref_resolution"
-                android:textColor="#55C8FF"
+                android:textColor="@color/ui_primary"
                 android:textSize="14sp"
                 android:textStyle="bold" />
-
             <Spinner
                 android:id="@+id/spResolution"
                 android:layout_width="match_parent"
-                android:layout_height="44dp"
+                android:layout_height="48dp"
                 android:layout_marginTop="4dp"
-                android:background="#222222"
                 android:paddingStart="8dp" />
-
-            <!-- Target FPS -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="14dp"
                 android:text="@string/pref_target_fps"
-                android:textColor="#55C8FF"
+                android:textColor="@color/ui_primary"
                 android:textSize="14sp"
                 android:textStyle="bold" />
-
             <Spinner
                 android:id="@+id/spFps"
                 android:layout_width="match_parent"
-                android:layout_height="44dp"
+                android:layout_height="48dp"
                 android:layout_marginTop="4dp"
-                android:background="#222222"
                 android:paddingStart="8dp" />
-
-            <!-- JPEG Quality -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="14dp"
                 android:text="@string/pref_jpeg_quality"
-                android:textColor="#55C8FF"
+                android:textColor="@color/ui_primary"
                 android:textSize="14sp"
                 android:textStyle="bold" />
-
             <EditText
                 android:id="@+id/etQuality"
                 android:layout_width="match_parent"
-                android:layout_height="44dp"
+                android:layout_height="56dp"
                 android:layout_marginTop="4dp"
-                android:background="#222222"
+                android:background="@drawable/surface_field"
                 android:inputType="number"
                 android:paddingStart="10dp"
                 android:paddingEnd="10dp"
                 android:text="80"
-                android:textColor="#FFFFFF"
+                android:textColor="@color/ui_text"
                 android:textSize="14sp" />
-
-            <!-- Dim Timeout -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="14dp"
                 android:text="@string/pref_dim_timeout"
-                android:textColor="#55C8FF"
+                android:textColor="@color/ui_primary"
                 android:textSize="14sp"
                 android:textStyle="bold" />
-
             <EditText
                 android:id="@+id/etDimTimeout"
                 android:layout_width="match_parent"
-                android:layout_height="44dp"
+                android:layout_height="56dp"
                 android:layout_marginTop="4dp"
-                android:background="#222222"
+                android:background="@drawable/surface_field"
                 android:inputType="number"
                 android:paddingStart="10dp"
                 android:paddingEnd="10dp"
                 android:text="30"
-                android:textColor="#FFFFFF"
+                android:textColor="@color/ui_text"
                 android:textSize="14sp" />
-
-            <!-- Retention Grace Period -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="14dp"
                 android:text="@string/pref_retention_grace_period"
-                android:textColor="#55C8FF"
+                android:textColor="@color/ui_primary"
                 android:textSize="14sp"
                 android:textStyle="bold" />
-
             <EditText
                 android:id="@+id/etRetentionGracePeriod"
                 android:layout_width="match_parent"
-                android:layout_height="44dp"
+                android:layout_height="56dp"
                 android:layout_marginTop="4dp"
-                android:background="#222222"
+                android:background="@drawable/surface_field"
                 android:inputType="number"
                 android:paddingStart="10dp"
                 android:paddingEnd="10dp"
                 android:text="5"
-                android:textColor="#FFFFFF"
+                android:textColor="@color/ui_text"
                 android:textSize="14sp" />
-
-            <!-- HTTP Basic Auth -->
             <CheckBox
                 android:id="@+id/cbAuthEnabled"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
                 android:text="@string/pref_auth_enabled"
-                android:textColor="#55C8FF"
+                android:textColor="@color/ui_primary"
                 android:textSize="14sp"
                 android:textStyle="bold" />
-
             <LinearLayout
                 android:id="@+id/layoutAuthFields"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical">
-
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
                     android:text="@string/pref_auth_username"
-                    android:textColor="#AAAAAA"
+                    android:textColor="@color/ui_text_secondary"
                     android:textSize="13sp" />
-
                 <EditText
                     android:id="@+id/etAuthUsername"
                     android:layout_width="match_parent"
-                    android:layout_height="44dp"
+                    android:layout_height="56dp"
                     android:layout_marginTop="4dp"
-                    android:background="#222222"
+                    android:background="@drawable/surface_field"
                     android:inputType="text"
                     android:paddingStart="10dp"
                     android:paddingEnd="10dp"
                     android:text="admin"
-                    android:textColor="#FFFFFF"
+                    android:textColor="@color/ui_text"
                     android:textSize="14sp" />
-
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
                     android:text="@string/pref_auth_password"
-                    android:textColor="#AAAAAA"
+                    android:textColor="@color/ui_text_secondary"
                     android:textSize="13sp" />
-
                 <EditText
                     android:id="@+id/etAuthPassword"
                     android:layout_width="match_parent"
-                    android:layout_height="44dp"
+                    android:layout_height="56dp"
                     android:layout_marginTop="4dp"
-                    android:background="#222222"
+                    android:background="@drawable/surface_field"
                     android:inputType="text"
                     android:paddingStart="10dp"
                     android:paddingEnd="10dp"
                     android:text="password"
-                    android:textColor="#FFFFFF"
+                    android:textColor="@color/ui_text"
                     android:textSize="14sp" />
             </LinearLayout>
-
-            <!-- MQTT Broker Configuration -->
             <View
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
                 android:layout_marginTop="18dp"
                 android:layout_marginBottom="14dp"
                 android:background="#2A2A2A" />
-
             <CheckBox
                 android:id="@+id/cbMqttEnabled"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/pref_mqtt_enabled"
-                android:textColor="#55C8FF"
+                android:textColor="@color/ui_primary"
                 android:textSize="14sp"
                 android:textStyle="bold" />
-
             <LinearLayout
                 android:id="@+id/layoutMqttFields"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical">
-
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
                     android:text="@string/pref_mqtt_host"
-                    android:textColor="#AAAAAA"
+                    android:textColor="@color/ui_text_secondary"
                     android:textSize="13sp" />
-
                 <EditText
                     android:id="@+id/etMqttHost"
                     android:layout_width="match_parent"
-                    android:layout_height="44dp"
+                    android:layout_height="56dp"
                     android:layout_marginTop="4dp"
-                    android:background="#222222"
+                    android:background="@drawable/surface_field"
                     android:hint="如 192.168.1.100 或 homeassistant.local"
                     android:inputType="textUri"
                     android:paddingStart="10dp"
                     android:paddingEnd="10dp"
-                    android:textColor="#FFFFFF"
+                    android:textColor="@color/ui_text"
                     android:textColorHint="#666666"
                     android:textSize="14sp" />
-
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
                     android:text="@string/pref_mqtt_port"
-                    android:textColor="#AAAAAA"
+                    android:textColor="@color/ui_text_secondary"
                     android:textSize="13sp" />
-
                 <EditText
                     android:id="@+id/etMqttPort"
                     android:layout_width="match_parent"
-                    android:layout_height="44dp"
+                    android:layout_height="56dp"
                     android:layout_marginTop="4dp"
-                    android:background="#222222"
+                    android:background="@drawable/surface_field"
                     android:inputType="number"
                     android:paddingStart="10dp"
                     android:paddingEnd="10dp"
                     android:text="1883"
-                    android:textColor="#FFFFFF"
+                    android:textColor="@color/ui_text"
                     android:textSize="14sp" />
-
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
                     android:text="@string/pref_mqtt_client_id"
-                    android:textColor="#AAAAAA"
+                    android:textColor="@color/ui_text_secondary"
                     android:textSize="13sp" />
-
                 <EditText
                     android:id="@+id/etMqttClientId"
                     android:layout_width="match_parent"
-                    android:layout_height="44dp"
+                    android:layout_height="56dp"
                     android:layout_marginTop="4dp"
-                    android:background="#222222"
+                    android:background="@drawable/surface_field"
                     android:inputType="text"
                     android:paddingStart="10dp"
                     android:paddingEnd="10dp"
-                    android:textColor="#FFFFFF"
+                    android:textColor="@color/ui_text"
                     android:textSize="14sp" />
-
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
                     android:text="@string/pref_auth_username"
-                    android:textColor="#AAAAAA"
+                    android:textColor="@color/ui_text_secondary"
                     android:textSize="13sp" />
-
                 <EditText
                     android:id="@+id/etMqttUsername"
                     android:layout_width="match_parent"
-                    android:layout_height="44dp"
+                    android:layout_height="56dp"
                     android:layout_marginTop="4dp"
-                    android:background="#222222"
+                    android:background="@drawable/surface_field"
                     android:hint="可选 (留空为匿名连接)"
                     android:inputType="text"
                     android:paddingStart="10dp"
                     android:paddingEnd="10dp"
-                    android:textColor="#FFFFFF"
+                    android:textColor="@color/ui_text"
                     android:textColorHint="#666666"
                     android:textSize="14sp" />
-
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
                     android:text="@string/pref_auth_password"
-                    android:textColor="#AAAAAA"
+                    android:textColor="@color/ui_text_secondary"
                     android:textSize="13sp" />
-
                 <EditText
                     android:id="@+id/etMqttPassword"
                     android:layout_width="match_parent"
-                    android:layout_height="44dp"
+                    android:layout_height="56dp"
                     android:layout_marginTop="4dp"
-                    android:background="#222222"
+                    android:background="@drawable/surface_field"
                     android:hint="可选"
                     android:inputType="textPassword"
                     android:paddingStart="10dp"
                     android:paddingEnd="10dp"
-                    android:textColor="#FFFFFF"
+                    android:textColor="@color/ui_text"
                     android:textColorHint="#666666"
                     android:textSize="14sp" />
-
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
                     android:text="@string/pref_mqtt_topic_prefix"
-                    android:textColor="#AAAAAA"
+                    android:textColor="@color/ui_text_secondary"
                     android:textSize="13sp" />
-
                 <EditText
                     android:id="@+id/etMqttTopicPrefix"
                     android:layout_width="match_parent"
-                    android:layout_height="44dp"
+                    android:layout_height="56dp"
                     android:layout_marginTop="4dp"
-                    android:background="#222222"
+                    android:background="@drawable/surface_field"
                     android:inputType="text"
                     android:paddingStart="10dp"
                     android:paddingEnd="10dp"
                     android:text="camera_agent"
-                    android:textColor="#FFFFFF"
+                    android:textColor="@color/ui_text"
                     android:textSize="14sp" />
-
                 <Button
                     android:id="@+id/btnTestMqtt"
                     android:layout_width="match_parent"
                     android:layout_height="44dp"
                     android:layout_marginTop="12dp"
-                    android:backgroundTint="#1976D2"
+                    app:backgroundTint="@color/ui_control"
                     android:text="@string/btn_test_mqtt"
-                    android:textColor="#FFFFFF"
+                    android:textColor="@color/control_text"
                     android:textSize="13sp"
-                    android:textStyle="bold" />
-
+                    android:textStyle="bold"
+                    android:background="@drawable/control_button"
+                    android:minHeight="48dp" />
                 <TextView
                     android:id="@+id/tvMqttTestResult"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
-                    android:textColor="#AAAAAA"
+                    android:textColor="@color/ui_text_secondary"
                     android:textSize="12sp"
                     android:visibility="gone" />
             </LinearLayout>
-
-            <!-- Battery Optimization / Lock Screen Persistence Section -->
             <View
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
                 android:layout_marginTop="18dp"
                 android:layout_marginBottom="14dp"
                 android:background="#2A2A2A" />
-
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="锁屏与后台常驻优化 (Keepalive)"
-                android:textColor="#55C8FF"
+                android:textColor="@color/ui_primary"
                 android:textSize="14sp"
                 android:textStyle="bold" />
-
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
                 android:text="@string/battery_opt_hint"
-                android:textColor="#888888"
+                android:textColor="@color/ui_text_secondary"
                 android:textSize="12sp" />
-
             <Button
                 android:id="@+id/btnBatteryOpt"
                 android:layout_width="match_parent"
                 android:layout_height="46dp"
                 android:layout_marginTop="8dp"
-                android:backgroundTint="#2E7D32"
+                app:backgroundTint="@color/ui_control"
                 android:text="@string/btn_battery_opt"
-                android:textColor="#FFFFFF"
+                android:textColor="@color/control_text"
                 android:textSize="13sp"
-                android:textStyle="bold" />
-
-            <!-- Save Button -->
+                android:textStyle="bold"
+                android:background="@drawable/control_button"
+                android:minHeight="48dp" />
             <Button
                 android:id="@+id/btnSave"
                 android:layout_width="match_parent"
                 android:layout_height="52dp"
                 android:layout_marginTop="20dp"
-                android:backgroundTint="#00E05A"
+                app:backgroundTint="@color/ui_control"
                 android:text="@string/btn_save_settings"
-                android:textColor="#000000"
+                android:textColor="@color/control_text"
                 android:textSize="16sp"
-                android:textStyle="bold" />
-
-            <!-- Divider -->
+                android:textStyle="bold"
+                android:background="@drawable/control_button"
+                android:minHeight="48dp" />
             <View
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
                 android:layout_marginTop="24dp"
                 android:layout_marginBottom="20dp"
                 android:background="#333333" />
-
-            <!-- Diagnostic / Debug Page Button -->
             <Button
                 android:id="@+id/btnOpenDiagnostics"
                 android:layout_width="match_parent"
                 android:layout_height="52dp"
-                android:backgroundTint="#2E2E2E"
+                app:backgroundTint="@color/ui_control"
                 android:text="@string/btn_open_diagnostics"
-                android:textColor="#00FF66"
+                android:textColor="@color/control_text"
                 android:textSize="15sp"
-                android:textStyle="bold" />
-
-            <!-- Realtime Preview & Camera Screen Button -->
+                android:textStyle="bold"
+                android:background="@drawable/control_button"
+                android:minHeight="48dp" />
             <Button
                 android:id="@+id/btnPreview"
                 android:layout_width="match_parent"
                 android:layout_height="52dp"
                 android:layout_marginTop="12dp"
-                android:backgroundTint="#1F2633"
+                app:backgroundTint="@color/ui_control"
                 android:text="@string/btn_preview"
-                android:textColor="#38BDF8"
+                android:textColor="@color/control_text"
                 android:textSize="15sp"
-                android:textStyle="bold" />
-
+                android:textStyle="bold"
+                android:background="@drawable/control_button"
+                android:minHeight="48dp" />
         </LinearLayout>
     </ScrollView>
-
 </LinearLayout>

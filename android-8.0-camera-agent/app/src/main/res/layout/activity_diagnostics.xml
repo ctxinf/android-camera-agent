@@ -1,27 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#121212"
+    android:background="@color/ui_background"
     android:orientation="vertical"
     android:padding="12dp">
-
-    <!-- Header -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
         android:orientation="horizontal">
-
         <Button
             android:id="@+id/btnBack"
             android:layout_width="wrap_content"
             android:layout_height="36dp"
-            android:background="#2E2E2E"
+            android:background="@drawable/control_button"
             android:text="← 返回"
-            android:textColor="#FFFFFF"
-            android:textSize="13sp" />
-
+            android:textColor="@color/control_text"
+            android:textSize="13sp"
+            android:minHeight="48dp"
+            app:backgroundTint="@color/ui_control" />
         <TextView
             android:id="@+id/tvTitle"
             android:layout_width="0dp"
@@ -29,21 +29,18 @@
             android:layout_marginStart="12dp"
             android:layout_weight="1"
             android:text="@string/diagnostics_title"
-            android:textColor="#FFFFFF"
+            android:textColor="@color/ui_text"
             android:textSize="18sp"
             android:textStyle="bold" />
     </LinearLayout>
-
     <TextView
         android:id="@+id/tvDeviceInfo"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:textColor="#AAAAAA"
+        android:textColor="@color/ui_text_secondary"
         android:textSize="12sp"
         android:text="Device: Loading..." />
-
-    <!-- Status Section -->
     <TextView
         android:id="@+id/tvStatus"
         android:layout_width="match_parent"
@@ -52,9 +49,8 @@
         android:background="#222222"
         android:padding="8dp"
         android:text="Status: Ready"
-        android:textColor="#00FF66"
+        android:textColor="@color/ui_primary"
         android:textSize="13sp" />
-
     <TextView
         android:id="@+id/tvCameraInfo"
         android:layout_width="match_parent"
@@ -65,22 +61,22 @@
         android:text="Cameras: Probing..."
         android:textColor="#DDDDDD"
         android:textSize="11sp" />
-
-    <!-- Controls Row -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:orientation="horizontal">
-
         <Button
             android:id="@+id/btnProbe"
             android:layout_width="0dp"
             android:layout_height="44dp"
             android:layout_weight="1"
             android:text="Probe"
-            android:textSize="12sp" />
-
+            android:textSize="12sp"
+            android:background="@drawable/control_button"
+            android:minHeight="48dp"
+            android:textColor="@color/control_text"
+            app:backgroundTint="@color/ui_control" />
         <Button
             android:id="@+id/btnStartService"
             android:layout_width="0dp"
@@ -88,8 +84,11 @@
             android:layout_marginStart="6dp"
             android:layout_weight="1"
             android:text="Service"
-            android:textSize="12sp" />
-
+            android:textSize="12sp"
+            android:background="@drawable/control_button"
+            android:minHeight="48dp"
+            android:textColor="@color/control_text"
+            app:backgroundTint="@color/ui_control" />
         <Button
             android:id="@+id/btnSnapshot"
             android:layout_width="0dp"
@@ -97,17 +96,23 @@
             android:layout_marginStart="6dp"
             android:layout_weight="1"
             android:text="Snapshot"
-            android:textSize="12sp" />
-
+            android:textSize="12sp"
+            android:background="@drawable/control_button"
+            android:minHeight="48dp"
+            android:textColor="@color/control_text"
+            app:backgroundTint="@color/ui_control" />
         <Button
             android:id="@+id/btnClearLogs"
             android:layout_width="wrap_content"
             android:layout_height="44dp"
             android:layout_marginStart="6dp"
             android:text="Clear"
-            android:textSize="12sp" />
+            android:textSize="12sp"
+            android:background="@drawable/control_button"
+            android:minHeight="48dp"
+            android:textColor="@color/control_text"
+            app:backgroundTint="@color/ui_control" />
     </LinearLayout>
-
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -116,8 +121,6 @@
         android:textColor="#CCCCCC"
         android:textSize="12sp"
         android:textStyle="bold" />
-
-    <!-- Diagnostic Log Console -->
     <ScrollView
         android:id="@+id/svLogs"
         android:layout_width="match_parent"
@@ -126,14 +129,12 @@
         android:layout_weight="1"
         android:background="#050505"
         android:padding="8dp">
-
         <TextView
             android:id="@+id/tvLogs"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:fontFamily="monospace"
-            android:textColor="#00FF66"
+            android:textColor="@color/ui_primary"
             android:textSize="11sp" />
     </ScrollView>
-
 </LinearLayout>

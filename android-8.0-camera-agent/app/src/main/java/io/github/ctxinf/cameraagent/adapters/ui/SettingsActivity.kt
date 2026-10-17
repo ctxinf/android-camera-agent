@@ -227,10 +227,10 @@ class SettingsActivity : AppCompatActivity() {
             val isIgnoring = pm?.isIgnoringBatteryOptimizations(packageName) == true
             if (isIgnoring) {
                 btnBatteryOpt.text = "✓ 锁屏常驻: 已忽略电池优化 (正常)"
-                btnBatteryOpt.backgroundTintList = ColorStateList.valueOf(0xFF2E7D32.toInt())
+                btnBatteryOpt.backgroundTintList = ColorStateList.valueOf(0xFF404D70.toInt())
             } else {
                 btnBatteryOpt.text = "⚠ 锁屏常驻: 点此授权忽略电池优化"
-                btnBatteryOpt.backgroundTintList = ColorStateList.valueOf(0xFFC62828.toInt())
+                btnBatteryOpt.backgroundTintList = ColorStateList.valueOf(0xFF675048.toInt())
             }
         }
     }
@@ -263,7 +263,7 @@ class SettingsActivity : AppCompatActivity() {
 
         tvMqttTestResult.visibility = View.VISIBLE
         tvMqttTestResult.text = "正在尝试连接 MQTT Broker ($host:$port)..."
-        tvMqttTestResult.setTextColor(0xFF55C8FF.toInt())
+        tvMqttTestResult.setTextColor(0xFFBAC6EA.toInt())
         btnTestMqtt.isEnabled = false
 
         lifecycleScope.launch {
@@ -278,9 +278,9 @@ class SettingsActivity : AppCompatActivity() {
             btnTestMqtt.isEnabled = true
             tvMqttTestResult.text = result.message
             if (result.success) {
-                tvMqttTestResult.setTextColor(0xFF00E05A.toInt())
+                tvMqttTestResult.setTextColor(0xFFA8C7BA.toInt())
             } else {
-                tvMqttTestResult.setTextColor(0xFFFF5252.toInt())
+                tvMqttTestResult.setTextColor(0xFFE6A5A5.toInt())
             }
         }
     }

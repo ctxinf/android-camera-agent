@@ -1,6 +1,7 @@
 # Local planning and audit documents
 *.md
 !README*
+/docs/
 
 # Local tool configuration
 .agents/
