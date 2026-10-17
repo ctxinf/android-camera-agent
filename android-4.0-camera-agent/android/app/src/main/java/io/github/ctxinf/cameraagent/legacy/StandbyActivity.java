@@ -28,7 +28,7 @@ public class StandbyActivity extends Activity {
     private Button frontButton;
     private Button backButton;
     private LinearLayout facingRow;
-    private LinearLayout controls;
+    private View settingsButton;
     private boolean binding;
 
     private final Runnable dimTask = new Runnable() {
@@ -51,24 +51,45 @@ public class StandbyActivity extends Activity {
         frontButton = (Button) findViewById(R.id.facing_front);
         backButton = (Button) findViewById(R.id.facing_back);
         facingRow = (LinearLayout) findViewById(R.id.facing_row);
-        controls = (LinearLayout) findViewById(R.id.controls);
+        settingsButton = findViewById(R.id.settings);
         serviceToggle.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override public void onCheckedChanged(CompoundButton b, boolean enabled) {
                 if (binding) return;
-                settings.setCameraEnabled(enabled);
+                settings.setServiceEnabled(enabled);
+                AgentService svc = AgentService.get();
+                if (svc != null) { svc.restartHttpServer(); svc.restartMqtt(); }
                 applySettings();
             }
         });
+        LinearLayout switches = new LinearLayout(this);
+        String[] protocols = { "HTTP", "MCP", "MQTT" };
+        final String[] keys = { Settings.KEY_HTTP_ENABLED, Settings.KEY_MCP_ENABLED, Settings.KEY_MQTT_ENABLED };
+        for (int i = 0; i < protocols.length; i++) {
+            final String key = keys[i];
+            android.widget.CheckBox box = new android.widget.CheckBox(this);
+            box.setText(protocols[i]);
+            box.setTag(key);
+            box.setChecked(settings.raw().getBoolean(key, i == 0));
+            box.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                @Override public void onCheckedChanged(CompoundButton button, boolean enabled) {
+                    if (binding) return;
+                    settings.raw().edit().putBoolean(key, enabled).commit();
+                    AgentService svc = AgentService.get();
+                    if (svc != null) {
+                        if (Settings.KEY_MQTT_ENABLED.equals(key)) svc.restartMqtt();
+                        else svc.restartHttpServer();
+                    }
+                    refresh();
+                }
+            });
+            switches.addView(box, new LinearLayout.LayoutParams(0, (int) (48 * getResources().getDisplayMetrics().density), 1));
+        }
+        ((LinearLayout) findViewById(R.id.service_bar)).addView(switches, 1);
         frontButton.setOnClickListener(new View.OnClickListener() {
             @Override public void onClick(View v) { selectFacing(1); }
         });
         backButton.setOnClickListener(new View.OnClickListener() {
             @Override public void onClick(View v) { selectFacing(0); }
-        });
-        findViewById(R.id.preview_page).setOnClickListener(new View.OnClickListener() {
-            @Override public void onClick(View v) {
-                startActivity(new Intent(StandbyActivity.this, PreviewActivity.class));
-            }
         });
         findViewById(R.id.settings).setOnClickListener(new View.OnClickListener() {
             @Override public void onClick(View v) {
@@ -93,15 +114,52 @@ public class StandbyActivity extends Activity {
 
     private void refresh() {
         binding = true;
-        serviceToggle.setChecked(settings.cameraEnabled());
+        serviceToggle.setChecked(settings.serviceEnabled());
+        String[] keys = { Settings.KEY_HTTP_ENABLED, Settings.KEY_MCP_ENABLED, Settings.KEY_MQTT_ENABLED };
+        for (int i = 0; i < keys.length; i++) {
+            android.widget.CheckBox box = (android.widget.CheckBox) findViewById(R.id.service_bar).findViewWithTag(keys[i]);
+            box.setChecked(settings.raw().getBoolean(keys[i], i == 0));
+        }
         binding = false;
-        statusLed.setBackgroundResource(settings.cameraEnabled()
+        statusLed.setBackgroundResource(settings.serviceEnabled()
                 ? R.drawable.led_green : R.drawable.led_grey);
         boolean front = settings.cameraFacing() == 1;
         frontButton.setSelected(front);
         backButton.setSelected(!front);
         frontButton.setEnabled(CameraManager.hasFacing(1) && !settings.frontCameraDisabled());
+        statusText.setText(settings.serviceEnabled() ? "整体服务 · 已开启" : "整体服务 · 已关闭");
+        statusText.setTextColor(getResources().getColor(settings.serviceEnabled()
+                ? R.color.ui_success : R.color.ui_text_secondary));
+        AgentService svc = AgentService.get();
+        boolean running = settings.serviceEnabled() && svc != null && svc.isHttpRunning();
+        setStatusIndicator(R.id.http_status, serviceLine("HTTP", settings.httpEnabled(), running && settings.httpEnabled()));
+        setStatusIndicator(R.id.mcp_status, serviceLine("MCP", settings.mcpEnabled(), running && settings.mcpEnabled()));
+        ((TextView) findViewById(R.id.http_connections)).setText((svc == null ? 0 : svc.httpConnections()) + " 个连接");
+        ((TextView) findViewById(R.id.mcp_connections)).setText((svc == null ? 0 : svc.mcpConnections()) + " 个连接");
+        setStatusIndicator(R.id.mqtt_status,
+                (svc != null && svc.isMqttConnected() ? "🟢" : settings.mqttEnabled() && settings.serviceEnabled() ? "🟠" : "⚪")
+                + " MQTT · " + (!settings.mqttEnabled() ? "已停用" : !settings.serviceEnabled() ? "整体服务已关闭" : svc != null && svc.isMqttConnected() ? "已连接" : "未连接"));
+        setStatusIndicator(R.id.camera_status,
+                svc != null && svc.getCameraManager().getState() != CameraManager.State.CLOSED ? "🟢 相机使用中" : "⚪ 相机空闲");
         refreshInfo();
+    }
+
+    // Shape drawables are independent of the device's emoji font support.
+    private void setStatusIndicator(int viewId, String line) {
+        TextView view = (TextView) findViewById(viewId);
+        int resource = line.startsWith("🟢") ? R.drawable.led_green
+                : line.startsWith("🟠") ? R.drawable.led_amber : R.drawable.led_grey;
+        android.graphics.drawable.Drawable light = getResources().getDrawable(resource).mutate();
+        int size = (int) (10 * getResources().getDisplayMetrics().density);
+        light.setBounds(0, 0, size, size);
+        view.setCompoundDrawables(light, null, null, null);
+        view.setCompoundDrawablePadding((int) (8 * getResources().getDisplayMetrics().density));
+        view.setText(line.substring(line.indexOf(' ') + 1));
+    }
+
+    private String serviceLine(String name, boolean enabled, boolean running) {
+        return (running ? "🟢" : enabled && settings.serviceEnabled() ? "🟠" : "⚪")
+                + " " + name + " · " + (!enabled ? "已停用" : running ? "运行中" : "未运行");
     }
 
     private void refreshInfo() {
@@ -135,9 +193,10 @@ public class StandbyActivity extends Activity {
         lp.screenBrightness = dim ? settings.dimBrightness() : -1f;
         getWindow().setAttributes(lp);
         int visibility = dim ? View.INVISIBLE : View.VISIBLE;
+        findViewById(R.id.service_bar).setVisibility(visibility);
         infoView.setVisibility(visibility);
         facingRow.setVisibility(visibility);
-        controls.setVisibility(visibility);
+        settingsButton.setVisibility(visibility);
         serviceToggle.setVisibility(visibility);
         statusText.setVisibility(visibility);
         handler.removeCallbacks(statusTask);

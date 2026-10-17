@@ -19,6 +19,8 @@ public final class MqttStatusPublisher implements Runnable {
     private final Settings settings;
     private final DeviceStatus deviceStatus;
     private final CameraManager cameraManager;
+    private volatile boolean connected;
+    public boolean isConnected() { return connected; }
     private volatile boolean running;
     private volatile MqttConnection activeConnection;
     private Thread thread;
@@ -41,6 +43,7 @@ public final class MqttStatusPublisher implements Runnable {
     }
 
     public synchronized void stop() {
+        connected = false;
         running = false;
         if (thread != null) {
             thread.interrupt();
@@ -56,7 +59,7 @@ public final class MqttStatusPublisher implements Runnable {
     public void run() {
         long backoff = 2000;
         while (running) {
-            if (!settings.mqttEnabled() || settings.mqttHost().trim().length() == 0) {
+            if (!settings.serviceEnabled() || !settings.mqttEnabled() || settings.mqttHost().trim().length() == 0) {
                 sleep(5000);
                 continue;
             }
@@ -79,6 +82,7 @@ public final class MqttStatusPublisher implements Runnable {
                         clientId, availabilityTopic, configuredUser, configuredPass);
                 activeConnection = connection;
                 connection.connect();
+                connected = true;
                 migrateLegacyDiscovery(connection, deviceId);
                 connection.publish(availabilityTopic, "online", true);
                 connection.subscribe("homeassistant/status");
@@ -119,6 +123,7 @@ public final class MqttStatusPublisher implements Runnable {
             } catch (Exception e) {
                 Log.w("mqtt session ended: " + e);
             } finally {
+                connected = false;
                 if (connection != null) {
                     try {
                         // A clean stop should not leave a retained "online"

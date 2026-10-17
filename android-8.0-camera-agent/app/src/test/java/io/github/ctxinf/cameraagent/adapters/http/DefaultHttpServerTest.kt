@@ -34,6 +34,15 @@ class DefaultHttpServerTest {
         private var _dimTimeoutSec: Int = 30,
         private var _dimBrightness: Float = 0.01f,
     ) : SettingsRepository {
+        private var service = true
+        private var http = true
+        private var mcp = true
+        override val serviceEnabled get() = service
+        override val httpEnabled get() = http
+        override val mcpEnabled get() = mcp
+        override fun setServiceEnabled(enabled: Boolean) { service = enabled }
+        override fun setHttpEnabled(enabled: Boolean) { http = enabled }
+        override fun setMcpEnabled(enabled: Boolean) { mcp = enabled }
         private val _config = MutableStateFlow(initialConfig)
         override val config: StateFlow<CameraConfig> = _config.asStateFlow()
 
@@ -184,6 +193,62 @@ class DefaultHttpServerTest {
         settingsRepo.setHttpPathPrefix("/")
         assertEquals(200, requestStatus("/health"))
         assertEquals(404, requestStatus("/second/health"))
+    }
+
+    @Test
+    fun `HTTP and MCP route switches are independent for all aliases`() {
+        for (http in listOf(false, true)) for (mcp in listOf(false, true)) {
+            settingsRepo.setHttpEnabled(http)
+            settingsRepo.setMcpEnabled(mcp)
+            for (path in listOf("/health", "/api/status", "/api/v1/status", "/api/camera")) {
+                assertEquals(path, if (http) 200 else 404, requestStatus(path))
+            }
+            for (path in listOf("/mcp", "/api/mcp", "/api/v1/mcp")) {
+                assertEquals(path, if (mcp) 200 else 404, requestStatus(path))
+            }
+        }
+        settingsRepo.setServiceEnabled(false)
+        assertEquals(404, requestStatus("/health"))
+        assertEquals(404, requestStatus("/mcp"))
+    }
+
+    @Test
+    fun `disabling MCP closes its request while preserving HTTP connections`() {
+        Socket("127.0.0.1", serverPort).use { http ->
+            Socket("127.0.0.1", serverPort).use { mcp ->
+                http.soTimeout = 3000
+                mcp.soTimeout = 3000
+                http.getOutputStream().write("POST /api/camera HTTP/1.1\r\nContent-Length: 2\r\n\r\n".toByteArray())
+                mcp.getOutputStream().write("POST /mcp HTTP/1.1\r\nContent-Length: 2\r\n\r\n".toByteArray())
+                val deadline = System.nanoTime() + 3_000_000_000L
+                while ((httpServer.httpConnections != 1 || httpServer.mcpConnections != 1) &&
+                    System.nanoTime() < deadline) Thread.sleep(10)
+                assertEquals(1, httpServer.httpConnections)
+                assertEquals(1, httpServer.mcpConnections)
+                settingsRepo.setMcpEnabled(false)
+                httpServer.closeDisabledConnections()
+                assertEquals(-1, mcp.getInputStream().read())
+                http.getOutputStream().write("{}".toByteArray())
+                val response = http.getInputStream().bufferedReader().readText()
+                assertTrue(response.startsWith("HTTP/1.1 200"))
+                assertTrue(httpServer.isRunning)
+            }
+        }
+    }
+
+    @Test
+    fun `connections are counted by protocol until the socket closes`() {
+        Socket("127.0.0.1", serverPort).use { socket ->
+            socket.soTimeout = 3000
+            socket.getOutputStream().write("POST /mcp HTTP/1.1\r\nContent-Length: 10\r\n\r\n".toByteArray())
+            val deadline = System.nanoTime() + 3_000_000_000L
+            while (httpServer.mcpConnections == 0 && System.nanoTime() < deadline) Thread.sleep(10)
+            assertEquals(1, httpServer.mcpConnections)
+            assertEquals(0, httpServer.httpConnections)
+            kotlinx.coroutines.runBlocking { httpServer.stop() }
+            assertEquals(-1, socket.getInputStream().read())
+        }
+        assertEquals(0, httpServer.mcpConnections)
     }
 
     @Test

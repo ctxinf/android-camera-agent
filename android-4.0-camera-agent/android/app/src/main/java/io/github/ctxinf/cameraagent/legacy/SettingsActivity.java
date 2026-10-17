@@ -62,6 +62,12 @@ public class SettingsActivity extends PreferenceActivity
             facing.setSummary(getString(R.string.pref_facing_single));
         }
 
+        findPreference("preview").setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+            @Override public boolean onPreferenceClick(Preference p) {
+                startActivity(new android.content.Intent(SettingsActivity.this, PreviewActivity.class));
+                return true;
+            }
+        });
         populateResolutions();
         setupMqttVerifier();
         refreshAllSummaries();
@@ -172,12 +178,13 @@ public class SettingsActivity extends PreferenceActivity
             return;
         }
 
-        if (Settings.KEY_HTTP_PORT.equals(key)) {
+        if (Settings.KEY_HTTP_PORT.equals(key) || Settings.KEY_HTTP_ENABLED.equals(key) || Settings.KEY_MCP_ENABLED.equals(key)) {
             // The listening socket is bound at startup, so a new port needs the
             // server rebuilt. Done here rather than silently deferring to the
             // next boot, which would leave the UI lying about the endpoint.
             svc.restartHttpServer();
-        } else if (Settings.KEY_CAMERA_FACING.equals(key)
+        } else if (Settings.KEY_CAMERA_ENABLED.equals(key)
+                || Settings.KEY_CAMERA_FACING.equals(key)
                 || Settings.KEY_RESOLUTION.equals(key)
                 || Settings.KEY_FRONT_CAMERA_DISABLED.equals(key)) {
             svc.applyCameraSettings();

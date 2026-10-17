@@ -75,6 +75,18 @@ class DefaultHttpServer(
     private var acceptJob: Job? = null
 
     private val lock = Any()
+    private val sockets = java.util.concurrent.ConcurrentHashMap.newKeySet<Socket>()
+    private val clients = java.util.concurrent.ConcurrentHashMap<Socket, Boolean>()
+    override fun closeDisabledConnections() {
+        clients.forEach { (socket, mcp) ->
+            if (!settingsRepository.serviceEnabled ||
+                (if (mcp) !settingsRepository.mcpEnabled else !settingsRepository.httpEnabled)) {
+                try { socket.close() } catch (_: Exception) {}
+            }
+        }
+    }
+    override val httpConnections get() = clients.values.count { !it }
+    override val mcpConnections get() = clients.values.count { it }
 
     override suspend fun start(port: Int) {
         synchronized(lock) {
@@ -130,6 +142,9 @@ class DefaultHttpServer(
 
         toCancelJob?.cancel()
 
+        sockets.forEach { try { it.close() } catch (_: Exception) {} }
+        sockets.clear()
+
         toShutdownExecutor?.shutdownNow()
         try {
             toShutdownExecutor?.awaitTermination(1, TimeUnit.SECONDS)
@@ -142,8 +157,16 @@ class DefaultHttpServer(
         while (_isRunning && !server.isClosed) {
             try {
                 val client = server.accept()
-                executor?.execute {
-                    handleClient(client)
+                sockets.add(client)
+                val pool = executor
+                try {
+                    if (!_isRunning || pool == null) {
+                        sockets.remove(client)
+                        client.close()
+                    } else pool.execute { handleClient(client) }
+                } catch (_: java.util.concurrent.RejectedExecutionException) {
+                    sockets.remove(client)
+                    client.close()
                 }
             } catch (e: IOException) {
                 if (_isRunning) {
@@ -180,6 +203,13 @@ class DefaultHttpServer(
                     sendError(output, 404, "Not Found")
                     return
                 }
+
+            val isMcp = path in setOf("/mcp", "/api/mcp", "/api/v1/mcp")
+            if (!settingsRepository.serviceEnabled || if (isMcp) !settingsRepository.mcpEnabled else !settingsRepository.httpEnabled) {
+                sendError(output, 404, "Not Found")
+                return
+            }
+            clients[client] = isMcp
 
             // Parse headers
             var contentLength = 0
@@ -263,6 +293,8 @@ class DefaultHttpServer(
         } catch (e: Exception) {
             AppLog.w("Error processing HTTP request: ${e.message}")
         } finally {
+            clients.remove(client)
+            sockets.remove(client)
             try {
                 client.close()
             } catch (ignored: Exception) {}

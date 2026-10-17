@@ -18,6 +18,7 @@
     </PreferenceCategory>
 
     <PreferenceCategory android:title="@string/cat_camera">
+        <CheckBoxPreference android:key="camera_enabled" android:title="允许访问相机" android:defaultValue="true" />
         <CheckBoxPreference
             android:key="front_camera_disabled"
             android:title="@string/pref_disable_front"
@@ -58,6 +59,7 @@
     </PreferenceCategory>
 
     <PreferenceCategory android:title="@string/cat_network">
+        <CheckBoxPreference android:key="http_enabled" android:title="启用 HTTP 服务" android:defaultValue="true" />
         <EditTextPreference
             android:key="http_path_prefix"
             android:title="@string/pref_http_path_prefix"
@@ -100,35 +102,30 @@
             android:title="@string/pref_mqtt_host"
             android:summary="@string/pref_mqtt_host_sum"
             android:defaultValue=""
-            android:dependency="mqtt_enabled"
             android:inputType="text" />
         <EditTextPreference
             android:key="mqtt_port"
             android:title="@string/pref_mqtt_port"
             android:summary="@string/pref_mqtt_port_sum"
             android:defaultValue="1883"
-            android:dependency="mqtt_enabled"
             android:inputType="number" />
         <EditTextPreference
             android:key="mqtt_user"
             android:title="@string/pref_mqtt_user"
             android:summary="@string/pref_mqtt_user_sum"
             android:defaultValue=""
-            android:dependency="mqtt_enabled"
             android:inputType="text" />
         <EditTextPreference
             android:key="mqtt_pass"
             android:title="@string/pref_mqtt_pass"
             android:summary="@string/pref_mqtt_pass_sum"
             android:defaultValue=""
-            android:dependency="mqtt_enabled"
             android:inputType="textPassword" />
         <EditTextPreference
             android:key="mqtt_prefix"
             android:title="@string/pref_mqtt_prefix"
             android:summary="@string/pref_mqtt_prefix_sum"
             android:defaultValue="camera_agent"
-            android:dependency="mqtt_enabled"
             android:inputType="text" />
         <Preference
             android:key="mqtt_verify"
@@ -136,4 +133,7 @@
             android:summary="@string/pref_mqtt_verify_sum" />
     </PreferenceCategory>
 
+    <PreferenceCategory android:title="工具">
+        <Preference android:key="preview" android:title="画面预览" />
+    </PreferenceCategory>
 </PreferenceScreen>

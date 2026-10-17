@@ -38,7 +38,6 @@ class SettingsActivity : PreferenceActivity() {
     private lateinit var resolution: ListPreference
     private lateinit var battery: Preference
     private val authFields = mutableListOf<Preference>()
-    private val mqttFields = mutableListOf<Preference>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -53,6 +52,9 @@ class SettingsActivity : PreferenceActivity() {
         battery = action(display, "battery", R.string.btn_battery_opt) { requestBatteryBypass() }
 
         val camera = category(R.string.cat_camera)
+        toggle(camera, "camera_enabled", R.string.pref_camera_access, repo.config.value.enabled) { enabled ->
+            updateCamera { it.copy(enabled = enabled) }
+        }
         val caps = graph.capabilities.ifEmpty { graph.refreshCapabilities() }
         val facings = caps.map { it.facing }.distinct().ifEmpty { listOf(LensFacing.BACK) }
         choice(camera, "camera_facing", R.string.pref_default_facing,
@@ -71,13 +73,20 @@ class SettingsActivity : PreferenceActivity() {
         number(camera, "retention_grace_sec", R.string.pref_retention_grace_period, repo.config.value.retentionGracePeriodSec, 0..3600, R.string.unit_seconds) { seconds -> updateCamera { it.copy(retentionGracePeriodSec = seconds) } }
 
         val network = category(R.string.cat_network)
+        toggle(network, "http_enabled", R.string.pref_http_enabled, repo.httpEnabled) {
+            repo.setHttpEnabled(it)
+            refreshNetworkServices()
+        }
+        toggle(network, "mcp_enabled", R.string.pref_mcp_enabled, repo.mcpEnabled) {
+            repo.setMcpEnabled(it)
+            refreshNetworkServices()
+        }
         number(network, "http_port", R.string.pref_http_port, repo.httpPort, 1024..65535) { port ->
             if (port != repo.httpPort) {
                 repo.setHttpPort(port)
                 if (AgentService.isRunning) graph.appScope.launch {
                     try {
-                        graph.httpServer.stop()
-                        graph.httpServer.start(port)
+                        graph.refreshNetworkListener()
                     } catch (e: Exception) {
                         AppLog.e("HTTP restart failed", e)
                         runOnUiThread { toast(getString(R.string.http_restart_failed)) }
@@ -102,23 +111,31 @@ class SettingsActivity : PreferenceActivity() {
         val mqtt = category(R.string.pref_mqtt_title)
         toggle(mqtt, "mqtt_enabled", R.string.pref_mqtt_enabled, repo.mqttEnabled) { enabled ->
             repo.setMqttEnabled(enabled)
-            mqttFields.forEach { it.isEnabled = enabled }
             graph.mqttManager.restart()
         }
-        mqttFields += edit(mqtt, "mqtt_host", R.string.pref_mqtt_host, repo.mqttHost) { repo.setMqttHost(it); graph.mqttManager.restart() }
-        mqttFields += number(mqtt, "mqtt_port", R.string.pref_mqtt_port, repo.mqttPort, 1..65535) { repo.setMqttPort(it); graph.mqttManager.restart() }
-        mqttFields += edit(mqtt, "mqtt_client_id", R.string.pref_mqtt_client_id, repo.mqttClientId,
+        edit(mqtt, "mqtt_host", R.string.pref_mqtt_host, repo.mqttHost) { repo.setMqttHost(it); graph.mqttManager.restart() }
+        number(mqtt, "mqtt_port", R.string.pref_mqtt_port, repo.mqttPort, 1..65535) { repo.setMqttPort(it); graph.mqttManager.restart() }
+        edit(mqtt, "mqtt_client_id", R.string.pref_mqtt_client_id, repo.mqttClientId,
             normalize = { it.trim().ifEmpty { throw IllegalArgumentException(getString(R.string.value_required)) } }) { repo.setMqttClientId(it); graph.mqttManager.restart() }
-        mqttFields += edit(mqtt, "mqtt_username", R.string.pref_auth_username, repo.mqttUsername) { repo.setMqttUsername(it); graph.mqttManager.restart() }
-        mqttFields += edit(mqtt, "mqtt_password", R.string.pref_auth_password, repo.mqttPassword, password = true) { repo.setMqttPassword(it); graph.mqttManager.restart() }
-        mqttFields += edit(mqtt, "mqtt_topic_prefix", R.string.pref_mqtt_topic_prefix, repo.mqttTopicPrefix,
+        edit(mqtt, "mqtt_username", R.string.pref_auth_username, repo.mqttUsername) { repo.setMqttUsername(it); graph.mqttManager.restart() }
+        edit(mqtt, "mqtt_password", R.string.pref_auth_password, repo.mqttPassword, password = true) { repo.setMqttPassword(it); graph.mqttManager.restart() }
+        edit(mqtt, "mqtt_topic_prefix", R.string.pref_mqtt_topic_prefix, repo.mqttTopicPrefix,
             normalize = { it.trim().ifEmpty { "camera_agent" } }) { repo.setMqttTopicPrefix(it); graph.mqttManager.restart() }
-        mqttFields.forEach { it.isEnabled = repo.mqttEnabled }
         action(mqtt, "mqtt_test", R.string.btn_test_mqtt) { testMqtt(it) }
 
         val tools = category(R.string.cat_tools)
         action(tools, "preview", R.string.btn_preview) { startActivity(Intent(this, PreviewActivity::class.java)) }
         action(tools, "diagnostics", R.string.btn_open_diagnostics) { startActivity(Intent(this, DiagnosticsActivity::class.java)) }
+    }
+
+    private fun refreshNetworkServices() {
+        graph.appScope.launch {
+            try { graph.refreshNetworkListener() }
+            catch (e: Exception) {
+                AppLog.e("Listener restart failed", e)
+                runOnUiThread { toast(getString(R.string.http_restart_failed)) }
+            }
+        }
     }
 
     private fun category(title: Int) = PreferenceCategory(this).also {

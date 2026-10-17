@@ -36,6 +36,8 @@ public class AgentService extends Service {
     private CameraManager cameraManager;
     private DeviceStatus deviceStatus;
     private volatile HttpServer httpServer;
+    private final Object listenerLock = new Object();
+    private volatile boolean destroyed;
     private GatewayClient gatewayClient;
     private MqttStatusPublisher mqttPublisher;
 
@@ -98,10 +100,10 @@ public class AgentService extends Service {
         deviceStatus = new DeviceStatus(this, cameraManager, settings);
 
         httpServer = new HttpServer(settings.httpPort(), cameraManager, settings, deviceStatus);
-        httpServer.start();
+        if (settings.serviceEnabled() && (settings.httpEnabled() || settings.mcpEnabled())) httpServer.start();
 
         mqttPublisher = new MqttStatusPublisher(this, settings, deviceStatus, cameraManager);
-        mqttPublisher.start();
+        if (settings.serviceEnabled()) mqttPublisher.start();
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         String gwHost = prefs.getString(PREF_GATEWAY_HOST, null);
@@ -184,7 +186,14 @@ public class AgentService extends Service {
         new Thread(new Runnable() {
             @Override
             public void run() {
+                synchronized (listenerLock) {
+                if (destroyed) return;
                 HttpServer old = httpServer;
+                boolean enabled = settings.serviceEnabled() && (settings.httpEnabled() || settings.mcpEnabled());
+                if (old != null && enabled && old.isRunning() && old.getPort() == settings.httpPort()) {
+                    old.closeDisabledConnections();
+                    return;
+                }
                 if (old != null) {
                     old.stop();
                 }
@@ -197,19 +206,25 @@ public class AgentService extends Service {
                     return;
                 }
                 HttpServer fresh = new HttpServer(settings.httpPort(), cameraManager, settings, deviceStatus);
-                fresh.start();
+                if (settings.serviceEnabled() && (settings.httpEnabled() || settings.mcpEnabled())) fresh.start();
                 httpServer = fresh;
                 Log.i("http server restarted on :" + settings.httpPort());
                 refreshStatusNotification();
+                }
             }
         }, "http-restart").start();
     }
 
     /** Reconnect MQTT immediately after broker settings change. */
+    public boolean isMqttConnected() { return mqttPublisher != null && mqttPublisher.isConnected(); }
+    public boolean isHttpRunning() { return httpServer != null && httpServer.isRunning(); }
+    public int httpConnections() { return httpServer == null ? 0 : httpServer.connectionCount(false); }
+    public int mcpConnections() { return httpServer == null ? 0 : httpServer.connectionCount(true); }
+
     public void restartMqtt() {
         if (mqttPublisher != null) {
             mqttPublisher.stop();
-            mqttPublisher.start();
+            if (settings.serviceEnabled()) mqttPublisher.start();
         }
     }
 
@@ -240,8 +255,9 @@ public class AgentService extends Service {
         if (mqttPublisher != null) {
             mqttPublisher.stop();
         }
-        if (httpServer != null) {
-            httpServer.stop();
+        synchronized (listenerLock) {
+            destroyed = true;
+            if (httpServer != null) httpServer.stop();
         }
         if (cameraManager != null) {
             cameraManager.shutdown();

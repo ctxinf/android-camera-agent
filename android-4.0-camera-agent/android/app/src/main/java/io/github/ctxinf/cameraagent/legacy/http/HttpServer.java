@@ -63,6 +63,23 @@ public class HttpServer implements Runnable {
         this.mcpServer = new McpServer(cameraManager, settings);
     }
 
+    private final java.util.Set<Socket> sockets = java.util.Collections.newSetFromMap(new java.util.concurrent.ConcurrentHashMap<Socket, Boolean>());
+    private final java.util.concurrent.ConcurrentHashMap<Socket, Boolean> clients =
+            new java.util.concurrent.ConcurrentHashMap<Socket, Boolean>();
+    public void closeDisabledConnections() {
+        for (java.util.Map.Entry<Socket, Boolean> entry : clients.entrySet()) {
+            if (!settings.serviceEnabled() || (entry.getValue().booleanValue() ? !settings.mcpEnabled() : !settings.httpEnabled())) {
+                try { entry.getKey().close(); } catch (IOException ignored) {}
+            }
+        }
+    }
+    public boolean isRunning() { return running && serverSocket != null && serverSocket.isBound() && !serverSocket.isClosed(); }
+    public int connectionCount(boolean mcp) {
+        int count = 0;
+        for (Boolean value : clients.values()) if (value.booleanValue() == mcp) count++;
+        return count;
+    }
+
     public int getPort() {
         return port;
     }
@@ -81,13 +98,14 @@ public class HttpServer implements Runnable {
         // Idle threads should die back; this is a 1 GB device.
         workers.allowCoreThreadTimeOut(true);
         // Over capacity: drop the newest rather than block the accept loop.
-        workers.setRejectedExecutionHandler(new ThreadPoolExecutor.DiscardPolicy());
+        workers.setRejectedExecutionHandler(new ThreadPoolExecutor.AbortPolicy());
         acceptThread = new Thread(this, "http-accept");
         acceptThread.start();
     }
 
-    public void stop() {
+    public synchronized void stop() {
         running = false;
+        for (Socket client : sockets) { try { client.close(); } catch (IOException ignored) {} }
         try {
             if (serverSocket != null) {
                 serverSocket.close();
@@ -101,9 +119,12 @@ public class HttpServer implements Runnable {
     @Override
     public void run() {
         try {
-            serverSocket = new ServerSocket();
-            serverSocket.setReuseAddress(true);
-            serverSocket.bind(new InetSocketAddress(port));
+            synchronized (this) {
+                if (!running) return;
+                serverSocket = new ServerSocket();
+                serverSocket.setReuseAddress(true);
+                serverSocket.bind(new InetSocketAddress(port));
+            }
             Log.i("http listening on :" + port);
         } catch (IOException e) {
             Log.e("failed to bind :" + port + " - " + e);
@@ -121,12 +142,18 @@ public class HttpServer implements Runnable {
                 }
                 continue;
             }
+            sockets.add(client);
+            try {
             workers.execute(new Runnable() {
                 @Override
                 public void run() {
                     handle(client);
                 }
             });
+            } catch (java.util.concurrent.RejectedExecutionException e) {
+                sockets.remove(client);
+                try { client.close(); } catch (IOException ignored) {}
+            }
         }
         Log.i("http stopped");
     }
@@ -193,6 +220,13 @@ public class HttpServer implements Runnable {
                 return;
             }
 
+            boolean isMcp = MCP_PATH.equals(path);
+            if (!settings.serviceEnabled() || (isMcp ? !settings.mcpEnabled() : !settings.httpEnabled())) {
+                sendError(out, 404, "Not Found");
+                return;
+            }
+            clients.put(client, Boolean.valueOf(isMcp));
+
             if (!"GET".equals(method) && !"HEAD".equals(method) && !"POST".equals(method)) {
                 sendError(out, 405, "Method Not Allowed");
                 return;
@@ -257,6 +291,8 @@ public class HttpServer implements Runnable {
         } catch (Exception e) {
             Log.w("handler error: " + e);
         } finally {
+            clients.remove(client);
+            sockets.remove(client);
             try { client.close(); } catch (IOException ignored) { }
         }
     }

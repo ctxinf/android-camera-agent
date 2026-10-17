@@ -9,7 +9,6 @@
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_above="@+id/bottomBar"
         android:fillViewport="true">
         <LinearLayout
             android:layout_width="match_parent"
@@ -17,22 +16,10 @@
             android:orientation="vertical"
             android:padding="20dp"
             android:id="@+id/contentLayout">
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Camera Agent"
-                android:textSize="28sp"
-                android:textColor="@color/ui_text"
-                android:textStyle="bold"
-                android:layout_marginTop="8dp" />
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="设备控制台"
-                android:textSize="13sp"
-                android:textColor="@color/ui_text_secondary"
-                android:layout_marginTop="6dp"
-                android:layout_marginBottom="24dp" />
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:layout_marginBottom="24dp">
+                <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="Camera Agent" android:textSize="26sp" android:textColor="@color/ui_text" android:textStyle="bold" />
+                <ImageButton android:id="@+id/btnSettingsIcon" android:layout_width="48dp" android:layout_height="48dp" android:background="@drawable/control_button" android:src="@drawable/ic_settings" android:tint="@color/ui_primary" android:padding="12dp" android:contentDescription="@string/settings_title" />
+            </LinearLayout>
             <LinearLayout
                 android:id="@+id/topBar"
                 android:layout_width="match_parent"
@@ -45,15 +32,16 @@
                     android:gravity="center_vertical">
                     <View
                         android:id="@+id/statusLed"
-                        android:layout_width="8dp"
-                        android:layout_height="8dp"
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
                         android:background="@drawable/led_green"
                         android:layout_marginRight="10dp" />
                     <TextView
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:text="摄像头服务"
-                        android:textSize="16sp"
+                        android:text="整体服务 · 已开启"
+                        android:textStyle="bold"
+                        android:textSize="18sp"
                         android:textColor="@color/ui_text"
                         android:id="@+id/tvStatusText"
                         android:layout_weight="1"
@@ -69,6 +57,41 @@
                         android:textColor="@color/control_text"
                         android:checked="true"
                         android:backgroundTint="@null" />
+                </LinearLayout>
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:paddingTop="12dp">
+                    <TextView android:id="@+id/tvHttpStatus" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:textColor="@color/ui_text" android:textSize="14sp" />
+                    <TextView android:id="@+id/tvHttpConnections" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="@color/ui_text_secondary" android:textSize="12sp" />
+                </LinearLayout>
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:paddingTop="12dp">
+                    <TextView android:id="@+id/tvMcpStatus" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:textColor="@color/ui_text" android:textSize="14sp" />
+                    <TextView android:id="@+id/tvMcpConnections" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="@color/ui_text_secondary" android:textSize="12sp" />
+                </LinearLayout>
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:layout_marginTop="16dp">
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:text="MQTT · 未连接"
+                        android:textSize="12sp"
+                        android:textColor="@color/ui_text_secondary"
+                        android:id="@+id/tvMqttStatus"
+                        android:layout_weight="1" />
+                    <View
+                        android:id="@+id/cameraHardwareLed"
+                        android:layout_width="6dp"
+                        android:layout_height="6dp"
+                        android:background="@drawable/led_grey"
+                        android:layout_marginRight="6dp" />
+                    <TextView
+                        android:id="@+id/tvCameraHardwareStatus"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="相机空闲"
+                        android:textColor="@color/ui_text_secondary"
+                        android:textSize="12sp" />
                 </LinearLayout>
                 <TextView
                     android:layout_width="match_parent"
@@ -105,33 +128,6 @@
                         android:textColor="@color/control_text"
                         android:background="@drawable/control_button"
                         app:backgroundTint="@color/ui_control" />
-                </LinearLayout>
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:layout_marginTop="16dp">
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:text="MQTT · 未连接"
-                        android:textSize="12sp"
-                        android:textColor="@color/ui_text_secondary"
-                        android:id="@+id/tvMqttStatus"
-                        android:layout_weight="1" />
-                    <View
-                        android:id="@+id/cameraHardwareLed"
-                        android:layout_width="6dp"
-                        android:layout_height="6dp"
-                        android:background="@drawable/led_grey"
-                        android:layout_marginRight="6dp" />
-                    <TextView
-                        android:id="@+id/tvCameraHardwareStatus"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="相机空闲"
-                        android:textColor="@color/ui_text_secondary"
-                        android:textSize="12sp" />
                 </LinearLayout>
             </LinearLayout>
             <LinearLayout
@@ -241,29 +237,4 @@
                 android:layout_marginTop="20dp" />
         </LinearLayout>
     </ScrollView>
-    <RelativeLayout
-        android:id="@+id/bottomBar"
-        android:layout_width="match_parent"
-        android:layout_height="72dp"
-        android:layout_alignParentBottom="true"
-        android:padding="12dp"
-        android:background="@color/ui_surface">
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="CAMERA AGENT"
-            android:textSize="12sp"
-            android:textColor="@color/ui_text_secondary"
-            android:layout_centerVertical="true" />
-        <ImageButton
-            android:id="@+id/btnSettingsIcon"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:layout_alignParentRight="true"
-            android:background="@drawable/control_button"
-            android:src="@drawable/ic_settings"
-            android:tint="@color/ui_primary"
-            android:padding="12dp"
-            android:contentDescription="@string/settings_title" />
-    </RelativeLayout>
 </RelativeLayout>

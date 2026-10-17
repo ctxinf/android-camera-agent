@@ -9,6 +9,12 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 interface SettingsRepository {
+    val serviceEnabled: Boolean
+    fun setServiceEnabled(enabled: Boolean)
+    val httpEnabled: Boolean
+    val mcpEnabled: Boolean
+    fun setHttpEnabled(enabled: Boolean)
+    fun setMcpEnabled(enabled: Boolean)
     val config: StateFlow<CameraConfig>
     val httpPathPrefix: String
     val httpPort: Int
@@ -48,6 +54,13 @@ class SharedPreferencesSettingsRepository(
     context: Context,
 ) : SettingsRepository {
     private val prefs: SharedPreferences = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+
+    override val serviceEnabled get() = prefs.getBoolean("service_enabled", true)
+    override fun setServiceEnabled(enabled: Boolean) { prefs.edit().putBoolean("service_enabled", enabled).apply() }
+    override val httpEnabled get() = prefs.getBoolean("http_enabled", true)
+    override val mcpEnabled get() = prefs.getBoolean("mcp_enabled", false)
+    override fun setHttpEnabled(enabled: Boolean) { prefs.edit().putBoolean("http_enabled", enabled).apply() }
+    override fun setMcpEnabled(enabled: Boolean) { prefs.edit().putBoolean("mcp_enabled", enabled).apply() }
 
     private val _config = MutableStateFlow(loadConfig())
     override val config: StateFlow<CameraConfig> = _config.asStateFlow()

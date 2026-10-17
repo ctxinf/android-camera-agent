@@ -113,6 +113,28 @@ class MainActivity : AppCompatActivity() {
 
         tvDeviceStatus = findViewById(R.id.tvDeviceStatus)
 
+        val switches = android.widget.LinearLayout(this).apply { orientation = android.widget.LinearLayout.HORIZONTAL }
+        val repo = (application as CameraAgentApp).appGraph.settingsRepository
+        listOf("HTTP", "MCP", "MQTT").forEach { name ->
+            val box = android.widget.CheckBox(this).apply {
+                text = name
+                isChecked = when (name) { "HTTP" -> repo.httpEnabled; "MCP" -> repo.mcpEnabled; else -> repo.mqttEnabled }
+                setOnCheckedChangeListener { _, enabled ->
+                    if (isBinding) return@setOnCheckedChangeListener
+                    when (name) { "HTTP" -> repo.setHttpEnabled(enabled); "MCP" -> repo.setMcpEnabled(enabled); else -> repo.setMqttEnabled(enabled) }
+                    val graph = (application as CameraAgentApp).appGraph
+                    graph.appScope.launch {
+                        try { graph.refreshNetworkListener() }
+                        catch (e: Exception) { AppLog.e("Listener start failed", e) }
+                    }
+                    if (name == "MQTT") graph.mqttManager.restart()
+                    refreshUi()
+                }
+            }
+            box.tag = name
+            switches.addView(box, android.widget.LinearLayout.LayoutParams(0, 48.dp(), 1f))
+        }
+        findViewById<LinearLayout>(R.id.topBar).addView(switches, 1)
         setupListeners()
         ensureCameraPermission()
         ensureServiceStarted()
@@ -120,17 +142,46 @@ class MainActivity : AppCompatActivity() {
         wakeScreen()
     }
 
+    private fun Int.dp(): Int = (this * resources.displayMetrics.density).toInt()
+
+    private val statusRefresh = object : Runnable {
+        override fun run() { refreshUi(); handler.postDelayed(this, 1000) }
+    }
+
+    // Draw status lights instead of relying on emoji glyphs on older Android fonts.
+    private fun setStatusIndicator(view: TextView, line: String) {
+        val resource = when {
+            line.startsWith("🟢") -> R.drawable.led_green
+            line.startsWith("🟠") -> R.drawable.led_amber
+            else -> R.drawable.led_grey
+        }
+        val light = resources.getDrawable(resource, theme).mutate()
+        light.setBounds(0, 0, 10.dp(), 10.dp())
+        view.setCompoundDrawables(light, null, null, null)
+        view.compoundDrawablePadding = 8.dp()
+        view.text = line.substringAfter(' ')
+    }
+
+    private fun serviceLine(name: String, enabled: Boolean, running: Boolean): String {
+        val master = (application as CameraAgentApp).appGraph.settingsRepository.serviceEnabled
+        val icon = if (running) "🟢" else if (enabled && master) "🟠" else "⚪"
+        val state = if (!enabled) "已停用" else if (!running) "未运行" else "运行中"
+        return "$icon $name · $state"
+    }
+
     override fun onResume() {
         super.onResume()
         AppLog.d("MainActivity onResume()")
         ensureServiceStarted()
         refreshUi()
+        handler.post(statusRefresh)
         wakeScreen()
     }
 
     override fun onPause() {
         super.onPause()
         handler.removeCallbacks(dimTask)
+        handler.removeCallbacks(statusRefresh)
     }
 
     private fun setupListeners() {
@@ -156,9 +207,11 @@ class MainActivity : AppCompatActivity() {
             wakeScreen()
             lifecycleScope.launch {
                 val appGraph = (application as CameraAgentApp).appGraph
-                appGraph.coordinator.setEnabled(isChecked)
-                val config = appGraph.settingsRepository.config.value.copy(enabled = isChecked)
-                appGraph.settingsRepository.updateConfig(config)
+                val repo = appGraph.settingsRepository
+                repo.setServiceEnabled(isChecked)
+                try { appGraph.refreshNetworkListener() }
+                catch (e: Exception) { AppLog.e("Listener start failed", e) }
+                appGraph.mqttManager.restart()
                 refreshUi()
             }
         }
@@ -366,26 +419,7 @@ class MainActivity : AppCompatActivity() {
 
         // MQTT connection state
         lifecycleScope.launch {
-            appGraph.mqttManager.status.collect { mqttStatus ->
-                when (mqttStatus) {
-                    is MqttStatus.Disabled -> {
-                        tvMqttStatus.text = "MQTT · 未连接"
-                        tvMqttStatus.setTextColor(0xFFA3A8B7.toInt())
-                    }
-                    is MqttStatus.Connecting -> {
-                        tvMqttStatus.text = "MQTT · 连接中"
-                        tvMqttStatus.setTextColor(0xFFD7BE8E.toInt())
-                    }
-                    is MqttStatus.Connected -> {
-                        tvMqttStatus.text = "MQTT · 已连接"
-                        tvMqttStatus.setTextColor(0xFFA8C7BA.toInt())
-                    }
-                    is MqttStatus.Disconnected -> {
-                        tvMqttStatus.text = "MQTT · 连接失败"
-                        tvMqttStatus.setTextColor(0xFFE6A5A5.toInt())
-                    }
-                }
-            }
+            appGraph.mqttManager.status.collect { refreshUi() }
         }
     }
 
@@ -395,20 +429,45 @@ class MainActivity : AppCompatActivity() {
         val state = appGraph.coordinator.state.value
         val repo = appGraph.settingsRepository
 
+        listOf("HTTP", "MCP", "MQTT").forEach { name ->
+            val box = findViewById<LinearLayout>(R.id.topBar).findViewWithTag<android.widget.CheckBox>(name)
+            val checked = when (name) { "HTTP" -> repo.httpEnabled; "MCP" -> repo.mcpEnabled; else -> repo.mqttEnabled }
+            if (box != null && box.isChecked != checked) {
+                isBinding = true
+                box.isChecked = checked
+                isBinding = false
+            }
+        }
         // 1. Service Switch & Indicator
         isBinding = true
-        tbCameraEnable.isChecked = config.enabled
+        tbCameraEnable.isChecked = repo.serviceEnabled
         isBinding = false
 
-        if (!config.enabled) {
+        if (!repo.serviceEnabled) {
             statusLed.setBackgroundResource(R.drawable.led_grey)
-            tvStatusText.text = "摄像头服务"
+            tvStatusText.text = "整体服务 · 已关闭"
             tvStatusText.setTextColor(0xFFA3A8B7.toInt())
         } else {
             statusLed.setBackgroundResource(R.drawable.led_green)
-            tvStatusText.text = "摄像头服务"
-            tvStatusText.setTextColor(0xFFE0E0E0.toInt())
+            tvStatusText.text = "整体服务 · 已开启"
+            tvStatusText.setTextColor(0xFFA8C7BA.toInt())
         }
+
+        val listener = appGraph.httpServer
+        setStatusIndicator(findViewById(R.id.tvHttpStatus),
+            serviceLine("HTTP", repo.httpEnabled, repo.serviceEnabled && listener.isRunning && repo.httpEnabled))
+        setStatusIndicator(findViewById(R.id.tvMcpStatus),
+            serviceLine("MCP", repo.mcpEnabled, repo.serviceEnabled && listener.isRunning && repo.mcpEnabled))
+        findViewById<TextView>(R.id.tvHttpConnections).text = "${listener.httpConnections} 个连接"
+        findViewById<TextView>(R.id.tvMcpConnections).text = "${listener.mcpConnections} 个连接"
+        val mqttLine = when {
+            !repo.mqttEnabled -> "⚪ MQTT · 已停用"
+            !repo.serviceEnabled -> "⚪ MQTT · 整体服务已关闭"
+            appGraph.mqttManager.status.value is MqttStatus.Connected -> "🟢 MQTT · 已连接"
+            appGraph.mqttManager.status.value is MqttStatus.Connecting -> "🟠 MQTT · 连接中"
+            else -> "🟠 MQTT · 未连接"
+        }
+        setStatusIndicator(tvMqttStatus, mqttLine)
 
         // 2. Camera Hardware Physical State Indicator
         when (state) {
@@ -417,9 +476,13 @@ class MainActivity : AppCompatActivity() {
                 tvCameraHardwareStatus.text = "相机传输中"
                 tvCameraHardwareStatus.setTextColor(0xFFA8C7BA.toInt())
             }
+            is CameraState.Retained -> {
+                cameraHardwareLed.setBackgroundResource(R.drawable.led_green)
+                tvCameraHardwareStatus.text = "相机使用中 · 预热保持"
+            }
             is CameraState.Opening -> {
                 cameraHardwareLed.setBackgroundResource(R.drawable.led_amber)
-                tvCameraHardwareStatus.text = "相机已开启"
+                tvCameraHardwareStatus.text = "相机打开中"
                 tvCameraHardwareStatus.setTextColor(0xFFD7BE8E.toInt())
             }
             is CameraState.Failed -> {
@@ -463,27 +526,27 @@ class MainActivity : AppCompatActivity() {
             tvAuthBadge.setTextColor(0xFFD7BE8E.toInt())
             tvAuthBadge.setBackgroundColor(0xFF2E2415.toInt())
 
-            chipSnapshot.text = "[/snapshot.jpg]"
-            chipStream.text = "[/video.mjpeg]"
-            chipStatus.text = "[/api/status]"
-            chipMcp.text = "[/mcp]"
-            chipCameraConfig.text = "[/api/camera]"
-            chipWarmup.text = "[/api/v1/warmup]"
-            chipHealth.text = "[/health]"
+            chipSnapshot.text = "/snapshot.jpg"
+            chipStream.text = "/video.mjpeg"
+            chipStatus.text = "/api/status"
+            chipMcp.text = "/mcp"
+            chipCameraConfig.text = "/api/camera"
+            chipWarmup.text = "/api/v1/warmup"
+            chipHealth.text = "/health"
         } else {
             tvAuthBadge.visibility = View.GONE
 
-            chipSnapshot.text = "[/snapshot.jpg]"
-            chipStream.text = "[/video.mjpeg]"
-            chipStatus.text = "[/api/status]"
-            chipMcp.text = "[/mcp]"
-            chipCameraConfig.text = "[/api/camera]"
-            chipWarmup.text = "[/api/v1/warmup]"
-            chipHealth.text = "[/health]"
+            chipSnapshot.text = "/snapshot.jpg"
+            chipStream.text = "/video.mjpeg"
+            chipStatus.text = "/api/status"
+            chipMcp.text = "/mcp"
+            chipCameraConfig.text = "/api/camera"
+            chipWarmup.text = "/api/v1/warmup"
+            chipHealth.text = "/health"
         }
 
         val activeStreams = (state as? CameraState.Active)?.activeStreams ?: 0
-        val serviceStatus = if (config.enabled) "Service: ON" else "Service: SUSPENDED (Dummy)"
+        val serviceStatus = if (repo.serviceEnabled) "Service: ON" else "Service: SUSPENDED (Dummy)"
         tvDeviceStatus.text = "Device: ${Build.MODEL} | $serviceStatus | Cam: ${state::class.simpleName} | Streams: $activeStreams | IP: $ip"
     }
 

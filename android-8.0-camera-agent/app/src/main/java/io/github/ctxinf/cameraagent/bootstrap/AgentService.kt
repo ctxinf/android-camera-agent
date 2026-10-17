@@ -53,8 +53,7 @@ class AgentService : LifecycleService() {
         // Start HTTP Server
         lifecycleScope.launch {
             try {
-                val port = appGraph.settingsRepository.httpPort
-                appGraph.httpServer.start(port)
+                appGraph.refreshNetworkListener()
                 updateNotificationWithCurrentState()
             } catch (e: Exception) {
                 AppLog.e("Failed to start HTTP server in AgentService", e)
@@ -129,9 +128,9 @@ class AgentService : LifecycleService() {
         AppLog.i("AgentService onDestroy()")
         isRunning = false
 
-        lifecycleScope.launch {
+        appGraph.appScope.launch {
             try {
-                appGraph.httpServer.stop()
+                appGraph.refreshNetworkListener()
             } catch (e: Exception) {
                 AppLog.w("Error stopping HTTP server", e)
             }

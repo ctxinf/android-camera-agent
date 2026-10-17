@@ -24,6 +24,9 @@ import io.github.ctxinf.cameraagent.infrastructure.preferences.SharedPreferences
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 
 /**
  * Minimal dependency injection container using constructor injection.
@@ -71,6 +74,26 @@ class AppGraph(
             settingsRepository = settingsRepository,
             scope = appScope,
         )
+
+    private val listenerMutex = Mutex()
+    private var listenerPort: Int? = null
+
+    /** Serializes listener reconfiguration across startup, settings and shutdown. */
+    suspend fun refreshNetworkListener() = withContext(Dispatchers.IO) {
+        listenerMutex.withLock {
+            val enabled = AgentService.isRunning && settingsRepository.serviceEnabled &&
+                (settingsRepository.httpEnabled || settingsRepository.mcpEnabled)
+            if (!enabled || listenerPort != settingsRepository.httpPort) {
+                httpServer.stop()
+                listenerPort = null
+            }
+            httpServer.closeDisabledConnections()
+            if (enabled && !httpServer.isRunning) {
+                httpServer.start(settingsRepository.httpPort)
+                listenerPort = settingsRepository.httpPort
+            }
+        }
+    }
 
     init {
         AppLog.i("Initializing AppGraph...")

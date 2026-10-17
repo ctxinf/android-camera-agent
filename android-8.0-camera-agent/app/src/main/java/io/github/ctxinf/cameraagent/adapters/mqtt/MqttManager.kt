@@ -32,7 +32,7 @@ class MqttManager(
 ) {
 
     private val _status = MutableStateFlow<MqttStatus>(
-        if (settingsRepository.mqttEnabled) MqttStatus.Connecting else MqttStatus.Disabled
+        if ((settingsRepository.mqttEnabled && settingsRepository.serviceEnabled)) MqttStatus.Connecting else MqttStatus.Disabled
     )
     val status: StateFlow<MqttStatus> = _status.asStateFlow()
 
@@ -41,7 +41,7 @@ class MqttManager(
 
     @Synchronized
     fun start() {
-        if (!settingsRepository.mqttEnabled) {
+        if (!(settingsRepository.mqttEnabled && settingsRepository.serviceEnabled)) {
             _status.value = MqttStatus.Disabled
             return
         }
@@ -58,19 +58,19 @@ class MqttManager(
         loopJob = null
         client?.disconnect()
         client = null
-        _status.value = if (settingsRepository.mqttEnabled) MqttStatus.Disconnected("Stopped") else MqttStatus.Disabled
+        _status.value = if ((settingsRepository.mqttEnabled && settingsRepository.serviceEnabled)) MqttStatus.Disconnected("Stopped") else MqttStatus.Disabled
     }
 
     @Synchronized
     fun restart() {
         stop()
-        if (settingsRepository.mqttEnabled) {
+        if ((settingsRepository.mqttEnabled && settingsRepository.serviceEnabled)) {
             start()
         }
     }
 
     private suspend fun runMqttLoop() {
-        while (scope.isActive && settingsRepository.mqttEnabled) {
+        while (scope.isActive && (settingsRepository.mqttEnabled && settingsRepository.serviceEnabled)) {
             val host = settingsRepository.mqttHost.trim()
             val port = settingsRepository.mqttPort
             val clientId = settingsRepository.mqttClientId.ifBlank { "camera-agent-${Build.MODEL.take(6)}" }
@@ -99,7 +99,7 @@ class MqttManager(
 
                 // Ping & Periodic Publish loop
                 var ticks = 0
-                while (scope.isActive && c.isConnected && settingsRepository.mqttEnabled) {
+                while (scope.isActive && c.isConnected && (settingsRepository.mqttEnabled && settingsRepository.serviceEnabled)) {
                     delay(5000)
                     ticks++
 
@@ -118,12 +118,12 @@ class MqttManager(
                 c.disconnect()
             }
 
-            if (settingsRepository.mqttEnabled) {
+            if ((settingsRepository.mqttEnabled && settingsRepository.serviceEnabled)) {
                 delay(10_000) // Reconnect delay
             }
         }
 
-        if (!settingsRepository.mqttEnabled) {
+        if (!(settingsRepository.mqttEnabled && settingsRepository.serviceEnabled)) {
             _status.value = MqttStatus.Disabled
         }
     }

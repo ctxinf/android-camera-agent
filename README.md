@@ -46,6 +46,25 @@ is treated as an empty prefix. Each segment accepts ASCII letters, digits and
 `- _ . ~`; `.` and `..` segments, URLs, query strings, fragments and percent
 escapes are rejected. Clear the setting to restore the original root URLs.
 
+## Service controls
+
+Both editions provide a master service switch and independent HTTP, MCP and MQTT
+checkboxes on the homepage and in settings. HTTP defaults to enabled; MCP and
+MQTT default to disabled. The master switch pauses network services without
+clearing the individual choices. Camera access remains a separate camera setting;
+the camera indicator reports actual hardware use, including preview and warmup.
+
+HTTP and MCP share the configured port and authentication, but their routes and
+active connections are controlled independently. Disabling one leaves the other
+running; disabling both releases the listener. Green means running/connected,
+amber means enabled but starting or unavailable, and grey means disabled/paused.
+HTTP/MCP connection counts appear on the right and refresh every second. They
+count requests currently being handled, including streams, rather than remembered
+clients or cumulative requests; short MCP requests may return to zero immediately.
+
+MQTT fields can be edited and connection tests run while MQTT is disabled.
+Both editions keep the local preview entry under settings.
+
 ## App identity assets
 
 Both editions share the original camera-and-network mark in
