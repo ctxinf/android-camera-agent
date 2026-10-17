@@ -59,6 +59,12 @@
 
     <PreferenceCategory android:title="@string/cat_network">
         <EditTextPreference
+            android:key="http_path_prefix"
+            android:title="@string/pref_http_path_prefix"
+            android:dialogMessage="@string/http_path_prefix_hint"
+            android:defaultValue=""
+            android:inputType="textUri" />
+        <EditTextPreference
             android:key="http_port"
             android:title="@string/pref_port"
             android:summary="@string/pref_port_sum"

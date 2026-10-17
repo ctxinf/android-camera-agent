@@ -187,6 +187,12 @@ public class HttpServer implements Runnable {
                 path = path.substring(0, q);
             }
 
+            path = io.github.ctxinf.cameraagent.legacy.util.HttpPathPrefix.strip(path, settings.httpPathPrefix());
+            if (path == null) {
+                sendError(out, 404, "Not Found");
+                return;
+            }
+
             if (!"GET".equals(method) && !"HEAD".equals(method) && !"POST".equals(method)) {
                 sendError(out, 405, "Method Not Allowed");
                 return;

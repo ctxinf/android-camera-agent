@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.asStateFlow
 
 interface SettingsRepository {
     val config: StateFlow<CameraConfig>
+    val httpPathPrefix: String
     val httpPort: Int
     val dimTimeoutSec: Int
     val dimBrightness: Float
@@ -25,6 +26,7 @@ interface SettingsRepository {
     val mqttClientId: String
     val mqttTopicPrefix: String
 
+    fun setHttpPathPrefix(prefix: String)
     fun setHttpPort(port: Int)
     fun setDimTimeoutSec(seconds: Int)
     fun setDimBrightness(brightness: Float)
@@ -49,6 +51,13 @@ class SharedPreferencesSettingsRepository(
 
     private val _config = MutableStateFlow(loadConfig())
     override val config: StateFlow<CameraConfig> = _config.asStateFlow()
+
+    override val httpPathPrefix: String
+        get() = io.github.ctxinf.cameraagent.domain.HttpPathPrefix.normalize(prefs.getString("http_path_prefix", ""))
+
+    override fun setHttpPathPrefix(prefix: String) {
+        prefs.edit().putString("http_path_prefix", io.github.ctxinf.cameraagent.domain.HttpPathPrefix.normalize(prefix)).apply()
+    }
 
     override val httpPort: Int
         get() = prefs.getInt(KEY_HTTP_PORT, DEFAULT_HTTP_PORT)

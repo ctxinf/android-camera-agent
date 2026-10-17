@@ -227,6 +227,7 @@
                     android:textSize="13sp"
                     android:textColor="@color/ui_text_secondary"
                     android:id="@+id/tvEndpointSummary"
+                    android:textIsSelectable="true"
                     android:layout_marginTop="12dp"
                     android:lineSpacingExtra="4dp" />
             </LinearLayout>

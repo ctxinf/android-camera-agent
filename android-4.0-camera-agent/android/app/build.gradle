@@ -32,6 +32,7 @@ android {
     }
 }
 
-// No dependencies on purpose: everything used is Android framework API.
+// No runtime dependencies: everything used is Android framework API.
 dependencies {
+    testImplementation 'junit:junit:4.13.2'
 }

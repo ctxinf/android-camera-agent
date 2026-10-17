@@ -39,6 +39,20 @@ public class SettingsActivity extends PreferenceActivity
         getListView().setBackgroundColor(android.graphics.Color.rgb(17, 19, 24));
         getListView().setPadding(16, 0, 16, 0);
         settings = new Settings(this);
+        findPreference(Settings.KEY_HTTP_PATH_PREFIX).setOnPreferenceChangeListener(
+                new Preference.OnPreferenceChangeListener() {
+                    @Override public boolean onPreferenceChange(Preference preference, Object value) {
+                        try {
+                            String normalized = io.github.ctxinf.cameraagent.legacy.util.HttpPathPrefix.normalize(value.toString());
+                            ((EditTextPreference) preference).setText(normalized);
+                            preference.setSummary(normalized.length() == 0 ? getString(R.string.http_path_prefix_empty) : normalized);
+                            return false;
+                        } catch (IllegalArgumentException e) {
+                            android.widget.Toast.makeText(SettingsActivity.this, e.getMessage(), android.widget.Toast.LENGTH_LONG).show();
+                            return false;
+                        }
+                    }
+                });
 
         // Only offer lenses the device actually has, so picking "front" on a
         // single-camera phone is not silently ignored.
@@ -171,7 +185,8 @@ public class SettingsActivity extends PreferenceActivity
                 // The lens changed, so any list built for the old one is wrong.
                 populateResolutions();
             }
-        } else if (Settings.KEY_MQTT_ENABLED.equals(key)
+        } else if (Settings.KEY_HTTP_PATH_PREFIX.equals(key)
+                || Settings.KEY_MQTT_ENABLED.equals(key)
                 || Settings.KEY_MQTT_HOST.equals(key)
                 || Settings.KEY_MQTT_PORT.equals(key)
                 || Settings.KEY_MQTT_USER.equals(key)
@@ -187,7 +202,7 @@ public class SettingsActivity extends PreferenceActivity
                 Settings.KEY_DIM_BRIGHTNESS, Settings.KEY_WAKE_SECONDS,
                 Settings.KEY_CAMERA_FACING, Settings.KEY_RESOLUTION,
                 Settings.KEY_JPEG_QUALITY, Settings.KEY_MJPEG_FPS,
-                Settings.KEY_HTTP_PORT, Settings.KEY_AUTH_ENABLED,
+                Settings.KEY_HTTP_PORT, Settings.KEY_HTTP_PATH_PREFIX, Settings.KEY_AUTH_ENABLED,
                 Settings.KEY_AUTH_USER, Settings.KEY_MCP_ENABLED,
                 Settings.KEY_MQTT_ENABLED, Settings.KEY_MQTT_HOST,
                 Settings.KEY_MQTT_PORT, Settings.KEY_MQTT_USER,
@@ -212,6 +227,11 @@ public class SettingsActivity extends PreferenceActivity
         }
         if (p instanceof CheckBoxPreference) {
             return;   // the checkbox itself already shows the state
+        }
+        if (Settings.KEY_HTTP_PATH_PREFIX.equals(key)) {
+            String prefix = settings.httpPathPrefix();
+            p.setSummary(prefix.length() == 0 ? getString(R.string.http_path_prefix_empty) : prefix);
+            return;
         }
         if (p instanceof EditTextPreference) {
             String v = ((EditTextPreference) p).getText();

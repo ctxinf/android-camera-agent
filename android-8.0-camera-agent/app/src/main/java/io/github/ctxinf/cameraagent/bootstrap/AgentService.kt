@@ -207,7 +207,7 @@ class AgentService : LifecycleService() {
 
         val ip = getIpAddress() ?: "127.0.0.1"
         val port = appGraph.settingsRepository.httpPort
-        val title = "Camera Agent: http://$ip:$port"
+        val title = "Camera Agent: http://$ip:$port${appGraph.settingsRepository.httpPathPrefix}"
 
         val builder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             Notification.Builder(this, CHANNEL_ID)
@@ -218,7 +218,7 @@ class AgentService : LifecycleService() {
 
         builder.setContentTitle(title)
             .setContentText(statusText)
-            .setSmallIcon(android.R.drawable.ic_menu_camera)
+            .setSmallIcon(io.github.ctxinf.cameraagent.R.drawable.ic_launcher_monochrome)
             .setContentIntent(openIntent)
             .setOngoing(true)
 

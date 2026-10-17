@@ -2,357 +2,268 @@ package io.github.ctxinf.cameraagent.adapters.ui
 
 import android.content.Context
 import android.content.Intent
-import android.content.res.ColorStateList
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
 import android.os.PowerManager
+import android.preference.CheckBoxPreference
+import android.preference.EditTextPreference
+import android.preference.ListPreference
+import android.preference.Preference
+import android.preference.PreferenceActivity
+import android.preference.PreferenceCategory
 import android.provider.Settings
-import android.view.View
-import android.widget.ArrayAdapter
-import android.widget.Button
-import android.widget.CheckBox
-import android.widget.EditText
-import android.widget.LinearLayout
-import android.widget.RadioButton
-import android.widget.RadioGroup
-import android.widget.Spinner
-import android.widget.TextView
+import android.text.InputType
+import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.lifecycleScope
 import io.github.ctxinf.cameraagent.R
 import io.github.ctxinf.cameraagent.adapters.mqtt.MqttClient
 import io.github.ctxinf.cameraagent.bootstrap.AgentService
 import io.github.ctxinf.cameraagent.bootstrap.CameraAgentApp
+import io.github.ctxinf.cameraagent.domain.CameraConfig
+import io.github.ctxinf.cameraagent.domain.HttpPathPrefix
 import io.github.ctxinf.cameraagent.domain.LensFacing
-import io.github.ctxinf.cameraagent.domain.Size
 import io.github.ctxinf.cameraagent.infrastructure.logging.AppLog
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 
-class SettingsActivity : AppCompatActivity() {
-
-    private lateinit var btnBack: Button
-    private lateinit var etHttpPort: EditText
-    private lateinit var rgFacing: RadioGroup
-    private lateinit var rbFacingBack: RadioButton
-    private lateinit var rbFacingFront: RadioButton
-    private lateinit var spResolution: Spinner
-    private lateinit var spFps: Spinner
-    private lateinit var etQuality: EditText
-    private lateinit var etDimTimeout: EditText
-    private lateinit var etRetentionGracePeriod: EditText
-
-    // Basic Auth Views
-    private lateinit var cbAuthEnabled: CheckBox
-    private lateinit var layoutAuthFields: LinearLayout
-    private lateinit var etAuthUsername: EditText
-    private lateinit var etAuthPassword: EditText
-
-    // MQTT Views
-    private lateinit var cbMqttEnabled: CheckBox
-    private lateinit var layoutMqttFields: LinearLayout
-    private lateinit var etMqttHost: EditText
-    private lateinit var etMqttPort: EditText
-    private lateinit var etMqttClientId: EditText
-    private lateinit var etMqttUsername: EditText
-    private lateinit var etMqttPassword: EditText
-    private lateinit var etMqttTopicPrefix: EditText
-    private lateinit var btnTestMqtt: Button
-    private lateinit var tvMqttTestResult: TextView
-
-    // Battery Optimization View
-    private lateinit var btnBatteryOpt: Button
-
-    private lateinit var btnSave: Button
-    private lateinit var btnOpenDiagnostics: Button
-    private lateinit var btnPreview: Button
-
-    private var availableResolutions = listOf<Size>()
-    private val availableFpsList = listOf(5, 10, 15, 20, 25, 30)
+/** Platform preferences, matching the legacy edition. Existing typed settings stay intact. */
+@Suppress("DEPRECATION")
+class SettingsActivity : PreferenceActivity() {
+    private val graph get() = (application as CameraAgentApp).appGraph
+    private val repo get() = graph.settingsRepository
+    private val uiScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    private lateinit var resolution: ListPreference
+    private lateinit var battery: Preference
+    private val authFields = mutableListOf<Preference>()
+    private val mqttFields = mutableListOf<Preference>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_settings)
-        AppLog.i("SettingsActivity onCreate()")
+        preferenceScreen = preferenceManager.createPreferenceScreen(this)
+        listView.setBackgroundColor(getColor(R.color.ui_background))
+        val inset = (8 * resources.displayMetrics.density).toInt()
+        listView.setPadding(inset, 0, inset, 0)
 
-        btnBack = findViewById(R.id.btnBack)
-        etHttpPort = findViewById(R.id.etHttpPort)
-        rgFacing = findViewById(R.id.rgFacing)
-        rbFacingBack = findViewById(R.id.rbFacingBack)
-        rbFacingFront = findViewById(R.id.rbFacingFront)
-        spResolution = findViewById(R.id.spResolution)
-        spFps = findViewById(R.id.spFps)
-        etQuality = findViewById(R.id.etQuality)
-        etDimTimeout = findViewById(R.id.etDimTimeout)
-        etRetentionGracePeriod = findViewById(R.id.etRetentionGracePeriod)
+        val display = category(R.string.cat_display)
+        number(display, "dim_timeout_sec", R.string.pref_dim_timeout, repo.dimTimeoutSec, 5..3600, R.string.unit_seconds) { repo.setDimTimeoutSec(it) }
+        number(display, "dim_brightness", R.string.pref_dim_brightness, (repo.dimBrightness * 100).toInt(), 0..100, R.string.unit_percent) { repo.setDimBrightness(it / 100f) }
+        battery = action(display, "battery", R.string.btn_battery_opt) { requestBatteryBypass() }
 
-        cbAuthEnabled = findViewById(R.id.cbAuthEnabled)
-        layoutAuthFields = findViewById(R.id.layoutAuthFields)
-        etAuthUsername = findViewById(R.id.etAuthUsername)
-        etAuthPassword = findViewById(R.id.etAuthPassword)
+        val camera = category(R.string.cat_camera)
+        val caps = graph.capabilities.ifEmpty { graph.refreshCapabilities() }
+        val facings = caps.map { it.facing }.distinct().ifEmpty { listOf(LensFacing.BACK) }
+        choice(camera, "camera_facing", R.string.pref_default_facing,
+            facings.map { if (it == LensFacing.FRONT) getString(R.string.facing_front) else getString(R.string.facing_back) },
+            facings.map { it.name }, repo.config.value.facing.name) { value ->
+            updateCamera { it.copy(facing = LensFacing.valueOf(value)) }
+            refreshResolutions(LensFacing.valueOf(value))
+        }
+        resolution = choice(camera, "resolution", R.string.pref_resolution, emptyList(), emptyList(), "") { value ->
+            val (width, height) = value.split('x').map { it.toInt() }
+            updateCamera { it.copy(targetWidth = width, targetHeight = height) }
+        }
+        refreshResolutions(repo.config.value.facing)
+        number(camera, "target_fps", R.string.pref_target_fps, repo.config.value.targetFps, 1..30, R.string.unit_fps) { fps -> updateCamera { it.copy(targetFps = fps) } }
+        number(camera, "jpeg_quality", R.string.pref_jpeg_quality, repo.config.value.jpegQuality, 10..100) { quality -> updateCamera { it.copy(jpegQuality = quality) } }
+        number(camera, "retention_grace_sec", R.string.pref_retention_grace_period, repo.config.value.retentionGracePeriodSec, 0..3600, R.string.unit_seconds) { seconds -> updateCamera { it.copy(retentionGracePeriodSec = seconds) } }
 
-        cbMqttEnabled = findViewById(R.id.cbMqttEnabled)
-        layoutMqttFields = findViewById(R.id.layoutMqttFields)
-        etMqttHost = findViewById(R.id.etMqttHost)
-        etMqttPort = findViewById(R.id.etMqttPort)
-        etMqttClientId = findViewById(R.id.etMqttClientId)
-        etMqttUsername = findViewById(R.id.etMqttUsername)
-        etMqttPassword = findViewById(R.id.etMqttPassword)
-        etMqttTopicPrefix = findViewById(R.id.etMqttTopicPrefix)
-        btnTestMqtt = findViewById(R.id.btnTestMqtt)
-        tvMqttTestResult = findViewById(R.id.tvMqttTestResult)
+        val network = category(R.string.cat_network)
+        number(network, "http_port", R.string.pref_http_port, repo.httpPort, 1024..65535) { port ->
+            if (port != repo.httpPort) {
+                repo.setHttpPort(port)
+                if (AgentService.isRunning) graph.appScope.launch {
+                    try {
+                        graph.httpServer.stop()
+                        graph.httpServer.start(port)
+                    } catch (e: Exception) {
+                        AppLog.e("HTTP restart failed", e)
+                        runOnUiThread { toast(getString(R.string.http_restart_failed)) }
+                    }
+                }
+                graph.mqttManager.restart()
+            }
+        }
+        edit(network, "http_path_prefix", R.string.pref_http_path_prefix, repo.httpPathPrefix,
+            hint = getString(R.string.http_path_prefix_hint), normalize = HttpPathPrefix::normalize) {
+            repo.setHttpPathPrefix(it)
+            graph.mqttManager.restart()
+        }
+        toggle(network, "auth_enabled", R.string.pref_auth_enabled, repo.authEnabled) { enabled ->
+            repo.setAuthEnabled(enabled)
+            authFields.forEach { it.isEnabled = enabled }
+        }
+        authFields += edit(network, "auth_username", R.string.pref_auth_username, repo.authUsername) { repo.setAuthUsername(it) }
+        authFields += edit(network, "auth_password", R.string.pref_auth_password, repo.authPassword, password = true) { repo.setAuthPassword(it) }
+        authFields.forEach { it.isEnabled = repo.authEnabled }
 
-        btnBatteryOpt = findViewById(R.id.btnBatteryOpt)
-        btnSave = findViewById(R.id.btnSave)
-        btnOpenDiagnostics = findViewById(R.id.btnOpenDiagnostics)
-        btnPreview = findViewById(R.id.btnPreview)
+        val mqtt = category(R.string.pref_mqtt_title)
+        toggle(mqtt, "mqtt_enabled", R.string.pref_mqtt_enabled, repo.mqttEnabled) { enabled ->
+            repo.setMqttEnabled(enabled)
+            mqttFields.forEach { it.isEnabled = enabled }
+            graph.mqttManager.restart()
+        }
+        mqttFields += edit(mqtt, "mqtt_host", R.string.pref_mqtt_host, repo.mqttHost) { repo.setMqttHost(it); graph.mqttManager.restart() }
+        mqttFields += number(mqtt, "mqtt_port", R.string.pref_mqtt_port, repo.mqttPort, 1..65535) { repo.setMqttPort(it); graph.mqttManager.restart() }
+        mqttFields += edit(mqtt, "mqtt_client_id", R.string.pref_mqtt_client_id, repo.mqttClientId,
+            normalize = { it.trim().ifEmpty { throw IllegalArgumentException(getString(R.string.value_required)) } }) { repo.setMqttClientId(it); graph.mqttManager.restart() }
+        mqttFields += edit(mqtt, "mqtt_username", R.string.pref_auth_username, repo.mqttUsername) { repo.setMqttUsername(it); graph.mqttManager.restart() }
+        mqttFields += edit(mqtt, "mqtt_password", R.string.pref_auth_password, repo.mqttPassword, password = true) { repo.setMqttPassword(it); graph.mqttManager.restart() }
+        mqttFields += edit(mqtt, "mqtt_topic_prefix", R.string.pref_mqtt_topic_prefix, repo.mqttTopicPrefix,
+            normalize = { it.trim().ifEmpty { "camera_agent" } }) { repo.setMqttTopicPrefix(it); graph.mqttManager.restart() }
+        mqttFields.forEach { it.isEnabled = repo.mqttEnabled }
+        action(mqtt, "mqtt_test", R.string.btn_test_mqtt) { testMqtt(it) }
 
-        setupListeners()
-        setupForm()
+        val tools = category(R.string.cat_tools)
+        action(tools, "preview", R.string.btn_preview) { startActivity(Intent(this, PreviewActivity::class.java)) }
+        action(tools, "diagnostics", R.string.btn_open_diagnostics) { startActivity(Intent(this, DiagnosticsActivity::class.java)) }
+    }
+
+    private fun category(title: Int) = PreferenceCategory(this).also {
+        it.setTitle(title)
+        preferenceScreen.addPreference(it)
+    }
+
+    private fun action(parent: PreferenceCategory, key: String, title: Int, onClick: (Preference) -> Unit) = Preference(this).also {
+        it.key = key
+        it.setTitle(title)
+        parent.addPreference(it)
+        it.setOnPreferenceClickListener { pref -> onClick(pref); true }
+    }
+
+    private fun edit(parent: PreferenceCategory, key: String, title: Int, value: String,
+                     password: Boolean = false, hint: String? = null,
+                     normalize: (String) -> String = { it.trim() }, save: (String) -> Unit): EditTextPreference {
+        val pref = EditTextPreference(this)
+        pref.key = key
+        pref.isPersistent = false
+        pref.setTitle(title)
+        pref.dialogTitle = getString(title)
+        pref.dialogMessage = hint
+        pref.editText.inputType = if (password) InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
+            else InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
+        fun showSummary(text: String) {
+            pref.summary = when {
+                text.isEmpty() && key == "http_path_prefix" -> getString(R.string.http_path_prefix_empty)
+                text.isEmpty() -> getString(R.string.pref_unset)
+                password -> "••••••"
+                else -> text
+            }
+        }
+        pref.text = value
+        showSummary(value)
+        parent.addPreference(pref)
+        pref.setOnPreferenceChangeListener { _, newValue ->
+            try {
+                val normalized = normalize(newValue.toString())
+                save(normalized)
+                pref.text = normalized
+                showSummary(normalized)
+            } catch (e: IllegalArgumentException) { toast(e.message ?: getString(R.string.invalid_value)) }
+            (getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager)
+                .hideSoftInputFromWindow(pref.editText.windowToken, 0)
+            false // Store through the typed repository, never PreferenceManager's string store.
+        }
+        return pref
+    }
+
+    private fun number(parent: PreferenceCategory, key: String, title: Int, value: Int, range: IntRange,
+                       unit: Int? = null, save: (Int) -> Unit): EditTextPreference {
+        val pref = edit(parent, key, title, value.toString(), normalize = { raw ->
+            val number = raw.toIntOrNull()
+            require(number != null && number in range) { getString(R.string.number_range, range.first, range.last) }
+            number.toString()
+        }) { save(it.toInt()) }
+        pref.editText.inputType = InputType.TYPE_CLASS_NUMBER
+        pref.dialogMessage = getString(R.string.number_range, range.first, range.last)
+        fun summary(text: String) = if (unit == null) text else getString(unit, text.toInt())
+        pref.summary = summary(pref.text)
+        val validateAndSave = pref.onPreferenceChangeListener
+        pref.setOnPreferenceChangeListener { p, v ->
+            validateAndSave.onPreferenceChange(p, v)
+            pref.summary = summary(pref.text)
+            false
+        }
+        return pref
+    }
+
+    private fun toggle(parent: PreferenceCategory, key: String, title: Int, value: Boolean, save: (Boolean) -> Unit) {
+        val pref = CheckBoxPreference(this)
+        pref.key = key
+        pref.isPersistent = false
+        pref.setTitle(title)
+        pref.isChecked = value
+        parent.addPreference(pref)
+        pref.setOnPreferenceChangeListener { _, newValue -> save(newValue as Boolean); true }
+    }
+
+    private fun choice(parent: PreferenceCategory, key: String, title: Int, labels: List<String>, values: List<String>,
+                       current: String, save: (String) -> Unit): ListPreference = ListPreference(this).also { pref ->
+        pref.key = key
+        pref.isPersistent = false
+        pref.setTitle(title)
+        pref.dialogTitle = getString(title)
+        pref.entries = labels.toTypedArray()
+        pref.entryValues = values.toTypedArray()
+        pref.value = current
+        pref.summary = pref.entry
+        parent.addPreference(pref)
+        pref.setOnPreferenceChangeListener { _, value ->
+            save(value.toString())
+            pref.value = value.toString()
+            pref.summary = pref.entry
+            false
+        }
+    }
+
+    private fun refreshResolutions(facing: LensFacing) {
+        val config = repo.config.value
+        val current = "${config.targetWidth}x${config.targetHeight}"
+        val supported = graph.capabilities.firstOrNull { it.facing == facing }?.supportedSizes.orEmpty()
+            .map { "${it.width}x${it.height}" }
+        val values = (supported + current).distinct()
+        resolution.entries = values.map { it.replace("x", " × ") }.toTypedArray()
+        resolution.entryValues = values.toTypedArray()
+        resolution.value = current
+        resolution.summary = resolution.entry
+    }
+
+    private fun updateCamera(change: (CameraConfig) -> CameraConfig) {
+        // Application scope lets an accepted setting finish applying even after Back is pressed.
+        graph.appScope.launch(Dispatchers.Main.immediate) {
+            val config = change(repo.config.value)
+            repo.updateConfig(config)
+            graph.coordinator.updateConfig(config)
+        }
     }
 
     override fun onResume() {
         super.onResume()
-        refreshBatteryOptButton()
+        if (::battery.isInitialized) battery.setSummary(if (ignoresBatteryOptimization()) R.string.battery_opt_enabled else R.string.battery_opt_hint)
     }
 
-    private fun setupListeners() {
-        cbAuthEnabled.setOnCheckedChangeListener { _, isChecked ->
-            layoutAuthFields.visibility = if (isChecked) View.VISIBLE else View.GONE
-        }
+    private fun ignoresBatteryOptimization() = (getSystemService(Context.POWER_SERVICE) as PowerManager).isIgnoringBatteryOptimizations(packageName)
 
-        cbMqttEnabled.setOnCheckedChangeListener { _, isChecked ->
-            layoutMqttFields.visibility = if (isChecked) View.VISIBLE else View.GONE
-        }
-
-        btnTestMqtt.setOnClickListener {
-            testMqttConnection()
-        }
-
-        btnBatteryOpt.setOnClickListener {
-            requestBatteryOptimizationBypass()
-        }
-
-        btnBack.setOnClickListener { finish() }
-
-        btnOpenDiagnostics.setOnClickListener {
-            AppLog.i("SettingsActivity: Opening DiagnosticsActivity")
-            startActivity(Intent(this, DiagnosticsActivity::class.java))
-        }
-
-        btnPreview.setOnClickListener {
-            AppLog.i("SettingsActivity: Opening PreviewActivity")
-            startActivity(Intent(this, PreviewActivity::class.java))
-        }
-
-        btnSave.setOnClickListener { saveSettings() }
+    private fun requestBatteryBypass() {
+        if (ignoresBatteryOptimization()) return
+        val request = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, Uri.parse("package:$packageName"))
+        if (request.resolveActivity(packageManager) != null) startActivity(request)
+        else startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
     }
 
-    private fun setupForm() {
-        val appGraph = (application as CameraAgentApp).appGraph
-        val repo = appGraph.settingsRepository
-        val currentConfig = repo.config.value
-
-        etHttpPort.setText(repo.httpPort.toString())
-        etQuality.setText(currentConfig.jpegQuality.toString())
-        etDimTimeout.setText(repo.dimTimeoutSec.toString())
-        etRetentionGracePeriod.setText(currentConfig.retentionGracePeriodSec.toString())
-
-        // Basic Auth
-        cbAuthEnabled.isChecked = repo.authEnabled
-        layoutAuthFields.visibility = if (repo.authEnabled) View.VISIBLE else View.GONE
-        etAuthUsername.setText(repo.authUsername)
-        etAuthPassword.setText(repo.authPassword)
-
-        // MQTT
-        cbMqttEnabled.isChecked = repo.mqttEnabled
-        layoutMqttFields.visibility = if (repo.mqttEnabled) View.VISIBLE else View.GONE
-        etMqttHost.setText(repo.mqttHost)
-        etMqttPort.setText(repo.mqttPort.toString())
-        etMqttClientId.setText(repo.mqttClientId)
-        etMqttUsername.setText(repo.mqttUsername)
-        etMqttPassword.setText(repo.mqttPassword)
-        etMqttTopicPrefix.setText(repo.mqttTopicPrefix)
-
-        refreshBatteryOptButton()
-
-        if (currentConfig.facing == LensFacing.FRONT) {
-            rbFacingFront.isChecked = true
-        } else {
-            rbFacingBack.isChecked = true
-        }
-
-        // Setup Resolutions
-        val caps = if (appGraph.capabilities.isEmpty()) appGraph.refreshCapabilities() else appGraph.capabilities
-        val activeCap = caps.firstOrNull { it.facing == currentConfig.facing } ?: caps.firstOrNull()
-        availableResolutions = activeCap?.supportedSizes ?: listOf(Size(1920, 1080), Size(1280, 720), Size(640, 480))
-
-        val resStrings = availableResolutions.map { "${it.width} x ${it.height}" }
-        val resAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, resStrings)
-        spResolution.adapter = resAdapter
-
-        val curResIndex = availableResolutions.indexOfFirst {
-            it.width == currentConfig.targetWidth && it.height == currentConfig.targetHeight
-        }
-        if (curResIndex >= 0) {
-            spResolution.setSelection(curResIndex)
-        }
-
-        // Setup FPS
-        val fpsStrings = availableFpsList.map { "$it fps" }
-        val fpsAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, fpsStrings)
-        spFps.adapter = fpsAdapter
-
-        val curFpsIndex = availableFpsList.indexOf(currentConfig.targetFps)
-        if (curFpsIndex >= 0) {
-            spFps.setSelection(curFpsIndex)
-        }
-
-        rgFacing.setOnCheckedChangeListener { _, checkedId ->
-            val newFacing = if (checkedId == R.id.rbFacingFront) LensFacing.FRONT else LensFacing.BACK
-            val cap = caps.firstOrNull { it.facing == newFacing } ?: caps.firstOrNull()
-            if (cap != null) {
-                availableResolutions = cap.supportedSizes
-                val updatedResStrings = availableResolutions.map { "${it.width} x ${it.height}" }
-                val updatedAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, updatedResStrings)
-                spResolution.adapter = updatedAdapter
-            }
+    private fun testMqtt(pref: Preference) {
+        pref.isEnabled = false
+        pref.setSummary(R.string.mqtt_testing)
+        uiScope.launch {
+            val result = MqttClient.testConnection(repo.mqttHost, repo.mqttPort,
+                repo.mqttClientId + "-test", repo.mqttUsername.ifEmpty { null }, repo.mqttPassword.ifEmpty { null }, 5000)
+            pref.isEnabled = true
+            pref.setSummary(if (result.success) R.string.mqtt_test_success else R.string.mqtt_test_failed)
         }
     }
 
-    private fun refreshBatteryOptButton() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            val pm = getSystemService(Context.POWER_SERVICE) as? PowerManager
-            val isIgnoring = pm?.isIgnoringBatteryOptimizations(packageName) == true
-            if (isIgnoring) {
-                btnBatteryOpt.text = "✓ 锁屏常驻: 已忽略电池优化 (正常)"
-                btnBatteryOpt.backgroundTintList = ColorStateList.valueOf(0xFF404D70.toInt())
-            } else {
-                btnBatteryOpt.text = "⚠ 锁屏常驻: 点此授权忽略电池优化"
-                btnBatteryOpt.backgroundTintList = ColorStateList.valueOf(0xFF675048.toInt())
-            }
-        }
-    }
-
-    private fun requestBatteryOptimizationBypass() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            val pm = getSystemService(Context.POWER_SERVICE) as? PowerManager
-            if (pm?.isIgnoringBatteryOptimizations(packageName) == true) {
-                Toast.makeText(this, "应用已处于电池优化白名单 (锁屏常驻已就绪)", Toast.LENGTH_SHORT).show()
-            } else {
-                try {
-                    val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
-                        data = Uri.parse("package:$packageName")
-                    }
-                    startActivity(intent)
-                } catch (e: Exception) {
-                    val fallback = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
-                    startActivity(fallback)
-                }
-            }
-        }
-    }
-
-    private fun testMqttConnection() {
-        val host = etMqttHost.text.toString().trim()
-        val port = etMqttPort.text.toString().toIntOrNull() ?: 1883
-        val clientId = etMqttClientId.text.toString().trim().ifEmpty { "test-client-${(1000..9999).random()}" }
-        val user = etMqttUsername.text.toString().trim().ifEmpty { null }
-        val pass = etMqttPassword.text.toString().trim().ifEmpty { null }
-
-        tvMqttTestResult.visibility = View.VISIBLE
-        tvMqttTestResult.text = "正在尝试连接 MQTT Broker ($host:$port)..."
-        tvMqttTestResult.setTextColor(0xFFBAC6EA.toInt())
-        btnTestMqtt.isEnabled = false
-
-        lifecycleScope.launch {
-            val result = MqttClient.testConnection(
-                host = host,
-                port = port,
-                clientId = clientId,
-                username = user,
-                password = pass,
-                timeoutMs = 5000,
-            )
-            btnTestMqtt.isEnabled = true
-            tvMqttTestResult.text = result.message
-            if (result.success) {
-                tvMqttTestResult.setTextColor(0xFFA8C7BA.toInt())
-            } else {
-                tvMqttTestResult.setTextColor(0xFFE6A5A5.toInt())
-            }
-        }
-    }
-
-    private fun saveSettings() {
-        val appGraph = (application as CameraAgentApp).appGraph
-        val repo = appGraph.settingsRepository
-        val oldPort = repo.httpPort
-
-        val newPort = etHttpPort.text.toString().toIntOrNull() ?: 8080
-        val newQuality = etQuality.text.toString().toIntOrNull()?.coerceIn(10, 100) ?: 80
-        val newDimTimeout = etDimTimeout.text.toString().toIntOrNull()?.coerceAtLeast(5) ?: 30
-        val newRetentionGrace = etRetentionGracePeriod.text.toString().toIntOrNull()?.coerceIn(0, 3600) ?: 5
-        val newFacing = if (rbFacingFront.isChecked) LensFacing.FRONT else LensFacing.BACK
-
-        val selectedRes = if (spResolution.selectedItemPosition in availableResolutions.indices) {
-            availableResolutions[spResolution.selectedItemPosition]
-        } else {
-            Size(1280, 720)
-        }
-
-        val selectedFps = if (spFps.selectedItemPosition in availableFpsList.indices) {
-            availableFpsList[spFps.selectedItemPosition]
-        } else {
-            15
-        }
-
-        repo.setHttpPort(newPort)
-        repo.setDimTimeoutSec(newDimTimeout)
-
-        // Auth
-        repo.setAuthEnabled(cbAuthEnabled.isChecked)
-        repo.setAuthUsername(etAuthUsername.text.toString().trim().ifEmpty { "admin" })
-        repo.setAuthPassword(etAuthPassword.text.toString().trim().ifEmpty { "password" })
-
-        // MQTT
-        repo.setMqttEnabled(cbMqttEnabled.isChecked)
-        repo.setMqttHost(etMqttHost.text.toString().trim())
-        repo.setMqttPort(etMqttPort.text.toString().toIntOrNull() ?: 1883)
-        repo.setMqttClientId(etMqttClientId.text.toString().trim())
-        repo.setMqttUsername(etMqttUsername.text.toString().trim())
-        repo.setMqttPassword(etMqttPassword.text.toString().trim())
-        repo.setMqttTopicPrefix(etMqttTopicPrefix.text.toString().trim().ifEmpty { "camera_agent" })
-        appGraph.mqttManager.restart()
-
-        val updatedConfig = repo.config.value.copy(
-            facing = newFacing,
-            targetWidth = selectedRes.width,
-            targetHeight = selectedRes.height,
-            targetFps = selectedFps,
-            jpegQuality = newQuality,
-            retentionGracePeriodSec = newRetentionGrace,
-        )
-
-        lifecycleScope.launch {
-            appGraph.coordinator.updateConfig(updatedConfig)
-            repo.updateConfig(updatedConfig)
-            AppLog.i("Settings saved: Port=$newPort, Facing=$newFacing, Res=${selectedRes.width}x${selectedRes.height}, Fps=$selectedFps, Quality=$newQuality, RetentionGrace=${newRetentionGrace}s, Mqtt=${cbMqttEnabled.isChecked}")
-
-            if (oldPort != newPort && AgentService.isRunning) {
-                AppLog.i("HTTP port changed from $oldPort to $newPort, restarting AgentService...")
-                stopService(Intent(this@SettingsActivity, AgentService::class.java))
-                val startIntent = Intent(this@SettingsActivity, AgentService::class.java)
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    startForegroundService(startIntent)
-                } else {
-                    startService(startIntent)
-                }
-            }
-
-            Toast.makeText(this@SettingsActivity, "设置已保存 (Settings saved)", Toast.LENGTH_SHORT).show()
-            finish()
-        }
-    }
+    private fun toast(message: String) = Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+    override fun onDestroy() { uiScope.cancel(); super.onDestroy() }
 }

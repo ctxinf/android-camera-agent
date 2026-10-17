@@ -37,6 +37,11 @@ class DefaultHttpServerTest {
         private val _config = MutableStateFlow(initialConfig)
         override val config: StateFlow<CameraConfig> = _config.asStateFlow()
 
+        override var httpPathPrefix: String = ""
+            private set
+        override fun setHttpPathPrefix(prefix: String) {
+            httpPathPrefix = io.github.ctxinf.cameraagent.domain.HttpPathPrefix.normalize(prefix)
+        }
         override val httpPort: Int get() = _httpPort
         override val dimTimeoutSec: Int get() = _dimTimeoutSec
         override val dimBrightness: Float get() = _dimBrightness
@@ -132,6 +137,53 @@ class DefaultHttpServerTest {
         }
         coordinator.shutdown()
         testScope.coroutineContext[kotlinx.coroutines.Job]?.cancel()
+    }
+
+    private fun requestStatus(path: String, authorization: String? = null): Int {
+        val conn = URL("http://127.0.0.1:$serverPort$path").openConnection() as HttpURLConnection
+        conn.connectTimeout = 3000
+        conn.readTimeout = 3000
+        if (authorization != null) conn.setRequestProperty("Authorization", authorization)
+        return try { conn.responseCode } finally { conn.disconnect() }
+    }
+
+    @Test
+    fun `prefix mounts all aliases and rejects unprefixed or partial paths`() {
+        settingsRepo.setHttpPathPrefix(" /cameras//front/ ")
+        assertEquals(200, requestStatus("/cameras/front/health?probe=1"))
+        assertEquals(200, requestStatus("/cameras/front/api/status"))
+        assertEquals(200, requestStatus("/cameras/front/api/v1/status"))
+        assertEquals(200, requestStatus("/cameras/front/api/camera"))
+        assertEquals(200, requestStatus("/cameras/front/api/v1/config"))
+        assertEquals(200, requestStatus("/cameras/front/mcp"))
+        assertEquals(200, requestStatus("/cameras/front/api/mcp"))
+        assertEquals(200, requestStatus("/cameras/front/api/v1/mcp"))
+        for (path in listOf("/health", "/api/status", "/mcp", "/cameras/frontal/health", "/cameras/frontier/api/status")) {
+            assertEquals(path, 404, requestStatus(path))
+        }
+    }
+
+    @Test
+    fun `prefixed protected endpoints retain auth while health stays public`() {
+        settingsRepo.setHttpPathPrefix("/cam")
+        settingsRepo.setAuthEnabled(true)
+        assertEquals(200, requestStatus("/cam/health"))
+        assertEquals(401, requestStatus("/cam/api/status"))
+        assertEquals(401, requestStatus("/cam/mcp"))
+        assertEquals(200, requestStatus("/cam/api/status", "Basic YWRtaW46cGFzc3dvcmQ="))
+        assertEquals(404, requestStatus("/health"))
+    }
+
+    @Test
+    fun `changing and clearing prefix applies without restarting server`() {
+        settingsRepo.setHttpPathPrefix("/first")
+        assertEquals(200, requestStatus("/first/health"))
+        settingsRepo.setHttpPathPrefix("/second")
+        assertEquals(404, requestStatus("/first/health"))
+        assertEquals(200, requestStatus("/second/health"))
+        settingsRepo.setHttpPathPrefix("/")
+        assertEquals(200, requestStatus("/health"))
+        assertEquals(404, requestStatus("/second/health"))
     }
 
     @Test

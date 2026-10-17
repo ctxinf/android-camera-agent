@@ -80,4 +80,7 @@
     <string name="notif_title_idle">待机中 · 摄像头关闭</string>
     <string name="notif_title_open">● 摄像头开启中</string>
     <string name="notif_no_network">无网络</string>
+    <string name="pref_http_path_prefix">HTTP 路径前缀</string>
+    <string name="http_path_prefix_hint">例如 /camera/front。留空使用根路径；抓图、视频、状态和 MCP 均使用此路径前缀。修改后请同步更新访问地址。</string>
+    <string name="http_path_prefix_empty">未设置，使用根路径</string>
 </resources>

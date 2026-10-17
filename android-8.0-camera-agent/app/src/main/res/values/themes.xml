@@ -28,4 +28,13 @@
         <item name="textStartPadding">2dp</item>
         <item name="textEndPadding">2dp</item>
     </style>
+    <style name="Theme.CameraAgent.Preferences" parent="android:style/Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/ui_background</item>
+        <item name="android:colorBackground">@color/ui_background</item>
+        <item name="android:colorAccent">@color/ui_primary</item>
+        <item name="android:statusBarColor">@color/ui_background</item>
+        <item name="android:navigationBarColor">@color/ui_background</item>
+        <item name="android:textColorPrimary">@color/ui_text</item>
+        <item name="android:textColorSecondary">@color/ui_text_secondary</item>
+    </style>
 </resources>

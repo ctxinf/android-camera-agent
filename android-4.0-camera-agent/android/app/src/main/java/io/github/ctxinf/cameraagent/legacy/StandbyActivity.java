@@ -109,7 +109,7 @@ public class StandbyActivity extends Activity {
         AgentService service = AgentService.get();
         int port = service == null ? settings.httpPort() : service.getHttpPort();
         if (ip == null) { infoView.setText("no network"); return; }
-        String base = "http://" + ip + ":" + port;
+        String base = "http://" + ip + ":" + port + settings.httpPathPrefix();
         StringBuilder text = new StringBuilder();
         text.append(base).append("\n\n/snapshot.jpg\n")
                 .append("/video.mjpeg\n")

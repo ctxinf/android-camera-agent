@@ -175,6 +175,12 @@ class DefaultHttpServer(
                 path = path.substring(0, queryIdx)
             }
 
+            path = io.github.ctxinf.cameraagent.domain.HttpPathPrefix.strip(path, settingsRepository.httpPathPrefix)
+                ?: run {
+                    sendError(output, 404, "Not Found")
+                    return
+                }
+
             // Parse headers
             var contentLength = 0
             var authHeader: String? = null

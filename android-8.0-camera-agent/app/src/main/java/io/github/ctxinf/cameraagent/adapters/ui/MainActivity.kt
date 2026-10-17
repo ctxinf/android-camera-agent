@@ -1,8 +1,6 @@
 package io.github.ctxinf.cameraagent.adapters.ui
 
 import android.Manifest
-import android.content.ClipData
-import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -17,10 +15,9 @@ import android.view.WindowManager
 import android.widget.Button
 import android.widget.ImageButton
 import android.widget.LinearLayout
-import android.widget.TextView
 import android.widget.Toast
+import android.widget.TextView
 import android.widget.ToggleButton
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -179,6 +176,8 @@ class MainActivity : AppCompatActivity() {
         setupChipListeners()
     }
 
+    private var refreshEndpointDetail: (() -> Unit)? = null
+
     private fun setupChipListeners() {
         val appGraph = (application as CameraAgentApp).appGraph
         val repo = appGraph.settingsRepository
@@ -186,7 +185,7 @@ class MainActivity : AppCompatActivity() {
         chipSnapshot.setOnClickListener {
             wakeScreen()
             showEndpointDetail(
-                title = "📸 JPEG Snapshot",
+                title = "JPEG Snapshot",
                 path = "/snapshot.jpg",
                 method = "GET, HEAD",
                 contentType = "image/jpeg",
@@ -199,7 +198,7 @@ class MainActivity : AppCompatActivity() {
         chipStream.setOnClickListener {
             wakeScreen()
             showEndpointDetail(
-                title = "📹 MJPEG Live Stream",
+                title = "MJPEG Live Stream",
                 path = "/video.mjpeg",
                 method = "GET, HEAD",
                 contentType = "multipart/x-mixed-replace; boundary=frameboundary",
@@ -212,7 +211,7 @@ class MainActivity : AppCompatActivity() {
         chipStatus.setOnClickListener {
             wakeScreen()
             showEndpointDetail(
-                title = "📊 Device Telemetry & Status",
+                title = "Device Telemetry & Status",
                 path = "/api/status",
                 method = "GET",
                 contentType = "application/json",
@@ -224,7 +223,7 @@ class MainActivity : AppCompatActivity() {
         chipMcp.setOnClickListener {
             wakeScreen()
             showEndpointDetail(
-                title = "🤖 Model Context Protocol (MCP)",
+                title = "Model Context Protocol (MCP)",
                 path = "/mcp",
                 method = "POST (JSON-RPC 2.0), GET (Discover)",
                 contentType = "application/json",
@@ -236,7 +235,7 @@ class MainActivity : AppCompatActivity() {
         chipCameraConfig.setOnClickListener {
             wakeScreen()
             showEndpointDetail(
-                title = "⚙️ Camera Runtime Config",
+                title = "Camera Runtime Config",
                 path = "/api/camera",
                 method = "GET, POST, PATCH",
                 contentType = "application/json",
@@ -248,7 +247,7 @@ class MainActivity : AppCompatActivity() {
         chipWarmup.setOnClickListener {
             wakeScreen()
             showEndpointDetail(
-                title = "⚡ Hardware Warmup",
+                title = "Hardware Warmup",
                 path = "/api/v1/warmup",
                 method = "POST",
                 contentType = "application/json",
@@ -260,7 +259,7 @@ class MainActivity : AppCompatActivity() {
         chipHealth.setOnClickListener {
             wakeScreen()
             showEndpointDetail(
-                title = "🩺 Health Probe",
+                title = "Health Probe",
                 path = "/health",
                 method = "GET",
                 contentType = "application/json",
@@ -282,45 +281,22 @@ class MainActivity : AppCompatActivity() {
         val appGraph = (application as CameraAgentApp).appGraph
         val ip = getIpAddress() ?: "127.0.0.1"
         val port = appGraph.settingsRepository.httpPort
-        val fullUrl = "http://$ip:$port$path"
+        val fullUrl = "http://$ip:$port${appGraph.settingsRepository.httpPathPrefix}$path"
 
+        refreshEndpointDetail = { showEndpointDetail(title, path, method, contentType, description, authRequired = appGraph.settingsRepository.authEnabled && path != "/health", haRole = haRole) }
         // Update inline summary box
         val inlineText = buildString {
             append("$title\n")
             append("URL:     $fullUrl\n")
             append("Method:  $method\n")
             append("Type:    $contentType\n")
-            append("Auth:    ${if (authRequired) "🔒 需 Basic Auth" else "🔓 免密公开"}\n")
+            append("Auth:    ${if (authRequired) "需 Basic Auth" else "免密公开"}\n")
             if (haRole != null) {
                 append("HA:      $haRole\n")
             }
             append("说明:    $description")
         }
-        tvEndpointSummary.text = inlineText
-
-        // Pop up modern dialog
-        val dialogMessage = buildString {
-            append("地址 (Full URL):\n$fullUrl\n\n")
-            append("请求方式 (Method):\n$method\n\n")
-            append("内容类型 (Content-Type):\n$contentType\n\n")
-            append("鉴权状态 (Auth):\n${if (authRequired) "🔒 需 Basic Auth 鉴权" else "🔓 公开免密"}\n\n")
-            if (haRole != null) {
-                append("Home Assistant:\n$haRole\n\n")
-            }
-            append("功能说明 (Description):\n$description")
-        }
-
-        AlertDialog.Builder(this)
-            .setTitle(title)
-            .setMessage(dialogMessage)
-            .setPositiveButton("复制链接") { _, _ ->
-                val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                val clip = ClipData.newPlainText("URL", fullUrl)
-                clipboard.setPrimaryClip(clip)
-                Toast.makeText(this, "链接已复制到剪贴板！", Toast.LENGTH_SHORT).show()
-            }
-            .setNegativeButton("关闭", null)
-            .show()
+        if (tvEndpointSummary.text.toString() != inlineText) tvEndpointSummary.text = inlineText
     }
 
     private fun setFacing(facing: LensFacing) {
@@ -477,8 +453,9 @@ class MainActivity : AppCompatActivity() {
         // 4. Modern Endpoint Card & Auth Status
         val ip = getIpAddress() ?: "127.0.0.1"
         val port = repo.httpPort
-        val baseUrl = "http://$ip:$port"
+        val baseUrl = "http://$ip:$port${repo.httpPathPrefix}"
         tvBaseEndpoint.text = baseUrl
+        refreshEndpointDetail?.invoke()
 
         if (repo.authEnabled) {
             tvAuthBadge.visibility = View.VISIBLE

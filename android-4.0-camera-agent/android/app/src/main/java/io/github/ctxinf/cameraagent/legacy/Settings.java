@@ -15,6 +15,7 @@ import android.preference.PreferenceManager;
  */
 public final class Settings {
 
+    public static final String KEY_HTTP_PATH_PREFIX = "http_path_prefix";
     public static final String KEY_HTTP_PORT = "http_port";
     public static final String KEY_AUTH_ENABLED = "auth_enabled";
     public static final String KEY_AUTH_USER = "auth_user";
@@ -67,6 +68,11 @@ public final class Settings {
 
     public int httpPort() {
         return clamp(getInt(KEY_HTTP_PORT, DEFAULT_HTTP_PORT), 1024, 65535);
+    }
+
+    public String httpPathPrefix() {
+        return io.github.ctxinf.cameraagent.legacy.util.HttpPathPrefix.normalize(
+                prefs.getString(KEY_HTTP_PATH_PREFIX, ""));
     }
 
     public boolean authEnabled() {

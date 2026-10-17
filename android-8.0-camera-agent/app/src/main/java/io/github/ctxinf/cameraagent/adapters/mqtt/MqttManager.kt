@@ -163,8 +163,8 @@ class MqttManager(
                 put("ip", ip)
                 put("http_port", port)
                 put("camera_enabled", config.enabled)
-                put("snapshot_url", "http://$ip:$port/snapshot.jpg")
-                put("stream_url", "http://$ip:$port/video.mjpeg")
+                put("snapshot_url", "http://$ip:$port${settingsRepository.httpPathPrefix}/snapshot.jpg")
+                put("stream_url", "http://$ip:$port${settingsRepository.httpPathPrefix}/video.mjpeg")
             }.toString()
 
             currentClient.publish(topic, payload, retain = true)
