@@ -18,7 +18,6 @@
     </PreferenceCategory>
 
     <PreferenceCategory android:title="@string/cat_camera">
-        <CheckBoxPreference android:key="camera_enabled" android:title="允许访问相机" android:defaultValue="true" />
         <CheckBoxPreference
             android:key="front_camera_disabled"
             android:title="@string/pref_disable_front"

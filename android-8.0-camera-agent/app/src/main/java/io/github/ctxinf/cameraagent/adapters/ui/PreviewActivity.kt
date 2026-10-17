@@ -1,8 +1,12 @@
 package io.github.ctxinf.cameraagent.adapters.ui
 
 import android.os.Bundle
-import android.view.SurfaceHolder
-import android.view.SurfaceView
+import android.view.Surface
+import android.view.TextureView
+import android.graphics.SurfaceTexture
+import android.view.Gravity
+import android.widget.FrameLayout
+import io.github.ctxinf.cameraagent.domain.CameraState
 import android.view.View
 import android.view.WindowManager
 import android.widget.Button
@@ -17,13 +21,13 @@ import kotlinx.coroutines.launch
 class PreviewActivity : AppCompatActivity() {
 
     private lateinit var btnBack: Button
-    private lateinit var previewSurface: SurfaceView
+    private lateinit var previewSurface: TextureView
     private lateinit var tvPreviewStatus: TextView
     private lateinit var tvPreviewInfo: TextView
     private lateinit var btnTogglePreview: Button
     private lateinit var btnRotate: Button
 
-    private var currentHolder: SurfaceHolder? = null
+    private var previewOutput: Surface? = null
     private var isPreviewAttached = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -41,23 +45,22 @@ class PreviewActivity : AppCompatActivity() {
 
         btnBack.setOnClickListener { finish() }
 
-        previewSurface.holder.addCallback(object : SurfaceHolder.Callback {
-            override fun surfaceCreated(holder: SurfaceHolder) {
-                AppLog.i("Preview surfaceCreated")
-                currentHolder = holder
+        previewSurface.surfaceTextureListener = object : TextureView.SurfaceTextureListener {
+            override fun onSurfaceTextureAvailable(texture: SurfaceTexture, width: Int, height: Int) {
+                updatePreviewGeometry()
+                previewOutput = Surface(texture)
                 startPreview()
             }
-
-            override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {
-                currentHolder = holder
+            override fun onSurfaceTextureSizeChanged(texture: SurfaceTexture, width: Int, height: Int) { updatePreviewGeometry() }
+            override fun onSurfaceTextureUpdated(texture: SurfaceTexture) = Unit
+            override fun onSurfaceTextureDestroyed(texture: SurfaceTexture): Boolean {
+                releasePreviewOutput()
+                return true
             }
-
-            override fun surfaceDestroyed(holder: SurfaceHolder) {
-                AppLog.i("Preview surfaceDestroyed")
-                stopPreview()
-                currentHolder = null
-            }
-        })
+        }
+        (previewSurface.parent as View).addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ ->
+            updatePreviewGeometry()
+        }
 
         btnTogglePreview.setOnClickListener {
             if (isPreviewAttached) {
@@ -75,15 +78,15 @@ class PreviewActivity : AppCompatActivity() {
     }
 
     private fun startPreview() {
-        val holder = currentHolder ?: return
-        if (!holder.surface.isValid) return
+        val surface = previewOutput ?: return
+        if (!surface.isValid) return
         if (isPreviewAttached) return
 
         lifecycleScope.launch {
             try {
                 AppLog.i("Attaching preview surface...")
                 val appGraph = (application as CameraAgentApp).appGraph
-                appGraph.coordinator.attachPreview(holder.surface)
+                appGraph.coordinator.attachPreview(surface)
                 isPreviewAttached = true
                 tvPreviewStatus.visibility = View.GONE
                 btnTogglePreview.text = getString(R.string.preview_on)
@@ -97,14 +100,14 @@ class PreviewActivity : AppCompatActivity() {
     }
 
     private fun stopPreview() {
-        val holder = currentHolder ?: return
+        val surface = previewOutput ?: return
         if (!isPreviewAttached) return
 
         lifecycleScope.launch {
             try {
                 AppLog.i("Detaching preview surface...")
                 val appGraph = (application as CameraAgentApp).appGraph
-                appGraph.coordinator.detachPreview(holder.surface)
+                appGraph.coordinator.detachPreview(surface)
                 isPreviewAttached = false
                 tvPreviewStatus.text = "Preview Stopped"
                 tvPreviewStatus.visibility = View.VISIBLE
@@ -122,7 +125,6 @@ class PreviewActivity : AppCompatActivity() {
                 val appGraph = (application as CameraAgentApp).appGraph
                 val currentConfig = appGraph.coordinator.config.value
                 val nextRotation = (currentConfig.rotationOffset + 90) % 360
-                val updatedConfig = currentConfig.copy(rotationOffset = nextRotation)
                 appGraph.cameraAccess.updateLocal { it.copy(rotationOffset = nextRotation) }
                 AppLog.i("Rotation updated to $nextRotation°")
             } catch (e: Exception) {
@@ -132,19 +134,62 @@ class PreviewActivity : AppCompatActivity() {
     }
 
     private fun observeCameraState() {
-        val appGraph = (application as CameraAgentApp).appGraph
+        val graph = (application as CameraAgentApp).appGraph
         lifecycleScope.launch {
-            appGraph.coordinator.config.collect { config ->
-                val state = appGraph.coordinator.state.value
-                val info = "Lens: ${config.facing} | Target: ${config.targetWidth}x${config.targetHeight} @ ${config.targetFps}fps | " +
-                        "Rotation Offset: ${config.rotationOffset}° | State: ${state::class.simpleName}"
-                tvPreviewInfo.text = info
-            }
+            graph.coordinator.state.collect { refreshPreview() }
+        }
+        lifecycleScope.launch {
+            graph.coordinator.config.collect { refreshPreview() }
+        }
+    }
+
+    private fun refreshPreview() {
+        val graph = (application as CameraAgentApp).appGraph
+        val config = graph.coordinator.config.value
+        val state = graph.coordinator.state.value
+        tvPreviewInfo.text = "${if (config.facing == io.github.ctxinf.cameraagent.domain.LensFacing.FRONT) "前置" else "后置"} · " +
+            "${config.targetWidth}×${config.targetHeight} · ${config.targetFps} fps · " +
+            "旋转 ${config.rotationOffset}° · ${state::class.simpleName}"
+        btnRotate.text = "顺时针 ${config.rotationOffset}°"
+        updatePreviewGeometry()
+    }
+
+    private fun updatePreviewGeometry() {
+        val graph = (application as CameraAgentApp).appGraph
+        val config = graph.coordinator.config.value
+        val active = graph.coordinator.state.value as? CameraState.Active
+        val width = active?.width ?: config.targetWidth
+        val height = active?.height ?: config.targetHeight
+        val sensor = graph.capabilities.firstOrNull { it.facing == config.facing }?.sensorOrientation ?: 0
+        val rotation = (sensor + config.rotationOffset) % 360
+        val container = previewSurface.parent as View
+        if (container.width == 0 || container.height == 0) return
+        val swap = rotation % 180 != 0
+        val scale = minOf(container.width.toFloat() / (if (swap) height else width),
+            container.height.toFloat() / (if (swap) width else height))
+        val w = (width * scale).toInt().coerceAtLeast(1)
+        val h = (height * scale).toInt().coerceAtLeast(1)
+        previewSurface.surfaceTexture?.setDefaultBufferSize(width, height)
+        val params = previewSurface.layoutParams as FrameLayout.LayoutParams
+        if (params.width != w || params.height != h) {
+            previewSurface.layoutParams = FrameLayout.LayoutParams(w, h, Gravity.CENTER)
+        }
+        previewSurface.rotation = rotation.toFloat()
+    }
+
+    private fun releasePreviewOutput() {
+        val surface = previewOutput ?: return
+        previewOutput = null
+        isPreviewAttached = false
+        val graph = (application as CameraAgentApp).appGraph
+        graph.appScope.launch {
+            graph.coordinator.detachPreview(surface)
+            surface.release()
         }
     }
 
     override fun onDestroy() {
+        releasePreviewOutput()
         super.onDestroy()
-        stopPreview()
     }
 }

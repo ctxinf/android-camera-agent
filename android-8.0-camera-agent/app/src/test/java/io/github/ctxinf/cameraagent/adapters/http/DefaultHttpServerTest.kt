@@ -134,7 +134,7 @@ class DefaultHttpServerTest {
         )
         settingsRepo = FakeSettingsRepository(_httpPort = serverPort)
         httpServer = DefaultHttpServer(
-            cameraController = coordinator,
+            cameraController = io.github.ctxinf.cameraagent.application.CameraAccessController(coordinator, settingsRepo),
             frameEncoder = DefaultFrameEncoder(),
             settingsRepository = settingsRepo,
             getHardwareLevel = { "FULL" },

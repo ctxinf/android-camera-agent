@@ -26,6 +26,7 @@
         <!-- Standby / Home Main Screen -->
         <activity
             android:name=".adapters.ui.MainActivity"
+            android:screenOrientation="portrait"
             android:exported="true"
             android:launchMode="singleTop">
 
@@ -55,6 +56,7 @@
         <!-- Local Preview & Rotation Screen -->
         <activity
             android:name=".adapters.ui.PreviewActivity"
+            android:screenOrientation="portrait"
             android:exported="true"
             android:label="@string/preview_title" />
 

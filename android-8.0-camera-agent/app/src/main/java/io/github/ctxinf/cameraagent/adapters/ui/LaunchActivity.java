@@ -24,7 +24,6 @@ public class LaunchActivity extends Activity {
     };
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
-        boolean resident = AgentService.Companion.isRunning();
         ((CameraAgentApp) getApplication()).getAppGraph().getSettingsRepository().setManuallyExited(false);
         getPackageManager().setComponentEnabledSetting(new android.content.ComponentName(this,
                 io.github.ctxinf.cameraagent.bootstrap.BootReceiver.class),
@@ -44,11 +43,6 @@ public class LaunchActivity extends Activity {
         title.setTextColor(0xffe0e0e0);
         title.setPadding(0, 28, 0, 12);
         panel.addView(title);
-        TextView status = new TextView(this);
-        status.setText(resident ? "后台服务运行中 · 正在返回" : "重新启动 · 正在初始化");
-        status.setTextColor(resident ? 0xffa8c7ba : 0xffbac6ea);
-        status.setTextSize(16);
-        panel.addView(status);
         setContentView(panel);
         panel.setAlpha(0f);
         panel.setScaleX(0.96f);

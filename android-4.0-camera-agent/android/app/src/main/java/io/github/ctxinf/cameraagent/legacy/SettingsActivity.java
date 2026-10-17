@@ -194,6 +194,12 @@ public class SettingsActivity extends PreferenceActivity
     @Override
     protected void onResume() {
         super.onResume();
+        String[] toggles = { Settings.KEY_HTTP_ENABLED, Settings.KEY_MCP_ENABLED, Settings.KEY_MQTT_ENABLED };
+        for (String key : toggles) {
+            android.preference.CheckBoxPreference toggle = (android.preference.CheckBoxPreference) findPreference(key);
+            if (toggle != null) toggle.setChecked(settings.raw().getBoolean(key, Settings.KEY_HTTP_ENABLED.equals(key)));
+        }
+
         PreferenceManager.getDefaultSharedPreferences(this)
                 .registerOnSharedPreferenceChangeListener(this);
     }

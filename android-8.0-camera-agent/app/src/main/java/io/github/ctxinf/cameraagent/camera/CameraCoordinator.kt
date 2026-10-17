@@ -276,11 +276,11 @@ class CameraCoordinator(
                 val newConfig = command.config
                 _config.value = newConfig
 
-                if (_state.value is CameraState.Active) {
+                if (_state.value is CameraState.Active || _state.value is CameraState.Retained) {
                     val facingChanged = oldConfig.facing != newConfig.facing
                     val sizeChanged = oldConfig.targetWidth != newConfig.targetWidth ||
                             oldConfig.targetHeight != newConfig.targetHeight
-                    if (facingChanged || sizeChanged) {
+                    if (facingChanged || sizeChanged || oldConfig.rotationOffset != newConfig.rotationOffset) {
                         reopenWithUpdatedPlan()
                     } else {
                         try {

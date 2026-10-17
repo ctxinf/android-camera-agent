@@ -325,6 +325,25 @@ class CameraCoordinatorTest {
     }
 
     @Test
+    fun `clockwise rotation updates the live capture plan and preserves stream`() = runTest {
+        val backend = FakeCameraBackend()
+        val coordinator = createCoordinator(backend)
+        runCurrent()
+        coordinator.openStream("rotation-stream")
+        runCurrent()
+        for (offset in listOf(90, 180, 270, 0)) {
+            coordinator.updateConfig(coordinator.config.value.copy(rotationOffset = offset))
+            runCurrent()
+            assertEquals((90 + offset) % 360, backend.lastPlan?.rotation)
+            assertTrue(backend.isRepeating)
+            assertEquals(1, (coordinator.state.value as CameraState.Active).activeStreams)
+        }
+        coordinator.closeStream("rotation-stream")
+        runCurrent()
+        assertEquals(CameraState.Closed, coordinator.state.value)
+    }
+
+    @Test
     fun `updateConfig with facing change recreates session with requested camera`() = runTest {
         val fakeBackend = FakeCameraBackend()
         val coordinator = createCoordinator(fakeBackend)

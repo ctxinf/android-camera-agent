@@ -22,7 +22,7 @@ class DefaultFrameEncoder : FrameEncoder {
 
         // 1. If data is already a valid JPEG (starts with SOI marker 0xFF, 0xD8), return directly
         if (data.size >= 2 && data[0] == 0xFF.toByte() && data[1] == 0xD8.toByte()) {
-            return data
+            return if (frame.rotation == 0) data else rotateJpeg(data, frame.rotation, clampedQuality)
         }
 
         // 2. Compress NV21 to JPEG using Android platform YuvImage

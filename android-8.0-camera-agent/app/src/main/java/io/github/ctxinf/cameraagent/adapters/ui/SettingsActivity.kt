@@ -52,9 +52,6 @@ class SettingsActivity : PreferenceActivity() {
         battery = action(display, "battery", R.string.btn_battery_opt) { requestBatteryBypass() }
 
         val camera = category(R.string.cat_camera)
-        toggle(camera, "camera_enabled", R.string.pref_camera_access, repo.config.value.enabled) { enabled ->
-            updateCamera { it.copy(enabled = enabled) }
-        }
         toggle(camera, "front_camera_disabled", R.string.pref_disable_front, repo.frontCameraDisabled) { disabled ->
             graph.appScope.launch(Dispatchers.Main.immediate) {
                 graph.cameraAccess.setFrontDisabled(disabled)
@@ -290,6 +287,8 @@ class SettingsActivity : PreferenceActivity() {
 
     override fun onResume() {
         super.onResume()
+        listOf("http_enabled" to repo.httpEnabled, "mcp_enabled" to repo.mcpEnabled, "mqtt_enabled" to repo.mqttEnabled)
+            .forEach { (key, enabled) -> (findPreference(key) as? CheckBoxPreference)?.isChecked = enabled }
         if (::battery.isInitialized) battery.setSummary(if (ignoresBatteryOptimization()) R.string.battery_opt_enabled else R.string.battery_opt_hint)
     }
 

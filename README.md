@@ -61,12 +61,17 @@ device-only privacy gate: HTTP, MCP and MQTT cannot change camera access or
 switch lenses while it is disabled. Snapshot requests return a static disabled
 image, and MJPEG requests stream placeholder images without opening the camera.
 The front-camera prohibition in settings also blocks remote front-lens changes.
-The lens indicator reports actual hardware use, including preview and warmup.
+The camera status line below MQTT separates the selected Back / Front / Disabled
+mode from actual hardware use, including preview and warmup. The clockwise
+rotation button cycles through 0°, 90°, 180° and 270° and shares its saved value
+with the preview page. 0° is the default portrait image; sensor mounting correction
+is internal and is not added to the angle shown to the user. Local preview and
+HTTP images use the same orientation. Preview fits the rotated aspect ratio with
+letterboxing instead of stretching; quarter turns exchange output width and height.
 
 The red Force Exit button at the bottom of settings stops the service and process
 and persistently suppresses automatic restarts until a manual launcher open.
-The launcher animation lasts 900 ms and distinguishes a resident background
-service from a fresh service launch.
+The launcher animation lasts 900 ms and shows the app icon and name.
 
 HTTP and MCP share the configured port and authentication, but their routes and
 active connections are controlled independently. Disabling one leaves the other

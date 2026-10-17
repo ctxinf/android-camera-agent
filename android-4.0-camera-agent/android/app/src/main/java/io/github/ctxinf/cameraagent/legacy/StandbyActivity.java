@@ -103,6 +103,12 @@ public class StandbyActivity extends Activity {
                 startActivity(new Intent(StandbyActivity.this, SettingsActivity.class));
             }
         });
+        findViewById(R.id.rotation).setOnClickListener(new View.OnClickListener() {
+            @Override public void onClick(View v) {
+                settings.setRotationOffset((settings.rotationOffset() + 90) % 360);
+                applySettings();
+            }
+        });
         startService(new Intent(this, AgentService.class));
         wake();
     }
@@ -155,8 +161,17 @@ public class StandbyActivity extends Activity {
         setStatusIndicator(R.id.mqtt_status,
                 (svc != null && svc.isMqttConnected() ? "🟢" : settings.mqttEnabled() ? "🟠" : "⚪")
                 + " MQTT · " + (!settings.mqttEnabled() ? "已停用" : svc != null && svc.isMqttConnected() ? "已连接" : "未连接"));
-        setStatusIndicator(R.id.camera_status,
-                svc != null && svc.getCameraManager().getState() != CameraManager.State.CLOSED ? "🟢 镜头:" : "⚪ 镜头:");
+        CameraManager.State state = svc == null ? CameraManager.State.CLOSED : svc.getCameraManager().getState();
+        setStatusIndicator(R.id.camera_status, (state == CameraManager.State.OPEN ? "🟢" : state == CameraManager.State.OPENING ? "🟠" : "⚪")
+                + " 摄像头 · " + (!settings.cameraEnabled() ? "已禁用" : front ? "前置" : "后置"));
+        ((TextView) findViewById(R.id.camera_status)).setTextColor(settings.cameraEnabled() ? getResources().getColor(R.color.ui_text) : 0xffe6a5a5);
+        ((TextView) findViewById(R.id.cameraRuntime)).setText(state == CameraManager.State.OPEN ? "Active"
+                : state == CameraManager.State.OPENING ? "Opening" : "Standby");
+        Button rotation = (Button) findViewById(R.id.rotation);
+        rotation.setText(settings.rotationOffset() + "°");
+        rotation.setCompoundDrawablesWithIntrinsicBounds(getResources().getIdentifier(
+                "ic_rotation_" + settings.rotationOffset(), "drawable", getPackageName()), 0, 0, 0);
+        rotation.setContentDescription("顺时针旋转，当前 " + settings.rotationOffset() + " 度");
         refreshInfo();
     }
 

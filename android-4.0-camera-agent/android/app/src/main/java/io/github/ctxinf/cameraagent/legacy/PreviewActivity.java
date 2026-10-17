@@ -24,6 +24,7 @@ public class PreviewActivity extends Activity {
     private TextView infoView;
     private TextView deniedView;
     private SurfaceHolder holder;
+    private SurfaceView previewSurface;
     private boolean leaseHeld;
     private int generation;
 
@@ -37,6 +38,10 @@ public class PreviewActivity extends Activity {
         infoView = (TextView) findViewById(R.id.preview_info);
         deniedView = (TextView) findViewById(R.id.preview_denied);
         SurfaceView surface = (SurfaceView) findViewById(R.id.preview_surface);
+        previewSurface = surface;
+        ((View) surface.getParent()).addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
+            @Override public void onLayoutChange(View v, int a, int b, int c, int d, int e, int f, int g, int h) { fitPreview(); }
+        });
         surface.getHolder().setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
         surface.getHolder().addCallback(new SurfaceHolder.Callback() {
             @Override public void surfaceCreated(SurfaceHolder h) {
@@ -113,17 +118,43 @@ public class PreviewActivity extends Activity {
     private void refreshInfo() {
         CameraManager camera = camera();
         String resolution = camera == null ? null : camera.getActiveResolution();
-        int sensor = camera == null ? settings.sensorRotation() : camera.getSensorRotation();
-        int total = camera == null ? (sensor + settings.rotationOffset()) % 360 : camera.getFrameRotation();
-        infoView.setText((resolution == null ? settings.resolution() : resolution)
+        String info = (resolution == null ? settings.resolution() : resolution)
                 + "  ·  JPEG q" + settings.jpegQuality() + "  ·  " + settings.mjpegFps() + " fps\n"
-                + "旋转 " + total + "° = 传感器 " + sensor + "° + 手动 "
-                + settings.rotationOffset() + "°");
-        rotateButton.setText(getString(R.string.rotate_button_fmt, Integer.valueOf(total)));
+                + "旋转 " + settings.rotationOffset() + "°";
+        if (!info.contentEquals(infoView.getText())) infoView.setText(info);
+        String label = getString(R.string.rotate_button_fmt, Integer.valueOf(settings.rotationOffset()));
+        if (!label.contentEquals(rotateButton.getText())) rotateButton.setText(label);
+        fitPreview();
     }
 
-    @Override protected void onResume() { super.onResume(); refreshInfo(); }
+    private void fitPreview() {
+        CameraManager camera = camera();
+        String resolution = camera == null ? null : camera.getActiveResolution();
+        int w, h;
+        if (resolution != null) {
+            String[] size = resolution.split("x");
+            w = Integer.parseInt(size[0]); h = Integer.parseInt(size[1]);
+        } else {
+            w = settings.resolutionWidth(); h = settings.resolutionHeight();
+            int rotation = (settings.sensorRotation() + settings.rotationOffset()) % 360;
+            if (rotation % 180 != 0) { int tmp = w; w = h; h = tmp; }
+        }
+        View parent = (View) previewSurface.getParent();
+        if (parent.getWidth() == 0 || parent.getHeight() == 0) return;
+        float scale = Math.min((float) parent.getWidth() / w, (float) parent.getHeight() / h);
+        int width = Math.max(1, (int) (w * scale)), height = Math.max(1, (int) (h * scale));
+        android.widget.FrameLayout.LayoutParams old = (android.widget.FrameLayout.LayoutParams) previewSurface.getLayoutParams();
+        if (old.width != width || old.height != height) {
+            previewSurface.setLayoutParams(new android.widget.FrameLayout.LayoutParams(width, height, android.view.Gravity.CENTER));
+        }
+    }
+
+    private final Runnable refreshTask = new Runnable() {
+        @Override public void run() { refreshInfo(); handler.postDelayed(this, 500); }
+    };
+    @Override protected void onResume() { super.onResume(); handler.post(refreshTask); }
     @Override protected void onPause() {
+        handler.removeCallbacks(refreshTask);
         if (previewToggle.isChecked()) previewToggle.setChecked(false);
         super.onPause();
     }

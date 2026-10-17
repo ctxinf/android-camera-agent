@@ -232,6 +232,15 @@ class MainActivity : AppCompatActivity() {
             setFacing(LensFacing.FRONT)
         }
 
+        findViewById<Button>(R.id.btnRotation).setOnClickListener {
+            wakeScreen()
+            lifecycleScope.launch {
+                (application as CameraAgentApp).appGraph.cameraAccess.updateLocal {
+                    it.copy(rotationOffset = (it.rotationOffset + 90) % 360)
+                }
+            }
+        }
+
         setupChipListeners()
     }
 
@@ -474,32 +483,30 @@ class MainActivity : AppCompatActivity() {
         }
         setStatusIndicator(tvMqttStatus, mqttLine)
 
-        // 2. Camera Hardware Physical State Indicator
-        when (state) {
-            is CameraState.Active -> {
-                cameraHardwareLed.setBackgroundResource(R.drawable.led_green)
-                tvCameraHardwareStatus.text = "相机传输中"
-                tvCameraHardwareStatus.setTextColor(0xFFA8C7BA.toInt())
-            }
-            is CameraState.Retained -> {
-                cameraHardwareLed.setBackgroundResource(R.drawable.led_green)
-                tvCameraHardwareStatus.text = "相机使用中 · 预热保持"
-            }
-            is CameraState.Opening -> {
-                cameraHardwareLed.setBackgroundResource(R.drawable.led_amber)
-                tvCameraHardwareStatus.text = "相机打开中"
-                tvCameraHardwareStatus.setTextColor(0xFFD7BE8E.toInt())
-            }
-            is CameraState.Failed -> {
-                cameraHardwareLed.setBackgroundResource(R.drawable.led_grey)
-                tvCameraHardwareStatus.text = "相机异常"
-                tvCameraHardwareStatus.setTextColor(0xFFE6A5A5.toInt())
-            }
-            else -> {
-                cameraHardwareLed.setBackgroundResource(R.drawable.led_grey)
-                tvCameraHardwareStatus.text = "相机空闲"
-                tvCameraHardwareStatus.setTextColor(0xFFA3A8B7.toInt())
-            }
+        val runtime = when (state) {
+            is CameraState.Active -> "Active"
+            is CameraState.Retained -> "Retained"
+            is CameraState.Opening -> "Opening"
+            is CameraState.Closing -> "Closing"
+            is CameraState.Failed -> "Failed"
+            is CameraState.Disabled -> "Disabled"
+            else -> "Standby"
+        }
+        cameraHardwareLed.setBackgroundResource(when (state) {
+            is CameraState.Active, is CameraState.Retained -> R.drawable.led_green
+            is CameraState.Opening, is CameraState.Closing -> R.drawable.led_amber
+            else -> R.drawable.led_grey
+        })
+        tvCameraHardwareStatus.text = "摄像头 · " + if (!config.enabled) "已禁用" else if (config.facing == LensFacing.BACK) "后置" else "前置"
+        tvCameraHardwareStatus.setTextColor(if (!config.enabled) 0xFFE6A5A5.toInt() else getColor(R.color.ui_text))
+        findViewById<TextView>(R.id.cameraRuntime).text = runtime
+        findViewById<Button>(R.id.btnRotation).apply {
+            text = "${config.rotationOffset}°"
+            val icon = resources.getIdentifier("ic_rotation_${config.rotationOffset}", "drawable", packageName)
+            setCompoundDrawablesWithIntrinsicBounds(icon, 0, 0, 0)
+            backgroundTintList = android.content.res.ColorStateList.valueOf(0xFF303643.toInt())
+            setTextColor(0xFFE0E0E0.toInt())
+            contentDescription = "顺时针旋转，当前 ${config.rotationOffset} 度"
         }
 
         // Lens selection doubles as the local privacy-state display.
@@ -513,7 +520,6 @@ class MainActivity : AppCompatActivity() {
         btnFacingDisabled.setCompoundDrawablesWithIntrinsicBounds(
             BanDrawable(resources.displayMetrics.density, if (!config.enabled) 0xFF111318.toInt() else 0xFFE0E0E0.toInt()), null, null, null)
         btnFacingDisabled.compoundDrawablePadding = 2.dp()
-        tvCameraHardwareStatus.text = "镜头:"
         tvCameraHardwareStatus.contentDescription = if (config.enabled) "镜头允许访问，当前状态：${state::class.simpleName}" else "镜头已在本机禁用"
         val hasFront = appGraph.capabilities.any { it.facing == LensFacing.FRONT }
         // Keep the view clickable for a useful policy explanation, but never perform the switch.
