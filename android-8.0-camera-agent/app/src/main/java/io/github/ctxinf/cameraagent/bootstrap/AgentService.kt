@@ -1,5 +1,6 @@
 package io.github.ctxinf.cameraagent.bootstrap
 
+import android.app.AlarmManager
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -9,6 +10,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.BatteryManager
 import android.os.Build
+import android.os.SystemClock
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
 import io.github.ctxinf.cameraagent.R
@@ -126,16 +128,42 @@ class AgentService : LifecycleService() {
 
     override fun onTaskRemoved(rootIntent: Intent?) {
         super.onTaskRemoved(rootIntent)
-        AppLog.i("AgentService onTaskRemoved() - ensuring service stays alive")
+        AppLog.i("AgentService onTaskRemoved()")
         if (!appGraph.settingsRepository.backgroundEnabled || appGraph.settingsRepository.manuallyExited) {
             stopSelf()
-        } else if (isRunning) {
-            val restartIntent = Intent(applicationContext, AgentService::class.java)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                startForegroundService(restartIntent)
-            } else {
-                startService(restartIntent)
+            return
+        }
+
+        // When the task is cleared from Android recents, the OS will shortly terminate this process.
+        // Direct synchronous calls to startForegroundService die with the process.
+        // Instead, schedule an AlarmManager trigger to resurrect the ForegroundService 1 second later.
+        try {
+            val restartIntent = Intent(applicationContext, AgentService::class.java).apply {
+                setPackage(packageName)
+                action = ACTION_START
             }
+            val flags = PendingIntent.FLAG_ONE_SHOT or (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) PendingIntent.FLAG_IMMUTABLE else 0)
+            val restartPendingIntent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                PendingIntent.getForegroundService(applicationContext, 1002, restartIntent, flags)
+            } else {
+                PendingIntent.getService(applicationContext, 1002, restartIntent, flags)
+            }
+
+            val alarmManager = getSystemService(Context.ALARM_SERVICE) as? AlarmManager
+            alarmManager?.let {
+                val triggerAt = SystemClock.elapsedRealtime() + 1000L
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    try {
+                        it.setExactAndAllowWhileIdle(AlarmManager.ELAPSED_REALTIME_WAKEUP, triggerAt, restartPendingIntent)
+                    } catch (_: SecurityException) {
+                        it.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, triggerAt, restartPendingIntent)
+                    }
+                } else {
+                    alarmManager.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, triggerAt, restartPendingIntent)
+                }
+            }
+        } catch (e: Exception) {
+            AppLog.e("Failed to schedule service resurrection in onTaskRemoved", e)
         }
     }
 

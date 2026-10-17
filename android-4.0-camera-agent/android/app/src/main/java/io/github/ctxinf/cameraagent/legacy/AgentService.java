@@ -1,5 +1,7 @@
 package io.github.ctxinf.cameraagent.legacy;
 
+import android.app.AlarmManager;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
@@ -7,6 +9,7 @@ import android.content.SharedPreferences;
 import android.net.wifi.WifiManager;
 import android.os.IBinder;
 import android.os.PowerManager;
+import android.os.SystemClock;
 import android.preference.PreferenceManager;
 
 import io.github.ctxinf.cameraagent.legacy.camera.CameraManager;
@@ -249,8 +252,25 @@ public class AgentService extends Service {
     }
 
     @Override public void onTaskRemoved(Intent intent) {
-        if (!settings.backgroundEnabled() || settings.manuallyExited()) stopSelf();
         super.onTaskRemoved(intent);
+        if (!settings.backgroundEnabled() || settings.manuallyExited()) {
+            stopSelf();
+            return;
+        }
+        try {
+            Intent restartIntent = new Intent(getApplicationContext(), AgentService.class);
+            restartIntent.setPackage(getPackageName());
+            PendingIntent pendingIntent = PendingIntent.getService(
+                    getApplicationContext(), 1002, restartIntent,
+                    PendingIntent.FLAG_ONE_SHOT);
+            AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+            if (alarmManager != null) {
+                alarmManager.set(AlarmManager.ELAPSED_REALTIME_WAKEUP,
+                        SystemClock.elapsedRealtime() + 1000L, pendingIntent);
+            }
+        } catch (Exception e) {
+            Log.e("failed to schedule restart in onTaskRemoved: " + e);
+        }
     }
 
     @Override

@@ -64,6 +64,7 @@
             android:name=".bootstrap.AgentService"
             android:enabled="true"
             android:exported="false"
+            android:stopWithTask="false"
             android:foregroundServiceType="camera" />
 
         <!-- Boot Completed Receiver -->

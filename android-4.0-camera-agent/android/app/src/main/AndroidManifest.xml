@@ -48,6 +48,7 @@
 
         <service
             android:name=".AgentService"
+            android:stopWithTask="false"
             android:exported="false" />
 
         <receiver
