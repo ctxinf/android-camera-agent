@@ -5,6 +5,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.view.View
 import android.widget.Button
 import android.widget.ScrollView
 import android.widget.TextView
@@ -27,7 +28,7 @@ class DiagnosticsActivity : AppCompatActivity() {
     private lateinit var tvCameraInfo: TextView
     private lateinit var tvLogs: TextView
     private lateinit var svLogs: ScrollView
-    private lateinit var btnBack: Button
+    private lateinit var btnBack: View
     private lateinit var btnProbe: Button
     private lateinit var btnStartService: Button
     private lateinit var btnSnapshot: Button

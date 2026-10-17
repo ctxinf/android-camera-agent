@@ -42,7 +42,6 @@
         <!-- Settings Screen -->
         <activity
             android:name=".adapters.ui.SettingsActivity"
-            android:theme="@style/Theme.CameraAgent.Preferences"
             android:exported="true"
             android:windowSoftInputMode="stateHidden|adjustResize"
             android:label="@string/settings_title" />

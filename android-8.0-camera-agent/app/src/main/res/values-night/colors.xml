@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Brand / Primary (High contrast on dark surfaces) -->
+    <color name="ui_primary">#4CDA88</color>
+    <color name="ui_on_primary">#00391A</color>
+    <color name="ui_primary_container">#07552F</color>
+    <color name="ui_on_primary_container">#A5F7C5</color>
+
+    <!-- Surfaces & Backgrounds -->
+    <color name="ui_background">#101317</color>
+    <color name="ui_surface">#181D24</color>
+    <color name="ui_field">#222934</color>
+    <color name="ui_control">#293240</color>
+    <color name="ui_pressed">#374254</color>
+    <color name="ui_outline">#2F3A4B</color>
+    <color name="ui_divider">#26303E</color>
+
+    <!-- Typography -->
+    <color name="ui_text">#EFF2F6</color>
+    <color name="ui_text_secondary">#919CAD</color>
+    <color name="ui_text_tertiary">#667283</color>
+
+    <!-- Status & Semantic -->
+    <color name="ui_success">#4CDA88</color>
+    <color name="ui_success_container">#0B3A21</color>
+    <color name="ui_on_success_container">#4CDA88</color>
+    <color name="ui_warning">#FBBF24</color>
+    <color name="ui_warning_container">#38290D</color>
+    <color name="ui_error">#F87171</color>
+    <color name="ui_error_container">#3C1515</color>
+    <color name="ui_inactive">#6B7787</color>
+    <color name="ui_disabled">#4A5463</color>
+
+    <!-- Button states -->
+    <color name="control_normal_bg">#222934</color>
+    <color name="control_normal_text">#EFF2F6</color>
+    <color name="control_selected_bg">#4CDA88</color>
+    <color name="control_selected_text">#0B2014</color>
+
+    <!-- Card Badge Background -->
+    <color name="badge_running_bg">#14462B</color>
+    <color name="badge_running_icon">#4CDA88</color>
+    <color name="badge_stopped_bg">#232B36</color>
+    <color name="badge_stopped_icon">#6B7787</color>
+
+    <!-- Switch Track & Thumb Tint -->
+    <color name="switch_track_active">#1C5635</color>
+    <color name="switch_thumb_active">#4CDA88</color>
+    <color name="switch_track_inactive">#333C4A</color>
+    <color name="switch_thumb_inactive">#919CAD</color>
+
+    <!-- Dot indicators -->
+    <color name="dot_running">#4CDA88</color>
+    <color name="dot_stopped">#6B7787</color>
+    <color name="dot_connecting">#FBBF24</color>
+</resources>

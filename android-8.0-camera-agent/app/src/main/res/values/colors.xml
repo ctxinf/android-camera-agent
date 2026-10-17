@@ -1,17 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="ui_background">#111318</color>
-    <color name="ui_surface">#1D2027</color>
-    <color name="ui_field">#272B35</color>
-    <color name="ui_control">#303643</color>
-    <color name="ui_primary">#BAC6EA</color>
-    <color name="ui_primary_container">#404D70</color>
-    <color name="ui_text">#E2E2E9</color>
-    <color name="ui_text_secondary">#A3A8B7</color>
-    <color name="ui_success">#A8C7BA</color>
-    <color name="ui_warning">#D7BE8E</color>
-    <color name="ui_error">#E6A5A5</color>
-    <color name="ui_inactive">#797E8C</color>
-    <color name="ui_disabled">#737987</color>
-    <color name="ui_pressed">#40495F</color>
-    <color name="ui_outline">#454B5B</color>
+    <!-- Brand / Primary -->
+    <color name="ui_primary">#07552F</color>
+    <color name="ui_on_primary">#FFFFFF</color>
+    <color name="ui_primary_container">#D1E9D7</color>
+    <color name="ui_on_primary_container">#00210E</color>
+
+    <!-- Surfaces & Backgrounds -->
+    <color name="ui_background">#F7FAF8</color>
+    <color name="ui_surface">#FFFFFF</color>
+    <color name="ui_field">#EEF4F0</color>
+    <color name="ui_control">#E2ECE5</color>
+    <color name="ui_pressed">#CBDBCF</color>
+    <color name="ui_outline">#D8E2DA</color>
+    <color name="ui_divider">#E8EFEA</color>
+
+    <!-- Typography -->
+    <color name="ui_text">#151C17</color>
+    <color name="ui_text_secondary">#58655C</color>
+    <color name="ui_text_tertiary">#8A978E</color>
+
+    <!-- Status & Semantic -->
+    <color name="ui_success">#07552F</color>
+    <color name="ui_success_container">#D1E9D7</color>
+    <color name="ui_on_success_container">#07552F</color>
+    <color name="ui_warning">#B45309</color>
+    <color name="ui_warning_container">#FEF3C7</color>
+    <color name="ui_error">#B91C1C</color>
+    <color name="ui_error_container">#FEE2E2</color>
+    <color name="ui_inactive">#8E9A92</color>
+    <color name="ui_disabled">#BAC4BD</color>
+
+    <!-- Button states -->
+    <color name="control_normal_bg">#EEF4F0</color>
+    <color name="control_normal_text">#233027</color>
+    <color name="control_selected_bg">#07552F</color>
+    <color name="control_selected_text">#FFFFFF</color>
+
+    <!-- Card Badge Background -->
+    <color name="badge_running_bg">#D1E9D7</color>
+    <color name="badge_running_icon">#07552F</color>
+    <color name="badge_stopped_bg">#E2ECE5</color>
+    <color name="badge_stopped_icon">#8E9A92</color>
+
+    <!-- Switch Track & Thumb Tint -->
+    <color name="switch_track_active">#82BA97</color>
+    <color name="switch_thumb_active">#07552F</color>
+    <color name="switch_track_inactive">#D5DED8</color>
+    <color name="switch_thumb_inactive">#FFFFFF</color>
+
+    <!-- Dot indicators -->
+    <color name="dot_running">#07552F</color>
+    <color name="dot_stopped">#8E9A92</color>
+    <color name="dot_connecting">#B45309</color>
 </resources>

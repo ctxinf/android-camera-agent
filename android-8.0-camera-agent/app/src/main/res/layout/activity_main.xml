@@ -6,127 +6,664 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/ui_background">
-    <ScrollView
+
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/mainScrollView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:fillViewport="true">
+        android:fillViewport="true"
+        android:overScrollMode="never"
+        android:scrollbars="none">
+
         <LinearLayout
+            android:id="@+id/contentLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:descendantFocusability="blocksDescendants"
             android:orientation="vertical"
-            android:padding="20dp"
-            android:id="@+id/contentLayout">
-            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:layout_marginBottom="24dp">
-                <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="Camera Agent" android:textSize="26sp" android:textColor="@color/ui_text" android:textStyle="bold" />
-                <ImageButton android:id="@+id/btnSettingsIcon" android:layout_width="48dp" android:layout_height="48dp" android:background="@drawable/control_button" android:src="@drawable/ic_settings" android:tint="@color/ui_primary" android:padding="12dp" android:contentDescription="@string/settings_title" />
-            </LinearLayout>
-            <LinearLayout android:id="@+id/topBar" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:background="@drawable/surface_card">
-                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:paddingTop="12dp">
-                    <TextView android:id="@+id/tvHttpStatus" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:textColor="@color/ui_text" android:textSize="14sp" />
-                    <TextView android:id="@+id/tvHttpConnections" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="@color/ui_text_secondary" android:textSize="12sp" />
-                </LinearLayout>
-                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:paddingTop="12dp">
-                    <TextView android:id="@+id/tvMcpStatus" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:textColor="@color/ui_text" android:textSize="14sp" />
-                    <TextView android:id="@+id/tvMcpConnections" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="@color/ui_text_secondary" android:textSize="12sp" />
-                </LinearLayout>
-                <TextView android:id="@+id/tvMqttStatus" android:layout_width="match_parent" android:layout_height="wrap_content" android:paddingTop="12dp" android:textColor="@color/ui_text" android:textSize="14sp" />
-                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:paddingTop="12dp">
-                    <View android:id="@+id/cameraHardwareLed" android:layout_width="10dp" android:layout_height="10dp" android:layout_marginRight="8dp" android:background="@drawable/led_grey" />
-                    <TextView android:id="@+id/tvCameraHardwareStatus" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:textColor="@color/ui_text" android:textSize="14sp" />
-                    <TextView android:id="@+id/cameraRuntime" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="@color/ui_text_secondary" android:textSize="12sp" />
-                </LinearLayout>
-                <LinearLayout android:id="@+id/facingSegmentedContainer" android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:layout_marginTop="16dp">
-                    <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="摄像头:" android:textColor="@color/ui_text" android:textSize="14sp" />
-                    <Button android:id="@+id/btnRotation" android:layout_width="64dp" android:layout_height="48dp" android:padding="2dp" android:minWidth="0dp" android:text="0°" android:textSize="12sp" android:singleLine="true" android:textColor="@color/control_text" android:background="@drawable/control_button" />
-                    <Button android:id="@+id/btnFacingBack" android:layout_width="52dp" android:layout_height="48dp" android:layout_marginLeft="4dp" android:padding="4dp" android:minWidth="0dp" android:text="后置" android:textSize="14sp" android:textColor="@color/control_text" android:background="@drawable/control_button" app:backgroundTint="@color/ui_control" />
-                    <Button android:id="@+id/btnFacingFront" android:layout_width="52dp" android:layout_height="48dp" android:layout_marginLeft="4dp" android:padding="4dp" android:minWidth="0dp" android:text="前置" android:textSize="14sp" android:textColor="@color/control_text" android:background="@drawable/control_button" app:backgroundTint="@color/ui_control" />
-                    <Button android:id="@+id/btnFacingDisabled" android:layout_width="60dp" android:layout_height="48dp" android:layout_marginLeft="4dp" android:padding="4dp" android:minWidth="0dp" android:text="禁用" android:textSize="12sp" android:singleLine="true" android:textColor="@color/control_text" android:background="@drawable/control_button" app:backgroundTint="@color/ui_control" />
-                </LinearLayout>
-                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:layout_marginTop="16dp">
-                    <View android:id="@+id/statusLed" android:layout_width="16dp" android:layout_height="16dp" android:layout_marginRight="10dp" android:background="@drawable/led_green" />
-                    <TextView android:id="@+id/tvStatusText" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="后台服务 · 开启" android:textColor="@color/ui_text" android:textStyle="bold" android:textSize="16sp" android:layout_marginRight="8dp" />
-                    <ToggleButton android:id="@+id/tbCameraEnable" android:layout_width="64dp" android:layout_height="48dp" android:textOn="开启" android:textOff="关闭" android:checked="true" android:background="@drawable/control_button" android:textColor="@color/control_text" />
-                </LinearLayout>
-            </LinearLayout>
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:paddingTop="20dp"
+            android:paddingBottom="24dp">
+
+            <!-- Top App Bar -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:background="@drawable/surface_card"
-                android:layout_marginTop="16dp">
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:layout_marginBottom="16dp">
+
                 <TextView
-                    android:layout_width="match_parent"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:text="连接与接口"
-                    android:textSize="18sp"
+                    android:layout_weight="1"
+                    android:text="Camera Agent"
+                    android:textSize="28sp"
                     android:textColor="@color/ui_text"
                     android:textStyle="bold" />
+
+                <!-- Quick Theme Toggle (Left of Settings) -->
+                <ImageButton
+                    android:id="@+id/btnThemeToggle"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:layout_marginEnd="10dp"
+                    android:background="@drawable/control_button"
+                    app:backgroundTint="@color/ui_field"
+                    android:src="@drawable/ic_dark_mode"
+                    app:tint="@color/ui_text"
+                    android:padding="10dp"
+                    android:contentDescription="切换深色模式" />
+
+                <!-- Settings Button -->
+                <ImageButton
+                    android:id="@+id/btnSettingsIcon"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:background="@drawable/control_button"
+                    app:backgroundTint="@color/ui_field"
+                    android:src="@drawable/ic_settings"
+                    app:tint="@color/ui_text"
+                    android:padding="10dp"
+                    android:contentDescription="@string/settings_title" />
+            </LinearLayout>
+
+            <!-- Card 1: 服务 (Services) -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/surface_card"
+                android:orientation="vertical">
+
                 <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="服务"
+                    android:textColor="@color/ui_text"
+                    android:textSize="17sp"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="14dp" />
+
+                <!-- HTTP Row -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:src="@drawable/ic_globe"
+                        app:tint="@color/ui_text_secondary" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
+                        android:text="HTTP"
+                        android:textColor="@color/ui_text"
+                        android:textSize="15sp"
+                        android:textStyle="bold" />
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="14dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <View
+                            android:id="@+id/dotHttp"
+                            android:layout_width="8dp"
+                            android:layout_height="8dp"
+                            android:background="@drawable/led_green" />
+
+                        <TextView
+                            android:id="@+id/tvHttpStatusText"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="6dp"
+                            android:text="运行中"
+                            android:textColor="@color/ui_text_secondary"
+                            android:textSize="13sp" />
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/tvHttpConnections"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginEnd="10dp"
+                        android:gravity="end"
+                        android:text="0 个连接"
+                        android:textColor="@color/ui_text_tertiary"
+                        android:textSize="13sp" />
+
+                    <com.google.android.material.materialswitch.MaterialSwitch
+                        android:id="@+id/switchHttp"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" />
+                </LinearLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginTop="2dp"
+                    android:layout_marginBottom="2dp"
+                    android:background="@color/ui_divider" />
+
+                <!-- MCP Row -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:src="@drawable/ic_dns"
+                        app:tint="@color/ui_text_secondary" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
+                        android:text="MCP"
+                        android:textColor="@color/ui_text"
+                        android:textSize="15sp"
+                        android:textStyle="bold" />
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="14dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <View
+                            android:id="@+id/dotMcp"
+                            android:layout_width="8dp"
+                            android:layout_height="8dp"
+                            android:background="@drawable/led_grey" />
+
+                        <TextView
+                            android:id="@+id/tvMcpStatusText"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="6dp"
+                            android:text="已停用"
+                            android:textColor="@color/ui_text_secondary"
+                            android:textSize="13sp" />
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/tvMcpConnections"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginEnd="10dp"
+                        android:gravity="end"
+                        android:text="0 个连接"
+                        android:textColor="@color/ui_text_tertiary"
+                        android:textSize="13sp" />
+
+                    <com.google.android.material.materialswitch.MaterialSwitch
+                        android:id="@+id/switchMcp"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" />
+                </LinearLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginTop="2dp"
+                    android:layout_marginBottom="2dp"
+                    android:background="@color/ui_divider" />
+
+                <!-- MQTT Row -->
+                <LinearLayout
+                    android:id="@+id/layoutMqttRow"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:src="@drawable/ic_send"
+                        app:tint="@color/ui_text_secondary" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
+                        android:text="MQTT"
+                        android:textColor="@color/ui_text"
+                        android:textSize="15sp"
+                        android:textStyle="bold" />
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="14dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <View
+                            android:id="@+id/dotMqtt"
+                            android:layout_width="8dp"
+                            android:layout_height="8dp"
+                            android:background="@drawable/led_grey" />
+
+                        <TextView
+                            android:id="@+id/tvMqttStatusText"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="6dp"
+                            android:text="已停用"
+                            android:textColor="@color/ui_text_secondary"
+                            android:textSize="13sp" />
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/tvMqttConnections"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginEnd="10dp"
+                        android:gravity="end"
+                        android:text="0 个连接"
+                        android:textColor="@color/ui_text_tertiary"
+                        android:textSize="13sp" />
+
+                    <com.google.android.material.materialswitch.MaterialSwitch
+                        android:id="@+id/switchMqtt"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Card 2: 摄像头 (Camera) -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:background="@drawable/surface_card"
+                android:orientation="vertical">
+
+                <!-- Header -->
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="同一局域网内可访问以下服务"
-                    android:textSize="12sp"
-                    android:textColor="@color/ui_text_secondary"
-                    android:layout_marginTop="6dp"
-                    android:layout_marginBottom="16dp" />
-                <TextView
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="14dp">
+
+                    <ImageView
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:src="@drawable/ic_camera"
+                        app:tint="@color/ui_text" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:text="摄像头"
+                        android:textColor="@color/ui_text"
+                        android:textSize="17sp"
+                        android:textStyle="bold" />
+
+                    <View
+                        android:layout_width="0dp"
+                        android:layout_height="1dp"
+                        android:layout_weight="1" />
+
+                    <View
+                        android:id="@+id/cameraHardwareLed"
+                        android:layout_width="8dp"
+                        android:layout_height="8dp"
+                        android:background="@drawable/led_green" />
+
+                    <TextView
+                        android:id="@+id/tvCameraHardwareStatus"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="6dp"
+                        android:text="待机"
+                        android:textColor="@color/ui_success"
+                        android:textSize="13sp" />
+                </LinearLayout>
+
+                <!-- Camera Lens Selection Buttons -->
+                <LinearLayout
+                    android:id="@+id/facingSegmentedContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="46dp"
+                    android:orientation="horizontal">
+
+                    <Button
+                        android:id="@+id/btnFacingBack"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        app:backgroundTint="@color/control_normal_bg"
+                        app:cornerRadius="14dp"
+                        app:strokeColor="@color/ui_outline"
+                        app:strokeWidth="1dp"
+                        app:icon="@drawable/ic_videocam"
+                        app:iconGravity="textStart"
+                        app:iconPadding="6dp"
+                        app:iconSize="18dp"
+                        app:iconTint="@color/ui_text"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:padding="0dp"
+                        android:text="后置"
+                        android:textColor="@color/ui_text"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+
+                    <Button
+                        android:id="@+id/btnFacingFront"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:layout_marginStart="8dp"
+                        app:backgroundTint="@color/control_normal_bg"
+                        app:cornerRadius="14dp"
+                        app:strokeColor="@color/ui_outline"
+                        app:strokeWidth="1dp"
+                        app:icon="@drawable/ic_person"
+                        app:iconGravity="textStart"
+                        app:iconPadding="6dp"
+                        app:iconSize="18dp"
+                        app:iconTint="@color/ui_text"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:padding="0dp"
+                        android:text="前置"
+                        android:textColor="@color/ui_text"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+
+                    <Button
+                        android:id="@+id/btnFacingDisabled"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:layout_marginStart="8dp"
+                        app:backgroundTint="@color/control_normal_bg"
+                        app:cornerRadius="14dp"
+                        app:strokeColor="@color/ui_outline"
+                        app:strokeWidth="1dp"
+                        app:icon="@drawable/ic_block"
+                        app:iconGravity="textStart"
+                        app:iconPadding="6dp"
+                        app:iconSize="18dp"
+                        app:iconTint="@color/ui_text"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:padding="0dp"
+                        android:text="禁用"
+                        android:textColor="@color/ui_text"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <!-- Sub-actions: Rotation & Local Preview -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="46dp"
+                    android:layout_marginTop="10dp"
+                    android:orientation="horizontal">
+
+                    <Button
+                        android:id="@+id/btnRotation"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        app:backgroundTint="@color/ui_field"
+                        app:cornerRadius="14dp"
+                        app:strokeColor="@color/ui_outline"
+                        app:strokeWidth="1dp"
+                        app:icon="@drawable/ic_rotate"
+                        app:iconGravity="textStart"
+                        app:iconPadding="6dp"
+                        app:iconSize="18dp"
+                        app:iconTint="@color/ui_text"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:paddingStart="14dp"
+                        android:paddingEnd="10dp"
+                        android:text="旋转 0°"
+                        android:textColor="@color/ui_text"
+                        android:textSize="13sp" />
+
+                    <Button
+                        android:id="@+id/btnLocalPreview"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:layout_marginStart="10dp"
+                        app:backgroundTint="@color/ui_field"
+                        app:cornerRadius="14dp"
+                        app:strokeColor="@color/ui_outline"
+                        app:strokeWidth="1dp"
+                        app:icon="@drawable/ic_play_arrow"
+                        app:iconGravity="textStart"
+                        app:iconPadding="6dp"
+                        app:iconSize="18dp"
+                        app:iconTint="@color/ui_text"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:paddingStart="14dp"
+                        android:paddingEnd="14dp"
+                        android:text="本地预览"
+                        android:textColor="@color/ui_text"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Card 3: 连接与接口 (Connections & Endpoints) -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:background="@drawable/surface_card"
+                android:orientation="vertical">
+
+                <!-- Header -->
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="http://127.0.0.1:8080"
-                    android:textSize="16sp"
-                    android:textColor="@color/ui_primary"
-                    android:id="@+id/tvBaseEndpoint"
-                    android:textIsSelectable="true" />
-                <TextView
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_hub"
+                        app:tint="@color/ui_text" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginStart="10dp"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="连接与接口"
+                            android:textColor="@color/ui_text"
+                            android:textSize="17sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:text="同一局域网内可访问"
+                            android:textColor="@color/ui_text_secondary"
+                            android:textSize="12sp" />
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/tvAuthBadge"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/surface_field"
+                        android:paddingStart="8dp"
+                        android:paddingEnd="8dp"
+                        android:paddingTop="3dp"
+                        android:paddingBottom="3dp"
+                        android:text="已启用认证"
+                        android:textColor="@color/ui_warning"
+                        android:textSize="11sp"
+                        android:visibility="gone" />
+                </LinearLayout>
+
+                <!-- Base URL Display Box -->
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="已启用认证"
-                    android:textSize="12sp"
-                    android:textColor="@color/ui_warning"
-                    android:id="@+id/tvAuthBadge"
-                    android:visibility="gone"
-                    android:layout_marginTop="8dp" />
+                    android:layout_marginTop="14dp"
+                    android:background="@drawable/surface_field"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/tvBaseEndpoint"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="http://192.168.123.95:8080"
+                        android:textColor="@color/ui_text"
+                        android:textSize="15sp"
+                        android:textStyle="bold"
+                        android:focusable="false"
+                        android:focusableInTouchMode="false" />
+
+                    <ImageButton
+                        android:id="@+id/btnCopyUrl"
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:contentDescription="复制链接"
+                        android:padding="6dp"
+                        android:src="@drawable/ic_content_copy"
+                        app:tint="@color/ui_text_secondary" />
+                </LinearLayout>
+
+                <!-- Quick Action Buttons for Endpoints -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="44dp"
+                    android:layout_marginTop="12dp"
+                    android:orientation="horizontal">
+
+                    <Button
+                        android:id="@+id/btnQuickSnapshot"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        app:backgroundTint="@color/ui_field"
+                        app:cornerRadius="14dp"
+                        app:strokeColor="@color/ui_outline"
+                        app:strokeWidth="1dp"
+                        app:icon="@drawable/ic_image"
+                        app:iconGravity="textStart"
+                        app:iconPadding="6dp"
+                        app:iconSize="16dp"
+                        app:iconTint="@color/ui_text"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:paddingStart="12dp"
+                        android:paddingEnd="12dp"
+                        android:text="/snapshot.jpg"
+                        android:textColor="@color/ui_text"
+                        android:textSize="12sp" />
+
+                    <Button
+                        android:id="@+id/btnQuickVideo"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:layout_marginStart="8dp"
+                        app:backgroundTint="@color/ui_field"
+                        app:cornerRadius="14dp"
+                        app:strokeColor="@color/ui_outline"
+                        app:strokeWidth="1dp"
+                        app:icon="@drawable/ic_videocam"
+                        app:iconGravity="textStart"
+                        app:iconPadding="6dp"
+                        app:iconSize="16dp"
+                        app:iconTint="@color/ui_text"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:paddingStart="12dp"
+                        android:paddingEnd="12dp"
+                        android:text="/video.mjpeg"
+                        android:textColor="@color/ui_text"
+                        android:textSize="12sp" />
+                </LinearLayout>
+
+                <!-- Additional API Chips Group -->
                 <com.google.android.material.chip.ChipGroup
                     android:id="@+id/chipGroupPaths"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp">
+                    android:layout_marginTop="10dp">
+
                     <com.google.android.material.chip.Chip
                         android:id="@+id/chipSnapshot"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="/snapshot.jpg"
                         style="@style/Widget.CameraAgent.PathChip" />
+
                     <com.google.android.material.chip.Chip
                         android:id="@+id/chipStream"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="/video.mjpeg"
                         style="@style/Widget.CameraAgent.PathChip" />
+
                     <com.google.android.material.chip.Chip
                         android:id="@+id/chipStatus"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="/api/status"
                         style="@style/Widget.CameraAgent.PathChip" />
+
                     <com.google.android.material.chip.Chip
                         android:id="@+id/chipMcp"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="/mcp"
                         style="@style/Widget.CameraAgent.PathChip" />
+
                     <com.google.android.material.chip.Chip
                         android:id="@+id/chipCameraConfig"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="/api/camera"
                         style="@style/Widget.CameraAgent.PathChip" />
+
                     <com.google.android.material.chip.Chip
                         android:id="@+id/chipWarmup"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="/api/v1/warmup"
                         style="@style/Widget.CameraAgent.PathChip" />
+
                     <com.google.android.material.chip.Chip
                         android:id="@+id/chipHealth"
                         android:layout_width="wrap_content"
@@ -134,25 +671,74 @@
                         android:text="/health"
                         style="@style/Widget.CameraAgent.PathChip" />
                 </com.google.android.material.chip.ChipGroup>
+
                 <TextView
+                    android:id="@+id/tvEndpointSummary"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="选择接口查看使用说明"
-                    android:textSize="13sp"
+                    android:layout_marginTop="8dp"
+                    android:lineSpacingExtra="4dp"
+                    android:text="点击接口查看说明与参数"
                     android:textColor="@color/ui_text_secondary"
-                    android:id="@+id/tvEndpointSummary"
-                    android:textIsSelectable="true"
-                    android:layout_marginTop="12dp"
-                    android:lineSpacingExtra="4dp" />
+                    android:textSize="12sp"
+                    android:focusable="false"
+                    android:focusableInTouchMode="false" />
             </LinearLayout>
-            <TextView
+
+            <!-- Card 4: 后台服务 (Background Service Card) - Moved to bottom! -->
+            <LinearLayout
+                android:id="@+id/cardMainStatus"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text=""
-                android:textSize="12sp"
-                android:textColor="@color/ui_text_secondary"
+                android:layout_marginTop="16dp"
+                android:background="@drawable/surface_card"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <FrameLayout
+                    android:id="@+id/badgeStatusContainer"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:background="@drawable/status_circle_bg">
+
+                    <ImageView
+                        android:id="@+id/ivStatusBadgeIcon"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/ic_check"
+                        app:tint="@color/badge_running_icon" />
+                </FrameLayout>
+
+                <TextView
+                    android:id="@+id/tvMainServiceTitle"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:layout_marginEnd="8dp"
+                    android:layout_weight="1"
+                    android:text="后台服务已开启"
+                    android:textColor="@color/ui_text"
+                    android:textSize="17sp"
+                    android:textStyle="bold" />
+
+                <com.google.android.material.materialswitch.MaterialSwitch
+                    android:id="@+id/switchMainService"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+
+            <!-- Device Telemetry Status Footer -->
+            <TextView
                 android:id="@+id/tvDeviceStatus"
-                android:layout_marginTop="20dp" />
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:layout_marginBottom="8dp"
+                android:gravity="center"
+                android:text=""
+                android:textColor="@color/ui_text_tertiary"
+                android:textSize="12sp" />
         </LinearLayout>
-    </ScrollView>
+    </androidx.core.widget.NestedScrollView>
 </RelativeLayout>

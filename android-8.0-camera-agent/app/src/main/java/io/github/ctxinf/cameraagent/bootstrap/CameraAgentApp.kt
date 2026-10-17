@@ -17,7 +17,17 @@ class CameraAgentApp : Application(), Application.ActivityLifecycleCallbacks {
         AppLog.i("Application onCreate: Camera Agent initializing...")
         appGraph = AppGraph(this)
         registerActivityLifecycleCallbacks(this)
+        applyTheme(appGraph.settingsRepository.themeMode)
         AppLog.i("Application onCreate completed.")
+    }
+
+    fun applyTheme(mode: String) {
+        val nightMode = when (mode) {
+            "light" -> androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_NO
+            "dark" -> androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_YES
+            else -> androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
+        }
+        androidx.appcompat.app.AppCompatDelegate.setDefaultNightMode(nightMode)
     }
 
     private val handler = Handler(Looper.getMainLooper())

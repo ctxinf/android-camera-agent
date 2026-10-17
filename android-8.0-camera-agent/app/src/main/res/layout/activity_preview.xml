@@ -6,42 +6,48 @@
     android:layout_height="match_parent"
     android:background="@color/ui_background"
     android:orientation="vertical"
-    android:padding="12dp">
+    android:padding="16dp">
+
+    <!-- Top App Bar -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
         android:orientation="horizontal">
-        <Button
+
+        <ImageButton
             android:id="@+id/btnBack"
-            android:layout_width="wrap_content"
-            android:layout_height="48dp"
-            android:background="@drawable/control_button"
-            android:text="← 返回"
-            android:textColor="@color/control_text"
-            android:textSize="14sp"
-            android:minHeight="48dp"
-            app:backgroundTint="@color/ui_control" />
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="返回"
+            android:padding="10dp"
+            android:src="@drawable/ic_arrow_back"
+            app:tint="@color/ui_text" />
+
         <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
+            android:layout_marginStart="8dp"
             android:layout_weight="1"
             android:text="@string/preview_title"
             android:textColor="@color/ui_text"
-            android:textSize="18sp"
+            android:textSize="20sp"
             android:textStyle="bold" />
     </LinearLayout>
+
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_marginTop="12dp"
         android:layout_weight="1"
-        android:background="#181818">
+        android:background="#101317">
+
         <TextureView
             android:id="@+id/previewSurface"
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
+
         <TextView
             android:id="@+id/tvPreviewStatus"
             android:layout_width="match_parent"
@@ -52,42 +58,43 @@
             android:textSize="18sp"
             android:visibility="gone" />
     </FrameLayout>
+
     <TextView
         android:id="@+id/tvPreviewInfo"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="12dp"
         android:textColor="@color/ui_primary"
         android:textSize="13sp"
         android:text="Camera: Initializing..." />
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="12dp"
         android:orientation="horizontal">
+
         <Button
             android:id="@+id/btnTogglePreview"
             android:layout_width="0dp"
-            android:layout_height="52dp"
+            android:layout_height="50dp"
             android:layout_weight="1"
-            app:backgroundTint="@color/ui_control"
+            android:background="@drawable/control_button"
             android:text="@string/preview_on"
             android:textColor="@color/control_text"
             android:textSize="14sp"
-            android:textStyle="bold"
-            android:background="@drawable/control_button"
-            android:minHeight="48dp" />
+            android:textStyle="bold" />
+
         <Button
             android:id="@+id/btnRotate"
             android:layout_width="0dp"
-            android:layout_height="52dp"
+            android:layout_height="50dp"
             android:layout_marginStart="10dp"
             android:layout_weight="1"
-            app:backgroundTint="@color/ui_control"
+            android:background="@drawable/control_button"
             android:text="@string/btn_rotate"
             android:textColor="@color/control_text"
             android:textSize="14sp"
-            android:background="@drawable/control_button"
-            android:minHeight="48dp" />
+            android:textStyle="bold" />
     </LinearLayout>
 </LinearLayout>

@@ -20,7 +20,7 @@ import kotlinx.coroutines.launch
 
 class PreviewActivity : AppCompatActivity() {
 
-    private lateinit var btnBack: Button
+    private lateinit var btnBack: View
     private lateinit var previewSurface: TextureView
     private lateinit var tvPreviewStatus: TextView
     private lateinit var tvPreviewInfo: TextView
@@ -90,7 +90,8 @@ class PreviewActivity : AppCompatActivity() {
                 isPreviewAttached = true
                 tvPreviewStatus.visibility = View.GONE
                 btnTogglePreview.text = getString(R.string.preview_on)
-                btnTogglePreview.backgroundTintList = android.content.res.ColorStateList.valueOf(0xFF404D70.toInt())
+                btnTogglePreview.backgroundTintList = android.content.res.ColorStateList.valueOf(getColor(R.color.control_selected_bg))
+                btnTogglePreview.setTextColor(getColor(R.color.control_selected_text))
             } catch (e: Exception) {
                 AppLog.e("Failed to attach preview: ${e.message}", e)
                 tvPreviewStatus.text = "Preview Error: ${e.message}"
@@ -112,7 +113,8 @@ class PreviewActivity : AppCompatActivity() {
                 tvPreviewStatus.text = "Preview Stopped"
                 tvPreviewStatus.visibility = View.VISIBLE
                 btnTogglePreview.text = getString(R.string.preview_off)
-                btnTogglePreview.backgroundTintList = android.content.res.ColorStateList.valueOf(0xFF303643.toInt())
+                btnTogglePreview.backgroundTintList = android.content.res.ColorStateList.valueOf(getColor(R.color.control_normal_bg))
+                btnTogglePreview.setTextColor(getColor(R.color.control_normal_text))
             } catch (e: Exception) {
                 AppLog.w("Error detaching preview", e)
             }

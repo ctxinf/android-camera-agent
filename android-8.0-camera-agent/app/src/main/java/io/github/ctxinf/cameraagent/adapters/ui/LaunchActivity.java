@@ -42,7 +42,7 @@ public class LaunchActivity extends Activity {
         LinearLayout panel = new LinearLayout(this);
         panel.setOrientation(LinearLayout.VERTICAL);
         panel.setGravity(Gravity.CENTER);
-        panel.setBackgroundColor(0xff111318);
+        panel.setBackgroundColor(getColor(R.color.ui_background));
         int size = (int) (88 * getResources().getDisplayMetrics().density);
         ImageView icon = new ImageView(this);
         icon.setImageResource(R.mipmap.ic_launcher);
@@ -50,7 +50,7 @@ public class LaunchActivity extends Activity {
         TextView title = new TextView(this);
         title.setText("Camera Agent");
         title.setTextSize(28);
-        title.setTextColor(0xffe0e0e0);
+        title.setTextColor(getColor(R.color.ui_text));
         title.setPadding(0, 28, 0, 12);
         panel.addView(title);
         setContentView(panel);

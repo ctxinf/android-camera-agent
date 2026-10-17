@@ -1,40 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.CameraAgent" parent="Theme.MaterialComponents.NoActionBar">
+    <style name="Theme.CameraAgent" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="colorPrimary">@color/ui_primary</item>
-        <item name="colorPrimaryVariant">@color/ui_primary_container</item>
-        <item name="colorOnPrimary">@color/ui_background</item>
+        <item name="colorOnPrimary">@color/ui_on_primary</item>
+        <item name="colorPrimaryContainer">@color/ui_primary_container</item>
+        <item name="colorOnPrimaryContainer">@color/ui_on_primary_container</item>
         <item name="colorSecondary">@color/ui_primary</item>
-        <item name="colorSecondaryVariant">@color/ui_primary_container</item>
-        <item name="colorOnSecondary">@color/ui_background</item>
+        <item name="colorOnSecondary">@color/ui_on_primary</item>
         <item name="android:statusBarColor">@color/ui_background</item>
         <item name="android:navigationBarColor">@color/ui_background</item>
-        <item name="android:colorAccent">@color/ui_primary</item>
-        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightStatusBar">?attr/isLightTheme</item>
+        <item name="android:windowLightNavigationBar">?attr/isLightTheme</item>
         <item name="android:windowBackground">@color/ui_background</item>
+        <item name="colorSurface">@color/ui_surface</item>
+        <item name="colorOnSurface">@color/ui_text</item>
+        <item name="colorOutline">@color/ui_outline</item>
+
+        <!-- Switch Style -->
+        <item name="materialSwitchStyle">@style/Widget.CameraAgent.Switch</item>
     </style>
 
-    <style name="Widget.CameraAgent.PathChip" parent="Widget.MaterialComponents.Chip.Action">
+    <style name="Widget.CameraAgent.Switch" parent="Widget.Material3.CompoundButton.MaterialSwitch">
+        <item name="thumbTint">@color/switch_thumb_selector</item>
+        <item name="trackTint">@color/switch_track_selector</item>
+    </style>
+
+    <style name="Widget.CameraAgent.PathChip" parent="Widget.Material3.Chip.Assist">
         <item name="chipBackgroundColor">@color/chip_bg_color</item>
         <item name="chipStrokeColor">@color/chip_stroke_color</item>
         <item name="chipStrokeWidth">1dp</item>
-        <item name="chipCornerRadius">12dp</item>
-        <item name="chipMinHeight">48dp</item>
+        <item name="chipCornerRadius">14dp</item>
+        <item name="chipMinHeight">44dp</item>
         <item name="ensureMinTouchTargetSize">false</item>
         <item name="android:textColor">@color/chip_text_color</item>
-        <item name="android:textSize">12sp</item>
+        <item name="android:textSize">13sp</item>
         <item name="android:textStyle">bold</item>
         <item name="chipStartPadding">12dp</item>
         <item name="chipEndPadding">12dp</item>
-        <item name="textStartPadding">2dp</item>
-        <item name="textEndPadding">2dp</item>
-    </style>
-    <style name="Theme.CameraAgent.Preferences" parent="android:style/Theme.Material.NoActionBar">
-        <item name="android:windowBackground">@color/ui_background</item>
-        <item name="android:colorBackground">@color/ui_background</item>
-        <item name="android:colorAccent">@color/ui_primary</item>
-        <item name="android:statusBarColor">@color/ui_background</item>
-        <item name="android:navigationBarColor">@color/ui_background</item>
-        <item name="android:textColorPrimary">@color/ui_text</item>
-        <item name="android:textColorSecondary">@color/ui_text_secondary</item>
+        <item name="textStartPadding">4dp</item>
+        <item name="textEndPadding">4dp</item>
     </style>
 </resources>

@@ -5,16 +5,18 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.os.PowerManager
-import android.preference.CheckBoxPreference
-import android.preference.EditTextPreference
-import android.preference.ListPreference
-import android.preference.Preference
-import android.preference.PreferenceActivity
-import android.preference.PreferenceCategory
 import android.provider.Settings
 import android.text.InputType
-import android.view.inputmethod.InputMethodManager
+import android.view.View
+import android.widget.Button
+import android.widget.EditText
+import android.widget.FrameLayout
+import android.widget.ImageButton
+import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.materialswitch.MaterialSwitch
 import io.github.ctxinf.cameraagent.R
 import io.github.ctxinf.cameraagent.adapters.mqtt.MqttClient
 import io.github.ctxinf.cameraagent.bootstrap.AgentService
@@ -29,289 +31,563 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 
-/** Platform preferences, matching the legacy edition. Existing typed settings stay intact. */
-@Suppress("DEPRECATION")
-class SettingsActivity : PreferenceActivity() {
+class SettingsActivity : AppCompatActivity() {
+
     private val graph get() = (application as CameraAgentApp).appGraph
     private val repo get() = graph.settingsRepository
     private val uiScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
-    private lateinit var resolution: ListPreference
-    private lateinit var battery: Preference
-    private val authFields = mutableListOf<Preference>()
+
+    private var isBinding = false
+
+    // Display
+    private lateinit var tvDimTimeoutValue: TextView
+    private lateinit var tvDimBrightnessValue: TextView
+    private lateinit var tvBatteryValue: TextView
+    private lateinit var tvThemeModeValue: TextView
+
+    // Camera
+    private lateinit var switchDisableFront: MaterialSwitch
+    private lateinit var tvCameraFacingValue: TextView
+    private lateinit var tvResolutionValue: TextView
+    private lateinit var tvTargetFpsValue: TextView
+    private lateinit var tvJpegQualityValue: TextView
+    private lateinit var tvRetentionGraceValue: TextView
+
+    // Network
+    private lateinit var tvHttpPortValue: TextView
+    private lateinit var tvHttpPrefixValue: TextView
+    private lateinit var switchAuthEnabled: MaterialSwitch
+    private lateinit var itemAuthUsername: View
+    private lateinit var divAuthUsername: View
+    private lateinit var tvAuthUsernameValue: TextView
+    private lateinit var itemAuthPassword: View
+    private lateinit var divAuthPassword: View
+    private lateinit var tvAuthPasswordValue: TextView
+
+    // MQTT
+    private lateinit var switchMqttEnabled: MaterialSwitch
+    private lateinit var tvMqttHostValue: TextView
+    private lateinit var tvMqttPortValue: TextView
+    private lateinit var tvMqttClientIdValue: TextView
+    private lateinit var tvMqttTopicPrefixValue: TextView
+    private lateinit var tvMqttTestValue: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        preferenceScreen = preferenceManager.createPreferenceScreen(this)
-        listView.setBackgroundColor(getColor(R.color.ui_background))
-        val inset = (8 * resources.displayMetrics.density).toInt()
-        listView.setPadding(inset, 0, inset, 0)
+        setContentView(R.layout.activity_settings)
 
-        val display = category(R.string.cat_display)
-        number(display, "dim_timeout_sec", R.string.pref_dim_timeout, repo.dimTimeoutSec, 5..3600, R.string.unit_seconds) { repo.setDimTimeoutSec(it) }
-        number(display, "dim_brightness", R.string.pref_dim_brightness, (repo.dimBrightness * 100).toInt(), 0..100, R.string.unit_percent) { repo.setDimBrightness(it / 100f) }
-        battery = action(display, "battery", R.string.btn_battery_opt) { requestBatteryBypass() }
+        findViewById<ImageButton>(R.id.btnSettingsBack).setOnClickListener { finish() }
 
-        val camera = category(R.string.cat_camera)
-        toggle(camera, "front_camera_disabled", R.string.pref_disable_front, repo.frontCameraDisabled) { disabled ->
+        initViews()
+        setupClickListeners()
+        refreshUi()
+    }
+
+    private fun initViews() {
+        // Display
+        tvDimTimeoutValue = findViewById(R.id.tvDimTimeoutValue)
+        tvDimBrightnessValue = findViewById(R.id.tvDimBrightnessValue)
+        tvBatteryValue = findViewById(R.id.tvBatteryValue)
+        tvThemeModeValue = findViewById(R.id.tvThemeModeValue)
+
+        // Camera
+        switchDisableFront = findViewById(R.id.switchDisableFront)
+        tvCameraFacingValue = findViewById(R.id.tvCameraFacingValue)
+        tvResolutionValue = findViewById(R.id.tvResolutionValue)
+        tvTargetFpsValue = findViewById(R.id.tvTargetFpsValue)
+        tvJpegQualityValue = findViewById(R.id.tvJpegQualityValue)
+        tvRetentionGraceValue = findViewById(R.id.tvRetentionGraceValue)
+
+        // Network
+        tvHttpPortValue = findViewById(R.id.tvHttpPortValue)
+        tvHttpPrefixValue = findViewById(R.id.tvHttpPrefixValue)
+        switchAuthEnabled = findViewById(R.id.switchAuthEnabled)
+        itemAuthUsername = findViewById(R.id.itemAuthUsername)
+        divAuthUsername = findViewById(R.id.divAuthUsername)
+        tvAuthUsernameValue = findViewById(R.id.tvAuthUsernameValue)
+        itemAuthPassword = findViewById(R.id.itemAuthPassword)
+        divAuthPassword = findViewById(R.id.divAuthPassword)
+        tvAuthPasswordValue = findViewById(R.id.tvAuthPasswordValue)
+
+        // MQTT
+        switchMqttEnabled = findViewById(R.id.switchMqttEnabled)
+        tvMqttHostValue = findViewById(R.id.tvMqttHostValue)
+        tvMqttPortValue = findViewById(R.id.tvMqttPortValue)
+        tvMqttClientIdValue = findViewById(R.id.tvMqttClientIdValue)
+        tvMqttTopicPrefixValue = findViewById(R.id.tvMqttTopicPrefixValue)
+        tvMqttTestValue = findViewById(R.id.tvMqttTestValue)
+    }
+
+    private fun setupClickListeners() {
+        // --- Display ---
+        findViewById<View>(R.id.itemDimTimeout).setOnClickListener {
+            showNumberDialog(
+                title = getString(R.string.pref_dim_timeout),
+                currentValue = repo.dimTimeoutSec,
+                range = 5..3600,
+                unit = "秒"
+            ) { value ->
+                repo.setDimTimeoutSec(value)
+                refreshUi()
+            }
+        }
+
+        findViewById<View>(R.id.itemDimBrightness).setOnClickListener {
+            showNumberDialog(
+                title = getString(R.string.pref_dim_brightness),
+                currentValue = (repo.dimBrightness * 100).toInt(),
+                range = 0..100,
+                unit = "%"
+            ) { value ->
+                repo.setDimBrightness(value / 100f)
+                refreshUi()
+            }
+        }
+
+        findViewById<View>(R.id.itemBattery).setOnClickListener {
+            requestBatteryBypass()
+        }
+
+        findViewById<View>(R.id.itemThemeMode).setOnClickListener {
+            val themes = listOf(
+                "跟随系统 (默认)" to "system",
+                "浅色模式" to "light",
+                "深色模式" to "dark"
+            )
+            val currentIndex = themes.indexOfFirst { it.second == repo.themeMode }.coerceAtLeast(0)
+            MaterialAlertDialogBuilder(this)
+                .setTitle("外观与深色模式")
+                .setSingleChoiceItems(themes.map { it.first }.toTypedArray(), currentIndex) { dialog, which ->
+                    val selectedMode = themes[which].second
+                    repo.setThemeMode(selectedMode)
+                    (application as CameraAgentApp).applyTheme(selectedMode)
+                    refreshUi()
+                    dialog.dismiss()
+                }
+                .setNegativeButton(android.R.string.cancel, null)
+                .show()
+        }
+
+        // --- Camera ---
+        switchDisableFront.setOnCheckedChangeListener { _, disabled ->
+            if (isBinding) return@setOnCheckedChangeListener
             graph.appScope.launch(Dispatchers.Main.immediate) {
                 graph.cameraAccess.setFrontDisabled(disabled)
-                (findPreference("camera_facing") as? ListPreference)?.let {
-                    it.value = repo.config.value.facing.name
-                    it.summary = it.entry
-                }
-                refreshResolutions(repo.config.value.facing)
+                refreshUi()
             }
-            if (disabled) toast("前置摄像头已禁用")
+            if (disabled) Toast.makeText(this, "前置摄像头已禁用", Toast.LENGTH_SHORT).show()
         }
-        val caps = graph.capabilities.ifEmpty { graph.refreshCapabilities() }
-        val facings = caps.map { it.facing }.distinct().ifEmpty { listOf(LensFacing.BACK) }
-        choice(camera, "camera_facing", R.string.pref_default_facing,
-            facings.map { if (it == LensFacing.FRONT) getString(R.string.facing_front) else getString(R.string.facing_back) },
-            facings.map { it.name }, repo.config.value.facing.name) { value ->
-            if (value == LensFacing.FRONT.name && repo.frontCameraDisabled) {
-                toast("前置摄像头已在设置中禁用")
-                throw IllegalArgumentException("前置摄像头已禁用")
-            }
-            updateCamera { it.copy(facing = LensFacing.valueOf(value)) }
-            refreshResolutions(LensFacing.valueOf(value))
-        }
-        resolution = choice(camera, "resolution", R.string.pref_resolution, emptyList(), emptyList(), "") { value ->
-            val (width, height) = value.split('x').map { it.toInt() }
-            updateCamera { it.copy(targetWidth = width, targetHeight = height) }
-        }
-        refreshResolutions(repo.config.value.facing)
-        number(camera, "target_fps", R.string.pref_target_fps, repo.config.value.targetFps, 1..30, R.string.unit_fps) { fps -> updateCamera { it.copy(targetFps = fps) } }
-        number(camera, "jpeg_quality", R.string.pref_jpeg_quality, repo.config.value.jpegQuality, 10..100) { quality -> updateCamera { it.copy(jpegQuality = quality) } }
-        number(camera, "retention_grace_sec", R.string.pref_retention_grace_period, repo.config.value.retentionGracePeriodSec, 0..3600, R.string.unit_seconds) { seconds -> updateCamera { it.copy(retentionGracePeriodSec = seconds) } }
 
-        val network = category(R.string.cat_network)
-        toggle(network, "http_enabled", R.string.pref_http_enabled, repo.httpEnabled) {
-            repo.setHttpEnabled(it)
-            refreshNetworkServices()
-        }
-        toggle(network, "mcp_enabled", R.string.pref_mcp_enabled, repo.mcpEnabled) {
-            repo.setMcpEnabled(it)
-            refreshNetworkServices()
-        }
-        number(network, "http_port", R.string.pref_http_port, repo.httpPort, 1024..65535) { port ->
-            if (port != repo.httpPort) {
-                repo.setHttpPort(port)
-                if (AgentService.isRunning) graph.appScope.launch {
-                    try {
-                        graph.refreshNetworkListener()
-                    } catch (e: Exception) {
-                        AppLog.e("HTTP restart failed", e)
-                        runOnUiThread { toast(getString(R.string.http_restart_failed)) }
+        findViewById<View>(R.id.itemCameraFacing).setOnClickListener {
+            val caps = graph.capabilities.ifEmpty { graph.refreshCapabilities() }
+            val facings = caps.map { it.facing }.distinct().ifEmpty { listOf(LensFacing.BACK) }
+            val labels = facings.map { if (it == LensFacing.FRONT) getString(R.string.facing_front) else getString(R.string.facing_back) }
+            val currentIdx = facings.indexOf(repo.config.value.facing).coerceAtLeast(0)
+
+            MaterialAlertDialogBuilder(this)
+                .setTitle(R.string.pref_default_facing)
+                .setSingleChoiceItems(labels.toTypedArray(), currentIdx) { dialog, which ->
+                    val chosen = facings[which]
+                    if (chosen == LensFacing.FRONT && repo.frontCameraDisabled) {
+                        Toast.makeText(this, "前置摄像头已在设置中禁用", Toast.LENGTH_SHORT).show()
+                    } else {
+                        updateCamera { it.copy(facing = chosen) }
+                        refreshUi()
                     }
+                    dialog.dismiss()
                 }
-                graph.mqttManager.restart()
+                .setNegativeButton(android.R.string.cancel, null)
+                .show()
+        }
+
+        findViewById<View>(R.id.itemResolution).setOnClickListener {
+            val facing = repo.config.value.facing
+            val config = repo.config.value
+            val current = "${config.targetWidth}x${config.targetHeight}"
+            val supported = graph.capabilities.firstOrNull { it.facing == facing }?.supportedSizes.orEmpty()
+                .map { "${it.width}x${it.height}" }
+            val values = (supported + current).distinct()
+            val labels = values.map { it.replace("x", " × ") }
+            val currentIdx = values.indexOf(current).coerceAtLeast(0)
+
+            MaterialAlertDialogBuilder(this)
+                .setTitle(R.string.pref_resolution)
+                .setSingleChoiceItems(labels.toTypedArray(), currentIdx) { dialog, which ->
+                    val (w, h) = values[which].split('x').map { it.toInt() }
+                    updateCamera { it.copy(targetWidth = w, targetHeight = h) }
+                    refreshUi()
+                    dialog.dismiss()
+                }
+                .setNegativeButton(android.R.string.cancel, null)
+                .show()
+        }
+
+        findViewById<View>(R.id.itemTargetFps).setOnClickListener {
+            showNumberDialog(
+                title = getString(R.string.pref_target_fps),
+                currentValue = repo.config.value.targetFps,
+                range = 1..30,
+                unit = "帧/秒"
+            ) { fps ->
+                updateCamera { it.copy(targetFps = fps) }
+                refreshUi()
             }
         }
-        edit(network, "http_path_prefix", R.string.pref_http_path_prefix, repo.httpPathPrefix,
-            hint = getString(R.string.http_path_prefix_hint), normalize = HttpPathPrefix::normalize) {
-            repo.setHttpPathPrefix(it)
-            graph.mqttManager.restart()
-        }
-        toggle(network, "auth_enabled", R.string.pref_auth_enabled, repo.authEnabled) { enabled ->
-            repo.setAuthEnabled(enabled)
-            authFields.forEach { it.isEnabled = enabled }
-        }
-        authFields += edit(network, "auth_username", R.string.pref_auth_username, repo.authUsername) { repo.setAuthUsername(it) }
-        authFields += edit(network, "auth_password", R.string.pref_auth_password, repo.authPassword, password = true) { repo.setAuthPassword(it) }
-        authFields.forEach { it.isEnabled = repo.authEnabled }
 
-        val mqtt = category(R.string.pref_mqtt_title)
-        toggle(mqtt, "mqtt_enabled", R.string.pref_mqtt_enabled, repo.mqttEnabled) { enabled ->
+        findViewById<View>(R.id.itemJpegQuality).setOnClickListener {
+            showNumberDialog(
+                title = getString(R.string.pref_jpeg_quality),
+                currentValue = repo.config.value.jpegQuality,
+                range = 10..100,
+                unit = ""
+            ) { quality ->
+                updateCamera { it.copy(jpegQuality = quality) }
+                refreshUi()
+            }
+        }
+
+        findViewById<View>(R.id.itemRetentionGrace).setOnClickListener {
+            showNumberDialog(
+                title = getString(R.string.pref_retention_grace_period),
+                currentValue = repo.config.value.retentionGracePeriodSec,
+                range = 0..3600,
+                unit = "秒"
+            ) { seconds ->
+                updateCamera { it.copy(retentionGracePeriodSec = seconds) }
+                refreshUi()
+            }
+        }
+
+        // --- Network ---
+        findViewById<View>(R.id.itemHttpPort).setOnClickListener {
+            showNumberDialog(
+                title = getString(R.string.pref_http_port),
+                currentValue = repo.httpPort,
+                range = 1024..65535,
+                unit = ""
+            ) { port ->
+                if (port != repo.httpPort) {
+                    repo.setHttpPort(port)
+                    refreshNetworkServices()
+                    graph.mqttManager.restart()
+                    refreshUi()
+                }
+            }
+        }
+
+        findViewById<View>(R.id.itemHttpPrefix).setOnClickListener {
+            showTextDialog(
+                title = getString(R.string.pref_http_path_prefix),
+                currentValue = repo.httpPathPrefix,
+                hint = getString(R.string.http_path_prefix_hint)
+            ) { raw ->
+                val normalized = HttpPathPrefix.normalize(raw)
+                repo.setHttpPathPrefix(normalized)
+                graph.mqttManager.restart()
+                refreshUi()
+            }
+        }
+
+        switchAuthEnabled.setOnCheckedChangeListener { _, enabled ->
+            if (isBinding) return@setOnCheckedChangeListener
+            repo.setAuthEnabled(enabled)
+            refreshUi()
+        }
+
+        itemAuthUsername.setOnClickListener {
+            showTextDialog(
+                title = getString(R.string.pref_auth_username),
+                currentValue = repo.authUsername,
+                hint = "输入用户名"
+            ) { username ->
+                if (username.isNotBlank()) {
+                    repo.setAuthUsername(username)
+                    refreshUi()
+                }
+            }
+        }
+
+        itemAuthPassword.setOnClickListener {
+            showTextDialog(
+                title = getString(R.string.pref_auth_password),
+                currentValue = repo.authPassword,
+                hint = "输入访问密码",
+                isPassword = true
+            ) { password ->
+                if (password.isNotBlank()) {
+                    repo.setAuthPassword(password)
+                    refreshUi()
+                }
+            }
+        }
+
+        // --- MQTT ---
+        switchMqttEnabled.setOnCheckedChangeListener { _, enabled ->
+            if (isBinding) return@setOnCheckedChangeListener
             repo.setMqttEnabled(enabled)
             graph.mqttManager.restart()
+            refreshUi()
         }
-        edit(mqtt, "mqtt_host", R.string.pref_mqtt_host, repo.mqttHost) { repo.setMqttHost(it); graph.mqttManager.restart() }
-        number(mqtt, "mqtt_port", R.string.pref_mqtt_port, repo.mqttPort, 1..65535) { repo.setMqttPort(it); graph.mqttManager.restart() }
-        edit(mqtt, "mqtt_client_id", R.string.pref_mqtt_client_id, repo.mqttClientId,
-            normalize = { it.trim().ifEmpty { throw IllegalArgumentException(getString(R.string.value_required)) } }) { repo.setMqttClientId(it); graph.mqttManager.restart() }
-        edit(mqtt, "mqtt_username", R.string.pref_auth_username, repo.mqttUsername) { repo.setMqttUsername(it); graph.mqttManager.restart() }
-        edit(mqtt, "mqtt_password", R.string.pref_auth_password, repo.mqttPassword, password = true) { repo.setMqttPassword(it); graph.mqttManager.restart() }
-        edit(mqtt, "mqtt_topic_prefix", R.string.pref_mqtt_topic_prefix, repo.mqttTopicPrefix,
-            normalize = { it.trim().ifEmpty { "camera_agent" } }) { repo.setMqttTopicPrefix(it); graph.mqttManager.restart() }
-        action(mqtt, "mqtt_test", R.string.btn_test_mqtt) { testMqtt(it) }
 
-        val tools = category(R.string.cat_tools)
-        action(tools, "preview", R.string.btn_preview) { startActivity(Intent(this, PreviewActivity::class.java)) }
-        action(tools, "diagnostics", R.string.btn_open_diagnostics) { startActivity(Intent(this, DiagnosticsActivity::class.java)) }
-        val exit = android.widget.Button(this).apply {
-            text = "强制退出程序"
-            setTextColor(android.graphics.Color.WHITE)
-            backgroundTintList = android.content.res.ColorStateList.valueOf(0xffb3261e.toInt())
-            setCompoundDrawablesWithIntrinsicBounds(android.R.drawable.ic_lock_power_off, 0, 0, 0)
-            setPadding(24, 16, 24, 16)
-            setOnClickListener {
-                android.app.AlertDialog.Builder(this@SettingsActivity)
-                    .setTitle("强制退出程序")
-                    .setMessage("停止所有连接和相机，退出进程并禁止自启动，直到你再次手动打开应用。")
-                    .setNegativeButton(android.R.string.cancel, null)
-                    .setPositiveButton("退出") { _, _ -> (application as CameraAgentApp).forceExit() }
-                    .show()
+        findViewById<View>(R.id.itemMqttHost).setOnClickListener {
+            showTextDialog(
+                title = getString(R.string.pref_mqtt_host),
+                currentValue = repo.mqttHost,
+                hint = "例如: 192.168.1.5 或 broker.emqx.io"
+            ) { host ->
+                repo.setMqttHost(host)
+                graph.mqttManager.restart()
+                refreshUi()
             }
         }
-        listView.addFooterView(exit, null, false)
-    }
 
-    private fun refreshNetworkServices() {
-        graph.appScope.launch {
-            try { graph.refreshNetworkListener() }
-            catch (e: Exception) {
-                AppLog.e("Listener restart failed", e)
-                runOnUiThread { toast(getString(R.string.http_restart_failed)) }
+        findViewById<View>(R.id.itemMqttPort).setOnClickListener {
+            showNumberDialog(
+                title = getString(R.string.pref_mqtt_port),
+                currentValue = repo.mqttPort,
+                range = 1..65535,
+                unit = ""
+            ) { port ->
+                repo.setMqttPort(port)
+                graph.mqttManager.restart()
+                refreshUi()
             }
         }
-    }
 
-    private fun category(title: Int) = PreferenceCategory(this).also {
-        it.setTitle(title)
-        preferenceScreen.addPreference(it)
-    }
-
-    private fun action(parent: PreferenceCategory, key: String, title: Int, onClick: (Preference) -> Unit) = Preference(this).also {
-        it.key = key
-        it.setTitle(title)
-        parent.addPreference(it)
-        it.setOnPreferenceClickListener { pref -> onClick(pref); true }
-    }
-
-    private fun edit(parent: PreferenceCategory, key: String, title: Int, value: String,
-                     password: Boolean = false, hint: String? = null,
-                     normalize: (String) -> String = { it.trim() }, save: (String) -> Unit): EditTextPreference {
-        val pref = EditTextPreference(this)
-        pref.key = key
-        pref.isPersistent = false
-        pref.setTitle(title)
-        pref.dialogTitle = getString(title)
-        pref.dialogMessage = hint
-        pref.editText.inputType = if (password) InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
-            else InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
-        fun showSummary(text: String) {
-            pref.summary = when {
-                text.isEmpty() && key == "http_path_prefix" -> getString(R.string.http_path_prefix_empty)
-                text.isEmpty() -> getString(R.string.pref_unset)
-                password -> "••••••"
-                else -> text
+        findViewById<View>(R.id.itemMqttClientId).setOnClickListener {
+            showTextDialog(
+                title = getString(R.string.pref_mqtt_client_id),
+                currentValue = repo.mqttClientId,
+                hint = "客户端唯一标识"
+            ) { id ->
+                if (id.isNotBlank()) {
+                    repo.setMqttClientId(id)
+                    graph.mqttManager.restart()
+                    refreshUi()
+                }
             }
         }
-        pref.text = value
-        showSummary(value)
-        parent.addPreference(pref)
-        pref.setOnPreferenceChangeListener { _, newValue ->
-            try {
-                val normalized = normalize(newValue.toString())
-                save(normalized)
-                pref.text = normalized
-                showSummary(normalized)
-            } catch (e: IllegalArgumentException) { toast(e.message ?: getString(R.string.invalid_value)) }
-            (getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager)
-                .hideSoftInputFromWindow(pref.editText.windowToken, 0)
-            false // Store through the typed repository, never PreferenceManager's string store.
+
+        findViewById<View>(R.id.itemMqttTopicPrefix).setOnClickListener {
+            showTextDialog(
+                title = getString(R.string.pref_mqtt_topic_prefix),
+                currentValue = repo.mqttTopicPrefix,
+                hint = "例如: camera_agent"
+            ) { prefix ->
+                repo.setMqttTopicPrefix(prefix.ifBlank { "camera_agent" })
+                graph.mqttManager.restart()
+                refreshUi()
+            }
         }
-        return pref
-    }
 
-    private fun number(parent: PreferenceCategory, key: String, title: Int, value: Int, range: IntRange,
-                       unit: Int? = null, save: (Int) -> Unit): EditTextPreference {
-        val pref = edit(parent, key, title, value.toString(), normalize = { raw ->
-            val number = raw.toIntOrNull()
-            require(number != null && number in range) { getString(R.string.number_range, range.first, range.last) }
-            number.toString()
-        }) { save(it.toInt()) }
-        pref.editText.inputType = InputType.TYPE_CLASS_NUMBER
-        pref.dialogMessage = getString(R.string.number_range, range.first, range.last)
-        fun summary(text: String) = if (unit == null) text else getString(unit, text.toInt())
-        pref.summary = summary(pref.text)
-        val validateAndSave = pref.onPreferenceChangeListener
-        pref.setOnPreferenceChangeListener { p, v ->
-            validateAndSave.onPreferenceChange(p, v)
-            pref.summary = summary(pref.text)
-            false
+        findViewById<View>(R.id.itemMqttTest).setOnClickListener {
+            testMqtt()
         }
-        return pref
-    }
 
-    private fun toggle(parent: PreferenceCategory, key: String, title: Int, value: Boolean, save: (Boolean) -> Unit) {
-        val pref = CheckBoxPreference(this)
-        pref.key = key
-        pref.isPersistent = false
-        pref.setTitle(title)
-        pref.isChecked = value
-        parent.addPreference(pref)
-        pref.setOnPreferenceChangeListener { _, newValue -> save(newValue as Boolean); true }
-    }
+        // --- Tools ---
+        findViewById<View>(R.id.itemPreview).setOnClickListener {
+            startActivity(Intent(this, PreviewActivity::class.java))
+        }
 
-    private fun choice(parent: PreferenceCategory, key: String, title: Int, labels: List<String>, values: List<String>,
-                       current: String, save: (String) -> Unit): ListPreference = ListPreference(this).also { pref ->
-        pref.key = key
-        pref.isPersistent = false
-        pref.setTitle(title)
-        pref.dialogTitle = getString(title)
-        pref.entries = labels.toTypedArray()
-        pref.entryValues = values.toTypedArray()
-        pref.value = current
-        pref.summary = pref.entry
-        parent.addPreference(pref)
-        pref.setOnPreferenceChangeListener { _, value ->
-            try {
-                save(value.toString())
-                pref.value = value.toString()
-                pref.summary = pref.entry
-            } catch (_: IllegalArgumentException) { /* policy toast already shown */ }
-            false
+        findViewById<View>(R.id.itemDiagnostics).setOnClickListener {
+            startActivity(Intent(this, DiagnosticsActivity::class.java))
+        }
+
+        // Danger Exit
+        findViewById<Button>(R.id.btnExitApp).setOnClickListener {
+            MaterialAlertDialogBuilder(this)
+                .setTitle("强制退出程序")
+                .setMessage("停止所有连接和相机，退出进程并禁止自启动，直到你再次手动打开应用。")
+                .setNegativeButton(android.R.string.cancel, null)
+                .setPositiveButton("退出") { _, _ ->
+                    (application as CameraAgentApp).forceExit()
+                }
+                .show()
         }
     }
 
-    private fun refreshResolutions(facing: LensFacing) {
+    private fun refreshUi() {
+        isBinding = true
+
+        // Display
+        tvDimTimeoutValue.text = "${repo.dimTimeoutSec} 秒"
+        tvDimBrightnessValue.text = "${(repo.dimBrightness * 100).toInt()}%"
+        tvBatteryValue.text = if (ignoresBatteryOptimization()) getString(R.string.battery_opt_enabled) else getString(R.string.battery_opt_hint)
+        tvThemeModeValue.text = when (repo.themeMode) {
+            "light" -> "浅色模式"
+            "dark" -> "深色模式"
+            else -> "跟随系统 (默认)"
+        }
+
+        // Camera
+        switchDisableFront.isChecked = repo.frontCameraDisabled
         val config = repo.config.value
-        val current = "${config.targetWidth}x${config.targetHeight}"
-        val supported = graph.capabilities.firstOrNull { it.facing == facing }?.supportedSizes.orEmpty()
-            .map { "${it.width}x${it.height}" }
-        val values = (supported + current).distinct()
-        resolution.entries = values.map { it.replace("x", " × ") }.toTypedArray()
-        resolution.entryValues = values.toTypedArray()
-        resolution.value = current
-        resolution.summary = resolution.entry
-    }
+        tvCameraFacingValue.text = if (config.facing == LensFacing.FRONT) getString(R.string.facing_front) else getString(R.string.facing_back)
+        tvResolutionValue.text = "${config.targetWidth} × ${config.targetHeight}"
+        tvTargetFpsValue.text = "${config.targetFps} 帧/秒"
+        tvJpegQualityValue.text = "${config.jpegQuality}"
+        tvRetentionGraceValue.text = "${config.retentionGracePeriodSec} 秒"
 
-    private fun updateCamera(change: (CameraConfig) -> CameraConfig) {
-        // Application scope lets an accepted setting finish applying even after Back is pressed.
-        graph.appScope.launch(Dispatchers.Main.immediate) {
-            try { graph.cameraAccess.updateLocal(change) }
-            catch (e: SecurityException) { toast(e.message ?: "相机访问被禁用") }
-        }
+        // Network
+        tvHttpPortValue.text = "${repo.httpPort}"
+        tvHttpPrefixValue.text = repo.httpPathPrefix.ifEmpty { getString(R.string.http_path_prefix_empty) }
+        switchAuthEnabled.isChecked = repo.authEnabled
+        val authVisible = if (repo.authEnabled) View.VISIBLE else View.GONE
+        itemAuthUsername.visibility = authVisible
+        divAuthUsername.visibility = authVisible
+        itemAuthPassword.visibility = authVisible
+        divAuthPassword.visibility = authVisible
+        tvAuthUsernameValue.text = repo.authUsername
+        tvAuthPasswordValue.text = if (repo.authPassword.isNotEmpty()) "••••••" else getString(R.string.pref_unset)
+
+        // MQTT
+        switchMqttEnabled.isChecked = repo.mqttEnabled
+        tvMqttHostValue.text = repo.mqttHost.ifEmpty { getString(R.string.pref_unset) }
+        tvMqttPortValue.text = "${repo.mqttPort}"
+        tvMqttClientIdValue.text = repo.mqttClientId
+        tvMqttTopicPrefixValue.text = repo.mqttTopicPrefix
+
+        isBinding = false
     }
 
     override fun onResume() {
         super.onResume()
-        listOf("http_enabled" to repo.httpEnabled, "mcp_enabled" to repo.mcpEnabled, "mqtt_enabled" to repo.mqttEnabled)
-            .forEach { (key, enabled) -> (findPreference(key) as? CheckBoxPreference)?.isChecked = enabled }
-        if (::battery.isInitialized) battery.setSummary(if (ignoresBatteryOptimization()) R.string.battery_opt_enabled else R.string.battery_opt_hint)
+        refreshUi()
     }
 
-    private fun ignoresBatteryOptimization() = (getSystemService(Context.POWER_SERVICE) as PowerManager).isIgnoringBatteryOptimizations(packageName)
+    private fun ignoresBatteryOptimization(): Boolean {
+        val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
+        return pm.isIgnoringBatteryOptimizations(packageName)
+    }
 
     private fun requestBatteryBypass() {
-        if (ignoresBatteryOptimization()) return
+        if (ignoresBatteryOptimization()) {
+            Toast.makeText(this, R.string.battery_opt_enabled, Toast.LENGTH_SHORT).show()
+            return
+        }
         val request = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, Uri.parse("package:$packageName"))
-        if (request.resolveActivity(packageManager) != null) startActivity(request)
-        else startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
-    }
-
-    private fun testMqtt(pref: Preference) {
-        pref.isEnabled = false
-        pref.setSummary(R.string.mqtt_testing)
-        uiScope.launch {
-            val result = MqttClient.testConnection(repo.mqttHost, repo.mqttPort,
-                repo.mqttClientId + "-test", repo.mqttUsername.ifEmpty { null }, repo.mqttPassword.ifEmpty { null }, 5000)
-            pref.isEnabled = true
-            pref.setSummary(if (result.success) R.string.mqtt_test_success else R.string.mqtt_test_failed)
+        if (request.resolveActivity(packageManager) != null) {
+            startActivity(request)
+        } else {
+            startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
         }
     }
 
-    private fun toast(message: String) = Toast.makeText(this, message, Toast.LENGTH_LONG).show()
-    override fun onDestroy() { uiScope.cancel(); super.onDestroy() }
+    private fun testMqtt() {
+        tvMqttTestValue.text = getString(R.string.mqtt_testing)
+        uiScope.launch {
+            val result = MqttClient.testConnection(
+                repo.mqttHost,
+                repo.mqttPort,
+                repo.mqttClientId + "-test",
+                repo.mqttUsername.ifEmpty { null },
+                repo.mqttPassword.ifEmpty { null },
+                5000
+            )
+            tvMqttTestValue.text = if (result.success) getString(R.string.mqtt_test_success) else getString(R.string.mqtt_test_failed)
+        }
+    }
+
+    private fun updateCamera(change: (CameraConfig) -> CameraConfig) {
+        graph.appScope.launch(Dispatchers.Main.immediate) {
+            try {
+                graph.cameraAccess.updateLocal(change)
+                refreshUi()
+            } catch (e: SecurityException) {
+                Toast.makeText(this@SettingsActivity, e.message ?: "相机访问被禁用", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun refreshNetworkServices() {
+        graph.appScope.launch {
+            try {
+                graph.refreshNetworkListener()
+            } catch (e: Exception) {
+                AppLog.e("Listener restart failed", e)
+                runOnUiThread { Toast.makeText(this@SettingsActivity, R.string.http_restart_failed, Toast.LENGTH_SHORT).show() }
+            }
+        }
+    }
+
+    private fun showNumberDialog(
+        title: String,
+        currentValue: Int,
+        range: IntRange,
+        unit: String,
+        onSave: (Int) -> Unit
+    ) {
+        val input = EditText(this).apply {
+            inputType = InputType.TYPE_CLASS_NUMBER
+            setText(currentValue.toString())
+            setSelection(text.length)
+            setTextColor(getColor(R.color.ui_text))
+            setBackgroundResource(R.drawable.surface_field)
+            val pad = (14 * resources.displayMetrics.density).toInt()
+            setPadding(pad, pad, pad, pad)
+        }
+        val container = FrameLayout(this).apply {
+            val margin = (20 * resources.displayMetrics.density).toInt()
+            setPadding(margin, margin / 2, margin, margin / 2)
+            addView(input)
+        }
+
+        MaterialAlertDialogBuilder(this)
+            .setTitle(title)
+            .setMessage(if (unit.isNotEmpty()) "范围: ${range.first} ~ ${range.last} $unit" else "范围: ${range.first} ~ ${range.last}")
+            .setView(container)
+            .setPositiveButton(android.R.string.ok) { _, _ ->
+                val num = input.text.toString().toIntOrNull()
+                if (num != null && num in range) {
+                    onSave(num)
+                } else {
+                    Toast.makeText(this, getString(R.string.number_range, range.first, range.last), Toast.LENGTH_SHORT).show()
+                }
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
+    }
+
+    private fun showTextDialog(
+        title: String,
+        currentValue: String,
+        hint: String? = null,
+        isPassword: Boolean = false,
+        onSave: (String) -> Unit
+    ) {
+        val input = EditText(this).apply {
+            inputType = if (isPassword) {
+                InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
+            } else {
+                InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
+            }
+            setText(currentValue)
+            setSelection(text.length)
+            this.hint = hint
+            setHintTextColor(getColor(R.color.ui_text_tertiary))
+            setTextColor(getColor(R.color.ui_text))
+            setBackgroundResource(R.drawable.surface_field)
+            val pad = (14 * resources.displayMetrics.density).toInt()
+            setPadding(pad, pad, pad, pad)
+        }
+        val container = FrameLayout(this).apply {
+            val margin = (20 * resources.displayMetrics.density).toInt()
+            setPadding(margin, margin / 2, margin, margin / 2)
+            addView(input)
+        }
+
+        MaterialAlertDialogBuilder(this)
+            .setTitle(title)
+            .setView(container)
+            .setPositiveButton(android.R.string.ok) { _, _ ->
+                onSave(input.text.toString().trim())
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
+    }
+
+    override fun onDestroy() {
+        uiScope.cancel()
+        super.onDestroy()
+    }
 }

@@ -35,6 +35,9 @@ interface SettingsRepository {
     val mqttPassword: String
     val mqttClientId: String
     val mqttTopicPrefix: String
+    val themeMode: String get() = "system"
+
+    fun setThemeMode(mode: String) {}
 
     fun setHttpPathPrefix(prefix: String)
     fun setHttpPort(port: Int)
@@ -125,6 +128,13 @@ class SharedPreferencesSettingsRepository(
 
     override val mqttTopicPrefix: String
         get() = prefs.getString(KEY_MQTT_TOPIC_PREFIX, DEFAULT_MQTT_TOPIC_PREFIX) ?: DEFAULT_MQTT_TOPIC_PREFIX
+
+    override val themeMode: String
+        get() = prefs.getString(KEY_THEME_MODE, DEFAULT_THEME_MODE) ?: DEFAULT_THEME_MODE
+
+    override fun setThemeMode(mode: String) {
+        prefs.edit().putString(KEY_THEME_MODE, mode).apply()
+    }
 
     override fun setHttpPort(port: Int) {
         prefs.edit().putInt(KEY_HTTP_PORT, port).apply()
@@ -243,6 +253,7 @@ class SharedPreferencesSettingsRepository(
         private const val KEY_MQTT_PASSWORD = "mqtt_password"
         private const val KEY_MQTT_CLIENT_ID = "mqtt_client_id"
         private const val KEY_MQTT_TOPIC_PREFIX = "mqtt_topic_prefix"
+        private const val KEY_THEME_MODE = "theme_mode"
 
         const val DEFAULT_HTTP_PORT = 8080
         const val DEFAULT_DIM_TIMEOUT_SEC = 30
@@ -257,5 +268,6 @@ class SharedPreferencesSettingsRepository(
         const val DEFAULT_MQTT_USERNAME = ""
         const val DEFAULT_MQTT_PASSWORD = ""
         const val DEFAULT_MQTT_TOPIC_PREFIX = "camera_agent"
+        const val DEFAULT_THEME_MODE = "system"
     }
 }
