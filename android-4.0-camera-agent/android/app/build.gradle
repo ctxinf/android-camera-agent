@@ -43,6 +43,9 @@ android {
     lint {
         // Old-API surfaces (Camera, MediaRecorder) are deliberate, not oversights.
         disable 'UnusedAttribute'
+        // This legacy APK is distributed on GitHub, not Google Play.
+        // A future Play release must migrate targetSdk before submission.
+        disable 'ExpiredTargetSdkVersion'
     }
 }
 
