@@ -15,7 +15,7 @@ BACKGROUND = '#07552F'
 def attrs(**values):
     return {'{' + ANDROID + '}' + key: str(value) for key, value in values.items()}
 
-def vector(monochrome=False):
+def vector(source, monochrome=False):
     root = ET.Element('vector', attrs(width='108dp', height='108dp', viewportWidth=108, viewportHeight=108))
     group = ET.SubElement(root, 'group', attrs(scaleX='.92', scaleY='.92', translateX='4.32', translateY='4.32'))
     def visit(element, inherited, parent):
@@ -37,27 +37,48 @@ def vector(monochrome=False):
             if monochrome and style.get('fill') != '#F7F5EC':
                 values['fillColor'] = '#00000000'
             if values['fillColor'] == 'none': values['fillColor'] = '#00000000'
+            if style.get('fill-rule') == 'evenodd':
+                values['fillType'] = 'evenOdd'
             if 'stroke' in style:
                 values.update(strokeColor='#FFFFFF' if monochrome else style['stroke'], strokeWidth=style.get('stroke-width', '4'), strokeLineCap='round', strokeLineJoin='round')
             ET.SubElement(parent, 'path', attrs(**values))
         for child in element:
             if child.tag != SVG + 'rect': visit(child, style, parent)
-    visit(ET.parse(SOURCE).getroot(), {}, group)
+    visit(ET.parse(source).getroot(), {}, group)
     ET.indent(root)
     return ET.tostring(root, encoding='unicode') + '\n'
 
-for relative in ['android-8.0-camera-agent/app/src/main/res', 'android-4.0-camera-agent/android/app/src/main/res']:
+# Cut “4.0+” into the lower-right of the head. Paths keep the small label
+# independent of fonts and preserve it in themed monochrome icons.
+LEGACY_SOURCE = SOURCE.with_name('camera-agent-legacy.svg')
+legacy_tree = ET.parse(SOURCE)
+head = legacy_tree.getroot().find(f"{SVG}g/{SVG}path[2]")
+head.set('fill-rule', 'evenodd')
+head.set('d', head.get('d') + (
+    ' M62 74h1.4v2.8h1.8V74h1.4v7h-1.4v-2.8H62z'
+    ' M68 79.5h1.5V81H68z'
+    ' M71 74h5v7h-5z M72.4 75.4v4.2h2.2v-4.2z'
+    ' M79.5 75h1.4v2.1H83v1.4h-2.1v2.1h-1.4v-2.1h-2.1v-1.4h2.1z'
+))
+ET.register_namespace('', SVG[1:-1])
+legacy = ET.tostring(legacy_tree.getroot(), encoding='unicode') + '\n'
+LEGACY_SOURCE.write_text(legacy)
+
+for relative, source in [
+    ('android-8.0-camera-agent/app/src/main/res', SOURCE),
+    ('android-4.0-camera-agent/android/app/src/main/res', LEGACY_SOURCE),
+]:
     res = ROOT / relative
     for density, size in [('mdpi', 48), ('hdpi', 72), ('xhdpi', 96), ('xxhdpi', 144), ('xxxhdpi', 192)]:
         folder = res / ('mipmap-' + density)
         folder.mkdir(exist_ok=True)
         subprocess.run([
-            'magick', '-background', 'none', str(SOURCE), '-resize', f'{size}x{size}',
+            'magick', '-background', 'none', str(source), '-resize', f'{size}x{size}',
             '-depth', '8', '-strip', '-define', 'png:compression-level=9',
             str(folder / 'ic_launcher.png')
         ], check=True)
-    (res / 'drawable/ic_launcher_foreground.xml').write_text(vector())
-    (res / 'drawable/ic_launcher_monochrome.xml').write_text(vector(True))
+    (res / 'drawable/ic_launcher_foreground.xml').write_text(vector(source))
+    (res / 'drawable/ic_launcher_monochrome.xml').write_text(vector(source, True))
     (res / 'drawable/ic_launcher_background.xml').write_text('<shape xmlns:android="' + ANDROID + '"><solid android:color="' + BACKGROUND + '"/></shape>\n')
     for qualifier in ['v26', 'v33']:
         folder = res / ('mipmap-anydpi-' + qualifier)
