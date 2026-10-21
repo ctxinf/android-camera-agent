@@ -347,6 +347,12 @@ class MainActivity : AppCompatActivity() {
             openUrlOrDetail("/video.mjpeg")
         }
 
+        listOf(chipSnapshot, chipStream).forEach { chip ->
+            chip.shapeAppearanceModel = chip.shapeAppearanceModel.toBuilder()
+                .setTopRightCornerSize(0f)
+                .setBottomRightCornerSize(0f)
+                .build()
+        }
         setupChipListeners()
     }
 
@@ -376,9 +382,9 @@ class MainActivity : AppCompatActivity() {
                 path = "/snapshot.jpg",
                 method = "GET, HEAD",
                 contentType = "image/jpeg",
-                description = "单张实时抓图拍照。已为 Home Assistant 通用相机优化 HEAD 探活，不引发无效唤醒。",
+                description = "单张实时抓图拍照。支持 HEAD 探活，不唤醒摄像头。建议在 Home Assistant 中使用 MJPEG IP Camera 集成，填入 Still Image URL。",
                 authRequired = repo.authEnabled,
-                haRole = "Home Assistant Generic Camera: still_image_url"
+                haRole = "Home Assistant MJPEG IP Camera: Still Image URL"
             )
         }
 
@@ -389,9 +395,9 @@ class MainActivity : AppCompatActivity() {
                 path = "/video.mjpeg",
                 method = "GET, HEAD",
                 contentType = "multipart/x-mixed-replace; boundary=frameboundary",
-                description = "标准连续 MJPEG 视频流传输。支持在电脑浏览器、VLC、Home Assistant 中直接播放。",
+                description = "标准连续 MJPEG 视频流传输。支持浏览器和 VLC 播放。接入 Home Assistant 时建议使用 MJPEG IP Camera 集成，填入 MJPEG URL。",
                 authRequired = repo.authEnabled,
-                haRole = "Home Assistant Generic Camera: stream_source"
+                haRole = "Home Assistant MJPEG IP Camera: MJPEG URL"
             )
         }
 
@@ -659,6 +665,7 @@ class MainActivity : AppCompatActivity() {
         btnFacingFront.alpha = if (hasFront && !repo.frontCameraDisabled) 1f else 0.4f
 
         btnRotation.text = "旋转 ${config.rotationOffset}°"
+        updateSegmentedButton(btnRotation, config.rotationOffset != 0)
 
         // 3. Endpoints Card
         val ip = getIpAddress() ?: "127.0.0.1"

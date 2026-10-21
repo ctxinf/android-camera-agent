@@ -562,59 +562,6 @@
                         app:tint="@color/ui_text_secondary" />
                 </LinearLayout>
 
-                <!-- Quick Action Buttons for Endpoints -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="44dp"
-                    android:layout_marginTop="12dp"
-                    android:orientation="horizontal">
-
-                    <Button
-                        android:id="@+id/btnQuickSnapshot"
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:layout_weight="1"
-                        app:backgroundTint="@color/ui_field"
-                        app:cornerRadius="14dp"
-                        app:strokeColor="@color/ui_outline"
-                        app:strokeWidth="1dp"
-                        app:icon="@drawable/ic_image"
-                        app:iconGravity="textStart"
-                        app:iconPadding="6dp"
-                        app:iconSize="16dp"
-                        app:iconTint="@color/ui_text"
-                        android:insetTop="0dp"
-                        android:insetBottom="0dp"
-                        android:paddingStart="12dp"
-                        android:paddingEnd="12dp"
-                        android:text="/snapshot.jpg"
-                        android:textColor="@color/ui_text"
-                        android:textSize="12sp" />
-
-                    <Button
-                        android:id="@+id/btnQuickVideo"
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:layout_weight="1"
-                        android:layout_marginStart="8dp"
-                        app:backgroundTint="@color/ui_field"
-                        app:cornerRadius="14dp"
-                        app:strokeColor="@color/ui_outline"
-                        app:strokeWidth="1dp"
-                        app:icon="@drawable/ic_videocam"
-                        app:iconGravity="textStart"
-                        app:iconPadding="6dp"
-                        app:iconSize="16dp"
-                        app:iconTint="@color/ui_text"
-                        android:insetTop="0dp"
-                        android:insetBottom="0dp"
-                        android:paddingStart="12dp"
-                        android:paddingEnd="12dp"
-                        android:text="/video.mjpeg"
-                        android:textColor="@color/ui_text"
-                        android:textSize="12sp" />
-                </LinearLayout>
-
                 <!-- Additional API Chips Group -->
                 <com.google.android.material.chip.ChipGroup
                     android:id="@+id/chipGroupPaths"
@@ -622,19 +569,71 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp">
 
-                    <com.google.android.material.chip.Chip
-                        android:id="@+id/chipSnapshot"
+                    <LinearLayout
                         android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="/snapshot.jpg"
-                        style="@style/Widget.CameraAgent.PathChip" />
+                        android:layout_height="48dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
 
-                    <com.google.android.material.chip.Chip
-                        android:id="@+id/chipStream"
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chipSnapshot"
+                            android:layout_width="wrap_content"
+                            android:layout_height="44dp"
+                            android:text="/snapshot.jpg"
+                            style="@style/Widget.CameraAgent.PathChip" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnQuickSnapshot"
+                            android:layout_width="48dp"
+                            android:layout_height="44dp"
+                            android:minWidth="0dp"
+                            android:insetTop="0dp"
+                            android:insetBottom="0dp"
+                            android:padding="0dp"
+                            android:contentDescription="打开快照链接"
+                            app:backgroundTint="@color/chip_bg_color"
+                            app:strokeColor="@color/chip_stroke_color"
+                            app:strokeWidth="1dp"
+                            app:shapeAppearanceOverlay="@style/ShapeAppearance.CameraAgent.EndpointLink"
+                            app:icon="@drawable/ic_open_in_new"
+                            app:iconGravity="textStart"
+                            app:iconPadding="0dp"
+                            app:iconSize="18dp"
+                            app:iconTint="@color/chip_text_color" />
+                    </LinearLayout>
+
+                    <LinearLayout
                         android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="/video.mjpeg"
-                        style="@style/Widget.CameraAgent.PathChip" />
+                        android:layout_height="48dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chipStream"
+                            android:layout_width="wrap_content"
+                            android:layout_height="44dp"
+                            android:text="/video.mjpeg"
+                            style="@style/Widget.CameraAgent.PathChip" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnQuickVideo"
+                            android:layout_width="48dp"
+                            android:layout_height="44dp"
+                            android:minWidth="0dp"
+                            android:insetTop="0dp"
+                            android:insetBottom="0dp"
+                            android:padding="0dp"
+                            android:contentDescription="打开视频链接"
+                            app:backgroundTint="@color/chip_bg_color"
+                            app:strokeColor="@color/chip_stroke_color"
+                            app:strokeWidth="1dp"
+                            app:shapeAppearanceOverlay="@style/ShapeAppearance.CameraAgent.EndpointLink"
+                            app:icon="@drawable/ic_open_in_new"
+                            app:iconGravity="textStart"
+                            app:iconPadding="0dp"
+                            app:iconSize="18dp"
+                            app:iconTint="@color/chip_text_color" />
+                    </LinearLayout>
 
                     <com.google.android.material.chip.Chip
                         android:id="@+id/chipStatus"

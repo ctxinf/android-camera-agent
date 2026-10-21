@@ -40,4 +40,10 @@
         <item name="textStartPadding">4dp</item>
         <item name="textEndPadding">4dp</item>
     </style>
+    <style name="ShapeAppearance.CameraAgent.EndpointLink" parent="">
+        <item name="cornerSizeTopLeft">0dp</item>
+        <item name="cornerSizeBottomLeft">0dp</item>
+        <item name="cornerSizeTopRight">14dp</item>
+        <item name="cornerSizeBottomRight">14dp</item>
+    </style>
 </resources>
