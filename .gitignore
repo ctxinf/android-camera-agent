@@ -1,6 +1,8 @@
 # Local planning and audit documents
 *.md
 !README*
+!DETAIL.md
+!DETAIL.zh.md
 /docs/
 
 # Local tool configuration
@@ -36,3 +38,4 @@ captures/
 *.key
 *.pem
 *.log
+*.prompt.txt

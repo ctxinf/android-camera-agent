@@ -1,24 +1,45 @@
 # Android Camera Agent
 
-## 自动发布 APK
+[中文](README.zh.md) · [User guide](DETAIL.md) · [Download APK](https://github.com/ctxinf/android-camera-agent/releases)
 
-推送 `v1.0.0` 或 `v1.0.0-beta.1` 格式的 tag 后，GitHub Actions 会测试并构建 Android 8.0+ 和 Android 4.0+ 两个版本，将签名 APK 和 SHA-256 校验文件上传到 GitHub Releases。带后缀的 tag 发布为预发布版本。
+Turn a spare Android phone into an on-demand camera. View and control it yourself, let an AI agent use it through MCP, or connect it to Home Assistant.
 
-首次发布前，在仓库 **Settings → Secrets and variables → Actions** 配置：
+![Android Camera Agent — an on-demand camera for you, AI agents, and Home Assistant](assets/branding/readme-hero.png)
 
-| Secret | 内容 |
-| --- | --- |
-| `ANDROID_KEYSTORE_BASE64` | 发布 keystore 的 Base64 内容（Linux：`base64 -w 0 release.jks`） |
-| `ANDROID_KEYSTORE_PASSWORD` | keystore 密码 |
-| `ANDROID_KEY_ALIAS` | 签名密钥别名 |
-| `ANDROID_KEY_PASSWORD` | 签名密钥密码 |
+<details>
+<summary>Screenshots</summary>
 
-请保管好正式签名密钥和备份，后续 APK 更新需要沿用相同签名；不要将密钥提交到仓库。两个应用使用不同 applicationId，可以共用签名密钥。未来接入 Google Play App Signing 时，应单独规划上传密钥。
+<p>
+  <img src="assets/screenshots/01-main-dark.png" width="240" alt="Full app screen with service status, camera controls, and connection URLs">
+  <img src="assets/screenshots/03-interfaces-light.png" width="240" alt="HTTP and MCP endpoints with an expanded description in light mode">
+  <img src="assets/screenshots/04-camera-settings.png" width="240" alt="Native camera settings">
+</p>
 
-```bash
-git push -u origin main
-git tag v1.0.0
-git push origin v1.0.0
-```
+[All screenshots](assets/screenshots/README.md)
 
-APK 的 versionName 来自 tag（去掉 `v`），versionCode 为工作流运行序号加 100；请保留工作流名称和运行历史以保持版本号递增。当前本地构建默认版本号不变。缺少签名 Secrets 时工作流会明确失败。
+</details>
+
+## What it does
+
+- **HTTP:** remote snapshots, MJPEG video, status, and camera controls.
+- **MCP server:** give AI agents camera access and control.
+- **Home Assistant:** video via **MJPEG IP Camera**, entities and controls via **MQTT discovery**.
+- **On-demand camera:** releases the camera when idle to reduce battery use, heat, and unnecessary capture.
+
+Native Android. Runs in the background with the screen off. Supports old phones, down to **Android 4.0**.
+
+## Install
+
+Get an APK from [GitHub Releases](https://github.com/ctxinf/android-camera-agent/releases): **Android 8.0+** for newer phones, **Legacy (Android 4.0+)** for older ones.
+
+Install, grant camera permission, and use the connection URLs shown in the app. [Setup and integrations →](DETAIL.md)
+
+## Compared with
+
+| | Camera Agent | DroidCam (Classic) | Android IP Camera |
+| --- | --- | --- | --- |
+| Main use | Remote control & automation | PC webcam, audio + video | Network camera & recording |
+| Access | HTTP · MCP · MQTT | PC client + webcam drivers; HTTP video | HTTP controls; H.264 / MJPEG |
+| Camera use | Opens on demand, releases when idle | Webcam sessions | Streaming & recording |
+
+References: [DroidCam](https://www.dev47apps.com/), [HTTP video](https://www.dev47apps.com/droidcam/connect/), [Android IP Camera](https://github.com/DigitallyRefined/android-ip-camera). [More comparison notes](DETAIL.md#comparison).
