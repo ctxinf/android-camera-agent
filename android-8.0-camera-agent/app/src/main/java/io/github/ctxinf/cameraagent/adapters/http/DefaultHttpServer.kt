@@ -103,7 +103,7 @@ class DefaultHttpServer(
             try {
                 val socket = ServerSocket()
                 socket.reuseAddress = true
-                socket.bind(InetSocketAddress("0.0.0.0", port))
+                socket.bind(InetSocketAddress(settingsRepository.httpBindAddress, port))
                 serverSocket = socket
 
                 executor = Executors.newFixedThreadPool(MAX_WORKERS) as ThreadPoolExecutor

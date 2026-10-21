@@ -242,6 +242,7 @@ class MqttManager(
     }
 
     private fun getIpAddress(): String? {
+        if (settingsRepository.httpBindAddress != "0.0.0.0") return settingsRepository.httpBindAddress
         try {
             val interfaces = Collections.list(NetworkInterface.getNetworkInterfaces())
             for (itf in interfaces) {

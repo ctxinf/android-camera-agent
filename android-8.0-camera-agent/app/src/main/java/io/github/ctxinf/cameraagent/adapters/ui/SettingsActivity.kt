@@ -8,6 +8,13 @@ import android.os.PowerManager
 import android.provider.Settings
 import android.text.InputType
 import android.view.View
+import android.widget.LinearLayout
+import android.widget.Spinner
+import android.widget.ArrayAdapter
+import android.text.InputFilter
+import java.net.Inet4Address
+import java.net.NetworkInterface
+import java.util.Collections
 import android.widget.Button
 import android.widget.EditText
 import android.widget.FrameLayout
@@ -258,6 +265,7 @@ class SettingsActivity : AppCompatActivity() {
             }
         }
 
+        findViewById<View>(R.id.itemHttpBindAddress).setOnClickListener { showBindAddressDialog() }
         // --- Network ---
         findViewById<View>(R.id.itemHttpPort).setOnClickListener {
             showNumberDialog(
@@ -321,6 +329,20 @@ class SettingsActivity : AppCompatActivity() {
             }
         }
 
+        findViewById<View>(R.id.itemMqttUsername).setOnClickListener {
+            showTextDialog(getString(R.string.pref_mqtt_username), repo.mqttUsername) {
+                repo.setMqttUsername(it)
+                graph.mqttManager.restart()
+                refreshUi()
+            }
+        }
+        findViewById<View>(R.id.itemMqttPassword).setOnClickListener {
+            showTextDialog(getString(R.string.pref_mqtt_password), repo.mqttPassword, isPassword = true, trimValue = false) {
+                repo.setMqttPassword(it)
+                graph.mqttManager.restart()
+                refreshUi()
+            }
+        }
         // --- MQTT ---
         switchMqttEnabled.setOnCheckedChangeListener { _, enabled ->
             if (isBinding) return@setOnCheckedChangeListener
@@ -429,6 +451,7 @@ class SettingsActivity : AppCompatActivity() {
         tvRetentionGraceValue.text = "${config.retentionGracePeriodSec} 秒"
 
         // Network
+        findViewById<TextView>(R.id.tvHttpBindAddressValue).text = repo.httpBindAddress
         tvHttpPortValue.text = "${repo.httpPort}"
         tvHttpPrefixValue.text = repo.httpPathPrefix.ifEmpty { getString(R.string.http_path_prefix_empty) }
         switchAuthEnabled.isChecked = repo.authEnabled
@@ -441,6 +464,8 @@ class SettingsActivity : AppCompatActivity() {
         tvAuthPasswordValue.text = if (repo.authPassword.isNotEmpty()) "••••••" else getString(R.string.pref_unset)
 
         // MQTT
+        findViewById<TextView>(R.id.tvMqttUsernameValue).text = repo.mqttUsername.ifEmpty { getString(R.string.pref_unset) }
+        findViewById<TextView>(R.id.tvMqttPasswordValue).text = if (repo.mqttPassword.isEmpty()) getString(R.string.pref_unset) else "••••••"
         switchMqttEnabled.isChecked = repo.mqttEnabled
         tvMqttHostValue.text = repo.mqttHost.ifEmpty { getString(R.string.pref_unset) }
         tvMqttPortValue.text = "${repo.mqttPort}"
@@ -510,6 +535,68 @@ class SettingsActivity : AppCompatActivity() {
         }
     }
 
+    private fun showBindAddressDialog() {
+        val container = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            val pad = (20 * resources.displayMetrics.density).toInt()
+            setPadding(pad, pad / 2, pad, pad / 2)
+        }
+        val row = LinearLayout(this).apply { gravity = android.view.Gravity.CENTER_VERTICAL }
+        val parts = repo.httpBindAddress.split('.')
+        val inputs = (0..3).map { index ->
+            if (index > 0) row.addView(TextView(this).apply { text = "." })
+            EditText(this).apply {
+                inputType = InputType.TYPE_CLASS_NUMBER
+                filters = arrayOf(InputFilter.LengthFilter(3))
+                gravity = android.view.Gravity.CENTER
+                contentDescription = "IPv4 第 ${index + 1} 段"
+                setText(parts.getOrElse(index) { "0" })
+                row.addView(this, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+            }
+        }
+        container.addView(row)
+        val addresses = runCatching {
+            Collections.list(NetworkInterface.getNetworkInterfaces()).filter { it.isUp }
+                .flatMap { Collections.list(it.inetAddresses) }
+                .filterIsInstance<Inet4Address>().mapNotNull { it.hostAddress }.distinct().sorted()
+        }.getOrDefault(emptyList())
+        val options = listOf("选择本机 IP…", "0.0.0.0（所有接口）") + addresses
+        container.addView(Spinner(this).apply {
+            adapter = ArrayAdapter(this@SettingsActivity, android.R.layout.simple_spinner_dropdown_item, options)
+            onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
+                override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {}
+                override fun onItemSelected(parent: android.widget.AdapterView<*>?, view: View?, position: Int, id: Long) {
+                    if (position == 0) return
+                    val address = if (position == 1) "0.0.0.0" else options[position]
+                    address.split('.').forEachIndexed { index, part -> inputs[index].setText(part) }
+                }
+            }
+        })
+        val dialog = MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.pref_http_bind_address)
+            .setMessage("0.0.0.0 监听所有接口；HTTP 与 MCP 共用此监听地址。")
+            .setView(container)
+            .setPositiveButton(android.R.string.ok, null)
+            .setNegativeButton(android.R.string.cancel, null).create()
+        dialog.setOnShowListener {
+            dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                val values = inputs.map { it.text.toString().toIntOrNull() }
+                if (values.any { it == null || it !in 0..255 }) {
+                    inputs.forEachIndexed { index, input ->
+                        if (values[index] == null || values[index] !in 0..255) input.error = "请输入 0–255"
+                    }
+                } else {
+                    repo.setHttpBindAddress(values.joinToString("."))
+                    refreshNetworkServices()
+                    graph.mqttManager.restart()
+                    refreshUi()
+                    dialog.dismiss()
+                }
+            }
+        }
+        dialog.show()
+    }
+
     private fun showNumberDialog(
         title: String,
         currentValue: Int,
@@ -553,6 +640,7 @@ class SettingsActivity : AppCompatActivity() {
         currentValue: String,
         hint: String? = null,
         isPassword: Boolean = false,
+        trimValue: Boolean = true,
         onSave: (String) -> Unit
     ) {
         val input = EditText(this).apply {
@@ -580,7 +668,7 @@ class SettingsActivity : AppCompatActivity() {
             .setTitle(title)
             .setView(container)
             .setPositiveButton(android.R.string.ok) { _, _ ->
-                onSave(input.text.toString().trim())
+                onSave(if (trimValue) input.text.toString().trim() else input.text.toString())
             }
             .setNegativeButton(android.R.string.cancel, null)
             .show()

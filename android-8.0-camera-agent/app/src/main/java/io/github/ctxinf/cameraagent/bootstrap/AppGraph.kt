@@ -80,20 +80,23 @@ class AppGraph(
 
     private val listenerMutex = Mutex()
     private var listenerPort: Int? = null
+    private var listenerAddress: String? = null
 
     /** Serializes listener reconfiguration across startup, settings and shutdown. */
     suspend fun refreshNetworkListener() = withContext(Dispatchers.IO) {
         listenerMutex.withLock {
             val enabled = AgentService.isRunning && !settingsRepository.manuallyExited &&
                 (settingsRepository.httpEnabled || settingsRepository.mcpEnabled)
-            if (!enabled || listenerPort != settingsRepository.httpPort) {
+            if (!enabled || listenerPort != settingsRepository.httpPort || listenerAddress != settingsRepository.httpBindAddress) {
                 httpServer.stop()
                 listenerPort = null
+                listenerAddress = null
             }
             httpServer.closeDisabledConnections()
             if (enabled && !httpServer.isRunning) {
                 httpServer.start(settingsRepository.httpPort)
                 listenerPort = settingsRepository.httpPort
+                listenerAddress = settingsRepository.httpBindAddress
             }
         }
     }

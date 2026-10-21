@@ -61,7 +61,7 @@
     <string name="battery_opt_hint">将应用加入电池优化白名单，防止熄屏或锁屏后系统休眠网络与相机。</string>
     <string name="cat_display">显示</string>
     <string name="cat_camera">摄像头</string>
-    <string name="cat_network">网络与访问</string>
+    <string name="cat_network">HTTP Server</string>
     <string name="cat_tools">工具</string>
     <string name="pref_dim_brightness">静息亮度</string>
     <string name="unit_seconds">%1$d 秒</string>
@@ -83,4 +83,7 @@
     <string name="pref_mcp_enabled">启用 MCP 服务</string>
     <string name="pref_camera_access">允许访问相机</string>
     <string name="pref_disable_front">禁用前置摄像头</string>
+    <string name="pref_http_bind_address">绑定 HTTP IP</string>
+    <string name="pref_mqtt_username">MQTT 用户名</string>
+    <string name="pref_mqtt_password">MQTT 密码</string>
 </resources>

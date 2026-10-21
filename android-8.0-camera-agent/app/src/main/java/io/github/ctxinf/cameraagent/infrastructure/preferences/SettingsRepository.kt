@@ -21,6 +21,8 @@ interface SettingsRepository {
     fun setMcpEnabled(enabled: Boolean)
     val config: StateFlow<CameraConfig>
     val httpPathPrefix: String
+    val httpBindAddress: String get() = "0.0.0.0"
+    fun setHttpBindAddress(address: String) {}
     val httpPort: Int
     val dimTimeoutSec: Int
     val dimBrightness: Float
@@ -81,6 +83,13 @@ class SharedPreferencesSettingsRepository(
 
     override fun setHttpPathPrefix(prefix: String) {
         prefs.edit().putString("http_path_prefix", io.github.ctxinf.cameraagent.domain.HttpPathPrefix.normalize(prefix)).apply()
+    }
+
+    override val httpBindAddress: String
+        get() = prefs.getString("http_bind_address", "0.0.0.0") ?: "0.0.0.0"
+
+    override fun setHttpBindAddress(address: String) {
+        prefs.edit().putString("http_bind_address", address).apply()
     }
 
     override val httpPort: Int

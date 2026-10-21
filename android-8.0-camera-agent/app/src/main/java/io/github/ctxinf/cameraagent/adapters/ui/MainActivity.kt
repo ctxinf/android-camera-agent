@@ -558,6 +558,9 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private val httpCountDisplay = ConnectionCountDisplay()
+    private val mcpCountDisplay = ConnectionCountDisplay()
+
     private fun refreshUi() {
         val appGraph = (application as CameraAgentApp).appGraph
         val config = appGraph.coordinator.config.value
@@ -578,14 +581,14 @@ class MainActivity : AppCompatActivity() {
         dotHttp.setBackgroundResource(if (httpRunning) R.drawable.led_green else R.drawable.led_grey)
         tvHttpStatusText.text = if (httpRunning) "运行中" else "已停用"
         tvHttpStatusText.setTextColor(getColor(if (httpRunning) R.color.ui_success else R.color.ui_text_secondary))
-        tvHttpConnections.text = "${listener.httpConnections} 个连接"
+        tvHttpConnections.text = "${httpCountDisplay.update(if (httpRunning) listener.httpConnections else 0, android.os.SystemClock.elapsedRealtime(), !httpRunning)} 个连接"
 
         switchMcp.isChecked = repo.mcpEnabled
         val mcpRunning = repo.backgroundEnabled && listener.isRunning && repo.mcpEnabled
         dotMcp.setBackgroundResource(if (mcpRunning) R.drawable.led_green else R.drawable.led_grey)
         tvMcpStatusText.text = if (mcpRunning) "运行中" else "已停用"
         tvMcpStatusText.setTextColor(getColor(if (mcpRunning) R.color.ui_success else R.color.ui_text_secondary))
-        tvMcpConnections.text = "${listener.mcpConnections} 个连接"
+        tvMcpConnections.text = "${mcpCountDisplay.update(if (mcpRunning) listener.mcpConnections else 0, android.os.SystemClock.elapsedRealtime(), !mcpRunning)} 个连接"
 
         switchMqtt.isChecked = repo.mqttEnabled
         val mqttStatus = appGraph.mqttManager.status.value
@@ -707,6 +710,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun getIpAddress(): String? {
+        val bound = (application as CameraAgentApp).appGraph.settingsRepository.httpBindAddress
+        if (bound != "0.0.0.0") return bound
         try {
             val interfaces = Collections.list(NetworkInterface.getNetworkInterfaces())
             for (itf in interfaces) {
