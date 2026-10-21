@@ -250,6 +250,8 @@ class MqttManager(
                 put("unique_id", "${clientId}_streams")
                 put("state_topic", stateTopic)
                 put("value_template", "{{ value_json.active_streams }}")
+                put("state_class", "measurement")
+                put("suggested_display_precision", 0)
                 put("icon", "mdi:video-wireless")
                 put("device", deviceObj)
             }.toString()
