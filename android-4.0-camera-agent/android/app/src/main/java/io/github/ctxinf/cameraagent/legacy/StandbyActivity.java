@@ -28,8 +28,6 @@ public class StandbyActivity extends Activity {
     private Button frontButton;
     private Button backButton;
     private Button disabledButton;
-    private LinearLayout facingRow;
-    private View settingsButton;
     private boolean binding;
 
     private final Runnable dimTask = new Runnable() {
@@ -52,8 +50,6 @@ public class StandbyActivity extends Activity {
         frontButton = (Button) findViewById(R.id.facing_front);
         backButton = (Button) findViewById(R.id.facing_back);
         disabledButton = (Button) findViewById(R.id.facing_disabled);
-        facingRow = (LinearLayout) findViewById(R.id.facing_row);
-        settingsButton = findViewById(R.id.settings);
         serviceToggle.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override public void onCheckedChanged(CompoundButton b, boolean enabled) {
                 if (binding) return;
@@ -110,7 +106,6 @@ public class StandbyActivity extends Activity {
             }
         });
         startService(new Intent(this, AgentService.class));
-        wake();
     }
 
     private void selectFacing(int facing) {
@@ -208,9 +203,10 @@ public class StandbyActivity extends Activity {
         infoView.setText(text.toString());
     }
 
-    @Override public boolean onTouchEvent(MotionEvent event) {
-        if (event.getAction() == MotionEvent.ACTION_DOWN) { wake(); return true; }
-        return super.onTouchEvent(event);
+    @Override public boolean dispatchTouchEvent(MotionEvent event) {
+        // Observe touches before ScrollView, buttons or selectable text consume them.
+        if (event.getAction() == MotionEvent.ACTION_DOWN) wake();
+        return super.dispatchTouchEvent(event);
     }
 
     private void wake() {
@@ -224,23 +220,21 @@ public class StandbyActivity extends Activity {
         lp.screenBrightness = ((CameraAgentApp) getApplication()).screenBrightnessOverride(dim ? settings.dimBrightness() : -1f);
         ((CameraAgentApp) getApplication()).reportWindowBrightness(lp.screenBrightness);
         getWindow().setAttributes(lp);
-        int visibility = dim ? View.INVISIBLE : View.VISIBLE;
-        findViewById(R.id.service_bar).setVisibility(visibility);
-        infoView.setVisibility(visibility);
-        facingRow.setVisibility(visibility);
-        settingsButton.setVisibility(visibility);
-        serviceToggle.setVisibility(visibility);
-        statusText.setVisibility(visibility);
-        handler.removeCallbacks(statusTask);
-        if (!dim) { refresh(); handler.post(statusTask); }
+        // Idle mode changes brightness only; keep the home page and status polling intact.
     }
 
     @Override protected void onResume() {
         super.onResume();
         if (!settings.manuallyExited()) startService(new Intent(this, AgentService.class));
         wake();
+        handler.removeCallbacks(statusTask);
+        handler.post(statusTask);
     }
-    @Override protected void onPause() { handler.removeCallbacks(statusTask); super.onPause(); }
+    @Override protected void onPause() {
+        handler.removeCallbacks(dimTask);
+        handler.removeCallbacks(statusTask);
+        super.onPause();
+    }
     @Override protected void onDestroy() {
         handler.removeCallbacks(dimTask);
         handler.removeCallbacks(statusTask);
