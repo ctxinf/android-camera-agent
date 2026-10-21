@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Render compressed launcher PNGs and generate native adaptive vector layers."""
+"""Generate a round README icon, launcher PNGs, and adaptive vector layers."""
 from pathlib import Path
 import subprocess
 import re
@@ -63,6 +63,16 @@ head.set('d', head.get('d') + (
 ET.register_namespace('', SVG[1:-1])
 legacy = ET.tostring(legacy_tree.getroot(), encoding='unicode') + '\n'
 LEGACY_SOURCE.write_text(legacy)
+
+# Keep the README badge round without changing the adaptive launcher source.
+round_tree = ET.parse(SOURCE)
+round_background = round_tree.getroot().find(SVG + 'rect')
+round_background.tag = SVG + 'circle'
+round_background.attrib.clear()
+round_background.attrib.update(cx='54', cy='54', r='54', fill=BACKGROUND)
+SOURCE.with_name('camera-agent-round.svg').write_text(
+    ET.tostring(round_tree.getroot(), encoding='unicode') + '\n'
+)
 
 for relative, source in [
     ('android-8.0-camera-agent/app/src/main/res', SOURCE),

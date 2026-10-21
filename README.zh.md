@@ -1,4 +1,4 @@
-# <img src="assets/branding/camera-agent.svg" width="40" height="40" align="middle" alt="应用图标"> Android Camera Agent
+# <img src="assets/branding/camera-agent-round.svg" width="40" height="40" align="absmiddle" alt="应用图标"> Android Camera Agent
 
 [English](README.md) · [完整说明](DETAIL.zh.md) · [下载 APK](https://github.com/ctxinf/android-camera-agent/releases)
 
