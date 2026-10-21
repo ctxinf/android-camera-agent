@@ -76,7 +76,7 @@
                     android:id="@+id/info"
                     android:fontFamily="monospace"
                     android:lineSpacingExtra="6dp"
-                    android:textIsSelectable="true" />
+                    android:textIsSelectable="false" />
             </LinearLayout>
         </LinearLayout>
     </ScrollView>

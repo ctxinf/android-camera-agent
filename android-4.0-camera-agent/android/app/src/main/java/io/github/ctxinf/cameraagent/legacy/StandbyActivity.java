@@ -44,6 +44,7 @@ public class StandbyActivity extends Activity {
         setContentView(R.layout.activity_standby);
         settings = new Settings(this);
         infoView = (TextView) findViewById(R.id.info);
+        infoView.setMovementMethod(android.text.method.LinkMovementMethod.getInstance());
         statusText = (TextView) findViewById(R.id.status_text);
         statusLed = findViewById(R.id.status_led);
         serviceToggle = (ToggleButton) findViewById(R.id.camera_service_toggle);
@@ -163,6 +164,7 @@ public class StandbyActivity extends Activity {
         ((TextView) findViewById(R.id.cameraRuntime)).setText(state == CameraManager.State.OPEN ? "Active"
                 : state == CameraManager.State.OPENING ? "Opening" : "Standby");
         Button rotation = (Button) findViewById(R.id.rotation);
+        rotation.setSelected(settings.rotationOffset() != 0);
         rotation.setText(settings.rotationOffset() + "°");
         rotation.setCompoundDrawablesWithIntrinsicBounds(getResources().getIdentifier(
                 "ic_rotation_" + settings.rotationOffset(), "drawable", getPackageName()), 0, 0, 0);
@@ -189,18 +191,44 @@ public class StandbyActivity extends Activity {
     }
 
     private void refreshInfo() {
-        String ip = NetworkUtil.getLocalIpAddress();
+        String ip = settings.httpBindAddress();
+        if ("0.0.0.0".equals(ip)) ip = NetworkUtil.getLocalIpAddress();
         AgentService service = AgentService.get();
         int port = service == null ? settings.httpPort() : service.getHttpPort();
         if (ip == null) { infoView.setText("no network"); return; }
-        String base = "http://" + ip + ":" + port + settings.httpPathPrefix();
-        StringBuilder text = new StringBuilder();
-        text.append(base).append("\n\n/snapshot.jpg\n")
-                .append("/video.mjpeg\n")
-                .append("/api/status\n")
-                .append("/api/camera");
-        if (settings.mcpEnabled()) text.append("\n/mcp  (MCP)");
-        infoView.setText(text.toString());
+        final String base = "http://" + ip + ":" + port + settings.httpPathPrefix();
+        android.text.SpannableStringBuilder text = new android.text.SpannableStringBuilder(base + "\n");
+        addEndpoint(text, base, "/snapshot.jpg", "JPEG 实时抓图", "GET, HEAD", "image/jpeg", "获取单张实时照片。接入 Home Assistant 时，建议使用“MJPEG IP Camera”集成，而不是“通用摄像头（Generic Camera）”，将此地址填入 Still Image URL。");
+        addEndpoint(text, base, "/video.mjpeg", "MJPEG 视频流", "GET, HEAD", "multipart/x-mixed-replace", "连续 JPEG 视频流，支持浏览器和 VLC。接入 Home Assistant 时，建议使用“MJPEG IP Camera”集成，而不是“通用摄像头（Generic Camera）”，将此地址填入 MJPEG URL。");
+        addEndpoint(text, base, "/api/status", "设备状态", "GET, HEAD", "application/json", "查询摄像头、分辨率、连接数及设备运行状态。");
+        addEndpoint(text, base, "/api/camera", "相机配置", "GET, POST, HEAD", "application/json", "读取或修改镜头、分辨率、FPS、JPEG 质量与保活设置。");
+        if (settings.mcpEnabled()) addEndpoint(text, base, "/mcp", "MCP", "POST", "application/json", "通过 JSON-RPC 调用相机工具。HTTP 与 MCP 共用绑定地址及 Basic Auth 设置。");
+        // Avoid replacing spans during polling while the user is pressing a link.
+        if (!text.toString().equals(infoView.getText().toString())) infoView.setText(text);
+    }
+
+    private void addEndpoint(android.text.SpannableStringBuilder text, final String base,
+            final String path, final String title, final String method, final String type, final String description) {
+        text.append("\n");
+        int start = text.length();
+        text.append(path);
+        text.setSpan(new android.text.style.ClickableSpan() {
+            @Override public void onClick(View view) {
+                final String url = base + path;
+                new android.app.AlertDialog.Builder(StandbyActivity.this).setTitle(title)
+                        .setMessage(url + "\n\n方法：" + method + "\n类型：" + type
+                                + "\n认证：" + (settings.authEnabled() ? "需要 Basic Auth" : "免密访问")
+                                + "\n\n" + description)
+                        .setPositiveButton(android.R.string.ok, null)
+                        .setNeutralButton("复制 URL", new android.content.DialogInterface.OnClickListener() {
+                            @Override public void onClick(android.content.DialogInterface dialog, int which) {
+                                android.content.ClipboardManager clipboard = (android.content.ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
+                                clipboard.setPrimaryClip(android.content.ClipData.newPlainText(title, url));
+                                android.widget.Toast.makeText(StandbyActivity.this, "已复制 URL", android.widget.Toast.LENGTH_SHORT).show();
+                            }
+                        }).show();
+            }
+        }, start, text.length(), android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
     }
 
     @Override public boolean dispatchTouchEvent(MotionEvent event) {

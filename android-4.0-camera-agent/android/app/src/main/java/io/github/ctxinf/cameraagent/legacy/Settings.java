@@ -25,6 +25,9 @@ public final class Settings {
     public boolean manuallyExited() { return prefs.getBoolean("manually_exited", false); }
     public void setManuallyExited(boolean exited) { prefs.edit().putBoolean("manually_exited", exited).commit(); }
 
+    public static final String KEY_HTTP_BIND_ADDRESS = "http_bind_address";
+    public String httpBindAddress() { return prefs.getString(KEY_HTTP_BIND_ADDRESS, "0.0.0.0"); }
+
     public static final String KEY_HTTP_PORT = "http_port";
     public static final String KEY_AUTH_ENABLED = "auth_enabled";
     public static final String KEY_AUTH_USER = "auth_user";

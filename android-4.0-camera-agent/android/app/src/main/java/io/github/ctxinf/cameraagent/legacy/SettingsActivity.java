@@ -107,9 +107,115 @@ public class SettingsActivity extends PreferenceActivity
                 return true;
             }
         });
+        setupHttpDialogs();
         populateResolutions();
         setupMqttVerifier();
         refreshAllSummaries();
+    }
+
+    private android.widget.EditText field(android.widget.LinearLayout layout, String hint, String value, int type) {
+        android.widget.EditText input = new android.widget.EditText(this);
+        input.setHint(hint);
+        input.setContentDescription(hint);
+        input.setInputType(type);
+        input.setText(value);
+        layout.addView(input);
+        return input;
+    }
+
+    private android.widget.LinearLayout dialogLayout() {
+        android.widget.LinearLayout layout = new android.widget.LinearLayout(this);
+        layout.setOrientation(android.widget.LinearLayout.VERTICAL);
+        int padding = (int) (20 * getResources().getDisplayMetrics().density);
+        layout.setPadding(padding, padding / 2, padding, 0);
+        return layout;
+    }
+
+    private void refreshHttpSummaries() {
+        findPreference(Settings.KEY_HTTP_BIND_ADDRESS).setSummary(settings.httpBindAddress());
+        findPreference("http_auth").setSummary(settings.authEnabled() ? "已启用 · " + settings.authUser() : "未启用");
+    }
+
+    private void setupHttpDialogs() {
+        refreshHttpSummaries();
+        findPreference(Settings.KEY_HTTP_BIND_ADDRESS).setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+            @Override public boolean onPreferenceClick(Preference preference) {
+                android.widget.LinearLayout layout = dialogLayout();
+                final android.widget.EditText input = field(layout, "绑定 IPv4 地址", settings.httpBindAddress(), android.text.InputType.TYPE_CLASS_TEXT);
+                android.widget.Button choose = new android.widget.Button(SettingsActivity.this);
+                choose.setText("选择本机 IP…");
+                layout.addView(choose);
+                choose.setOnClickListener(new android.view.View.OnClickListener() {
+                    @Override public void onClick(android.view.View v) {
+                        final java.util.ArrayList<String> addresses = new java.util.ArrayList<String>();
+                        addresses.add("0.0.0.0");
+                        addresses.add("127.0.0.1");
+                        try {
+                            java.util.Enumeration<java.net.NetworkInterface> interfaces = java.net.NetworkInterface.getNetworkInterfaces();
+                            while (interfaces != null && interfaces.hasMoreElements()) {
+                                java.util.Enumeration<java.net.InetAddress> values = interfaces.nextElement().getInetAddresses();
+                                while (values.hasMoreElements()) {
+                                    java.net.InetAddress address = values.nextElement();
+                                    if (address instanceof java.net.Inet4Address && !addresses.contains(address.getHostAddress())) addresses.add(address.getHostAddress());
+                                }
+                            }
+                        } catch (java.net.SocketException e) { Log.w("local address lookup failed: " + e); }
+                        new AlertDialog.Builder(SettingsActivity.this).setTitle("选择本机 IP")
+                                .setItems(addresses.toArray(new String[addresses.size()]), new android.content.DialogInterface.OnClickListener() {
+                                    @Override public void onClick(android.content.DialogInterface d, int which) { input.setText(addresses.get(which)); }
+                                }).show();
+                    }
+                });
+                final AlertDialog dialog = new AlertDialog.Builder(SettingsActivity.this).setTitle("HTTP 绑定 IP")
+                        .setMessage("0.0.0.0 监听所有接口；HTTP 与 MCP 共用此地址。")
+                        .setView(layout).setNegativeButton(android.R.string.cancel, null).setPositiveButton("保存", null).create();
+                dialog.show();
+                dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(new android.view.View.OnClickListener() {
+                    @Override public void onClick(android.view.View v) {
+                        String value = input.getText().toString().trim();
+                        String[] parts = value.split("\\.", -1);
+                        boolean valid = parts.length == 4;
+                        for (String part : parts) {
+                            try { if (!part.matches("[0-9]{1,3}") || Integer.parseInt(part) > 255) valid = false; }
+                            catch (NumberFormatException e) { valid = false; }
+                        }
+                        if (!valid) { input.setError("请输入有效的 IPv4 地址"); return; }
+                        value = Integer.parseInt(parts[0]) + "." + Integer.parseInt(parts[1]) + "." + Integer.parseInt(parts[2]) + "." + Integer.parseInt(parts[3]);
+                        settings.raw().edit().putString(Settings.KEY_HTTP_BIND_ADDRESS, value).commit();
+                        refreshHttpSummaries();
+                        dialog.dismiss();
+                    }
+                });
+                return true;
+            }
+        });
+        findPreference("http_auth").setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+            @Override public boolean onPreferenceClick(Preference preference) {
+                android.widget.LinearLayout layout = dialogLayout();
+                final android.widget.CheckBox enabled = new android.widget.CheckBox(SettingsActivity.this);
+                enabled.setText("启用 Basic Auth");
+                enabled.setChecked(settings.authEnabled());
+                layout.addView(enabled);
+                final android.widget.EditText user = field(layout, "用户名", settings.authUser(), android.text.InputType.TYPE_CLASS_TEXT);
+                final android.widget.EditText pass = field(layout, "密码", settings.authPass(), android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD);
+                final AlertDialog dialog = new AlertDialog.Builder(SettingsActivity.this).setTitle("HTTP Basic Auth")
+                        .setView(layout).setNegativeButton(android.R.string.cancel, null).setPositiveButton("保存", null).create();
+                dialog.show();
+                dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(new android.view.View.OnClickListener() {
+                    @Override public void onClick(android.view.View v) {
+                        String name = user.getText().toString();
+                        if (enabled.isChecked() && (name.trim().length() == 0 || name.indexOf(':') >= 0)) {
+                            user.setError("请输入非空且不含冒号的用户名"); return;
+                        }
+                        settings.raw().edit().putBoolean(Settings.KEY_AUTH_ENABLED, enabled.isChecked())
+                                .putString(Settings.KEY_AUTH_USER, name).putString(Settings.KEY_AUTH_PASS, pass.getText().toString()).commit();
+                        refreshHttpSummaries();
+                        dialog.dismiss();
+                    }
+                });
+                return true;
+            }
+        });
     }
 
     private void setupMqttVerifier() {
@@ -213,6 +319,7 @@ public class SettingsActivity extends PreferenceActivity
 
     @Override
     public void onSharedPreferenceChanged(SharedPreferences prefs, String key) {
+        refreshHttpSummaries();
         Preference p = findPreference(key);
         if (p != null) {
             updateSummary(p);
@@ -223,7 +330,7 @@ public class SettingsActivity extends PreferenceActivity
             return;
         }
 
-        if (Settings.KEY_HTTP_PORT.equals(key) || Settings.KEY_HTTP_ENABLED.equals(key) || Settings.KEY_MCP_ENABLED.equals(key)) {
+        if (Settings.KEY_HTTP_BIND_ADDRESS.equals(key) || Settings.KEY_HTTP_PORT.equals(key) || Settings.KEY_HTTP_ENABLED.equals(key) || Settings.KEY_MCP_ENABLED.equals(key)) {
             // The listening socket is bound at startup, so a new port needs the
             // server rebuilt. Done here rather than silently deferring to the
             // next boot, which would leave the UI lying about the endpoint.

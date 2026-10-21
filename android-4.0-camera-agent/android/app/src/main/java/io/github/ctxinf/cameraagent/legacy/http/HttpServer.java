@@ -123,7 +123,7 @@ public class HttpServer implements Runnable {
                 if (!running) return;
                 serverSocket = new ServerSocket();
                 serverSocket.setReuseAddress(true);
-                serverSocket.bind(new InetSocketAddress(port));
+                serverSocket.bind(new InetSocketAddress(java.net.InetAddress.getByName(settings.httpBindAddress()), port));
             }
             Log.i("http listening on :" + port);
         } catch (IOException e) {

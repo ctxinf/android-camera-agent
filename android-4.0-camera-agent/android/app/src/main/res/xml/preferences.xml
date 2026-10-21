@@ -71,23 +71,8 @@
             android:summary="@string/pref_port_sum"
             android:defaultValue="8080"
             android:inputType="number" />
-        <CheckBoxPreference
-            android:key="auth_enabled"
-            android:title="@string/pref_auth"
-            android:summary="@string/pref_auth_sum"
-            android:defaultValue="false" />
-        <EditTextPreference
-            android:key="auth_user"
-            android:title="@string/pref_auth_user"
-            android:dependency="auth_enabled"
-            android:defaultValue=""
-            android:inputType="text" />
-        <EditTextPreference
-            android:key="auth_pass"
-            android:title="@string/pref_auth_pass"
-            android:dependency="auth_enabled"
-            android:defaultValue=""
-            android:inputType="textPassword" />
+        <Preference android:key="http_bind_address" android:title="HTTP 绑定 IP" />
+        <Preference android:key="http_auth" android:title="HTTP Basic Auth" />
     </PreferenceCategory>
 
     <PreferenceCategory android:title="@string/cat_mqtt">
