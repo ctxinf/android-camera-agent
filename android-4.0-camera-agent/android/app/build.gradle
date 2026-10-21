@@ -11,8 +11,8 @@ android {
         // API 14 floor per the compatibility target; the test device is API 18.
         minSdk 14
         targetSdk 18
-        versionCode (findProperty('releaseVersionCode') ?: '9').toInteger()
-        versionName (findProperty('releaseVersionName') ?: '0.5.4')
+        versionCode = providers.gradleProperty('releaseVersionCode').getOrElse('9').toInteger()
+        versionName = providers.gradleProperty('releaseVersionName').getOrElse('0.5.4')
     }
 
     signingConfigs {
