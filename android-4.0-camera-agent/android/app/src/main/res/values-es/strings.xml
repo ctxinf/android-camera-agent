@@ -137,6 +137,6 @@
     <string name="ui_url_copied">"URL copiada"</string>
     <string name="mqtt_host_unset">"La dirección del corredor no está configurada"</string>
     <string name="cat_appearance">Apariencia</string>
-    <string name="pref_language">Idioma</string>
+    <string name="pref_language">Idioma / Language</string>
     <string name="language_follow_system">Seguir el sistema</string>
 </resources>

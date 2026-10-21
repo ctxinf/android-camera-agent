@@ -137,6 +137,6 @@
     <string name="ui_url_copied">"تم نسخ عنوان URL"</string>
     <string name="mqtt_host_unset">"لم يتم تعيين عنوان الوسيط"</string>
     <string name="cat_appearance">المظهر</string>
-    <string name="pref_language">اللغة</string>
+    <string name="pref_language">اللغة / Language</string>
     <string name="language_follow_system">اتباع النظام</string>
 </resources>

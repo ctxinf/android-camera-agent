@@ -137,6 +137,6 @@
     <string name="ui_url_copied">"URL gekopieerd"</string>
     <string name="mqtt_host_unset">"Het makelaarsadres is niet ingesteld"</string>
     <string name="cat_appearance">Weergave</string>
-    <string name="pref_language">Taal</string>
+    <string name="pref_language">Taal / Language</string>
     <string name="language_follow_system">Systeem volgen</string>
 </resources>

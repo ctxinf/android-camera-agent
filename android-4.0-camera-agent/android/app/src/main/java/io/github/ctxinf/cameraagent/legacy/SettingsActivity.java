@@ -78,6 +78,9 @@ public class SettingsActivity extends PreferenceActivity
         getListView().addFooterView(about, null, false);
 
         addPreferencesFromResource(R.xml.preferences);
+        ListPreference languagePreference = (ListPreference) findPreference(LanguageSettings.KEY);
+        languagePreference.setIcon(new LanguageIcon(this));
+        languagePreference.setDialogIcon(new LanguageIcon(this));
         getListView().setBackgroundColor(android.graphics.Color.rgb(17, 19, 24));
         getListView().setPadding(16, 0, 16, 0);
         settings = new Settings(this);

@@ -137,6 +137,6 @@
     <string name="ui_url_copied">"URLをコピーしました"</string>
     <string name="mqtt_host_unset">"ブローカーアドレスが設定されていません"</string>
     <string name="cat_appearance">外観</string>
-    <string name="pref_language">言語</string>
+    <string name="pref_language">言語 / Language</string>
     <string name="language_follow_system">システム設定に従う</string>
 </resources>
