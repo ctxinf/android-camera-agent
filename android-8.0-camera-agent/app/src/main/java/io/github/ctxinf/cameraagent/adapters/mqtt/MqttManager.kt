@@ -18,6 +18,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.*
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import java.net.Inet4Address
@@ -28,6 +32,7 @@ class MqttManager(
     private val context: Context,
     private val cameraController: CameraController,
     private val settingsRepository: SettingsRepository,
+    private val applyCommand: suspend (JsonObject) -> Unit = {},
     private val scope: CoroutineScope = CoroutineScope(Dispatchers.IO + Job()),
 ) {
 
@@ -97,20 +102,41 @@ class MqttManager(
                 // Publish initial status
                 publishStatus(c)
 
-                // Ping & Periodic Publish loop
-                var ticks = 0
-                while (scope.isActive && c.isConnected && (settingsRepository.mqttEnabled && !settingsRepository.manuallyExited && io.github.ctxinf.cameraagent.bootstrap.AgentService.isRunning)) {
-                    delay(5000)
-                    ticks++
-
-                    if (ticks % 6 == 0) { // Every 30 seconds
-                        val pingOk = c.ping()
-                        if (!pingOk) {
-                            throw java.io.IOException("Ping response failed")
+                val prefix = settingsRepository.mqttTopicPrefix.ifBlank { "camera_agent" }
+                val commandTopic = "$prefix/${settingsRepository.mqttClientId}/set"
+                c.subscribe(commandTopic)
+                c.subscribe("homeassistant/status")
+                coroutineScope {
+                    val heartbeat = launch {
+                        while (isActive) {
+                            delay(25_000)
+                            c.sendPing()
+                            publishStatus(c)
                         }
-                        publishStatus(c)
                     }
+                    try {
+                        while (isActive && c.isConnected) {
+                            val message = c.receive() ?: continue
+                            if (message.topic == commandTopic) {
+                                try {
+                                    applyCommand(Json.parseToJsonElement(message.payload).jsonObject)
+                                    c.publish("$commandTopic/result", "{\"success\":true}")
+                                } catch (e: CancellationException) { throw e
+                                } catch (e: Exception) {
+                                    c.publish("$commandTopic/result", buildJsonObject {
+                                        put("success", false); put("error", e.message ?: "Invalid command")
+                                    }.toString())
+                                }
+                                publishStatus(c)
+                            } else if (message.topic == "homeassistant/status" && message.payload.trim() == "online") {
+                                publishHomeAssistantDiscovery(c)
+                                publishStatus(c)
+                            }
+                        }
+                    } finally { heartbeat.cancelAndJoin() }
                 }
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 AppLog.w("MqttManager connection error: ${e.message}")
                 _status.value = MqttStatus.Disconnected(e.message ?: "Connection error")
@@ -134,7 +160,7 @@ class MqttManager(
 
         try {
             val prefix = settingsRepository.mqttTopicPrefix.ifBlank { "camera_agent" }
-            val topic = "$prefix/status"
+            val topic = "$prefix/${settingsRepository.mqttClientId}/status"
 
             val state = cameraController.state.value
             val config = cameraController.config.value
@@ -153,6 +179,11 @@ class MqttManager(
             }
 
             val payload = buildJsonObject {
+                put("http_enabled", settingsRepository.httpEnabled)
+                put("mcp_enabled", settingsRepository.mcpEnabled)
+                put("camera_mode", if (!config.enabled) "disabled" else config.facing.name.lowercase())
+                put("rotation", config.rotationOffset)
+                put("screen_brightness", (context.applicationContext as io.github.ctxinf.cameraagent.bootstrap.CameraAgentApp).currentScreenBrightness())
                 put("camera_state", stateStr)
                 put("facing", config.facing.name)
                 put("width", if (state is CameraState.Active) state.width else config.targetWidth)
@@ -177,7 +208,7 @@ class MqttManager(
         try {
             val prefix = settingsRepository.mqttTopicPrefix.ifBlank { "camera_agent" }
             val clientId = settingsRepository.mqttClientId.ifBlank { "camera_agent" }
-            val stateTopic = "$prefix/status"
+            val stateTopic = "$prefix/$clientId/status"
 
             val deviceObj = buildJsonObject {
                 put("identifiers", clientId)
@@ -223,6 +254,36 @@ class MqttManager(
                 put("device", deviceObj)
             }.toString()
             c.publish(streamsDiscoveryTopic, streamsDiscoveryPayload, retain = true)
+
+            val commandTopic = "$prefix/$clientId/set"
+            suspend fun control(key: String, type: String, title: String, options: List<String> = emptyList()) {
+                c.publish("homeassistant/$type/${clientId}_$key/config", buildJsonObject {
+                    put("name", title); put("unique_id", "${clientId}_$key")
+                    put("device", deviceObj); put("state_topic", stateTopic)
+                    put("command_topic", commandTopic)
+                    put("value_template", "{{ value_json.$key }}")
+                    when (type) {
+                        "switch" -> {
+                            put("payload_on", "{\"$key\":true}"); put("payload_off", "{\"$key\":false}")
+                            put("state_on", "True"); put("state_off", "False")
+                        }
+                        "select" -> {
+                            put("options", JsonArray(options.map { JsonPrimitive(it) }))
+                            put("command_template", "{\"$key\":\"{{ value }}\"}")
+                        }
+                        "number" -> {
+                            put("min", 0); put("max", 100); put("step", 1)
+                            put("unit_of_measurement", "%")
+                            put("command_template", "{\"$key\":{{ value }}}")
+                        }
+                    }
+                }.toString(), retain = true)
+            }
+            control("http_enabled", "switch", "HTTP")
+            control("mcp_enabled", "switch", "MCP")
+            control("camera_mode", "select", "Camera", listOf("back", "front", "disabled"))
+            control("rotation", "select", "Rotation", listOf("0", "90", "180", "270"))
+            control("screen_brightness", "number", "Screen brightness")
 
             AppLog.i("MqttManager: Published Home Assistant MQTT Discovery topics")
         } catch (e: Exception) {

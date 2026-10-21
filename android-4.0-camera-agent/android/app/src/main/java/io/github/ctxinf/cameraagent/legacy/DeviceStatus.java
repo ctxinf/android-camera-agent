@@ -57,6 +57,11 @@ public final class DeviceStatus {
         out.put("resolution", active == null ? "unknown" : active);
         out.put("rotation", Integer.valueOf(cameraManager.getFrameRotation()));
         out.put("facing", settingsFacing());
+        out.put("http_enabled", Boolean.valueOf(settings.httpEnabled()));
+        out.put("mcp_enabled", Boolean.valueOf(settings.mcpEnabled()));
+        out.put("camera_mode", !settings.cameraEnabled() ? "disabled" : settingsFacing());
+        out.put("rotation", Integer.valueOf(settings.rotationOffset()));
+        out.put("screen_brightness", Integer.valueOf(((CameraAgentApp) context).currentScreenBrightness()));
         out.put("camera_enabled", Boolean.valueOf(settings.cameraEnabled()));
         out.put("front_camera_disabled", Boolean.valueOf(settings.frontCameraDisabled()));
         out.put("access_denied", Boolean.valueOf(cameraManager.isAccessDenied()));

@@ -13,6 +13,44 @@ import kotlin.concurrent.thread
 class MqttClientTest {
 
     @Test
+    fun `subscribe receives command while consuming suback and pingresp`() = runBlocking {
+        ServerSocket(0).use { server ->
+            val broker = thread {
+                server.accept().use { socket ->
+                    val input = DataInputStream(socket.getInputStream())
+                    val output = DataOutputStream(socket.getOutputStream())
+                    fun readPacket(): Pair<Int, ByteArray> {
+                        val header = input.readUnsignedByte()
+                        val size = input.readUnsignedByte()
+                        return header to ByteArray(size).also { input.readFully(it) }
+                    }
+                    readPacket()
+                    output.write(byteArrayOf(0x20, 2, 0, 0)); output.flush()
+                    val subscription = readPacket()
+                    check(subscription.first == 0x82)
+                    check(subscription.second.drop(4).dropLast(1).toByteArray().toString(Charsets.UTF_8) == "device/set")
+                    output.write(byteArrayOf(0x90.toByte(), 3, 0, 1, 0))
+                    output.write(byteArrayOf(0xd0.toByte(), 0))
+                    val topic = "device/set".toByteArray()
+                    val payload = "{\"camera_mode\":\"disabled\"}".toByteArray()
+                    output.write(0x30); output.write(2 + topic.size + payload.size)
+                    output.writeShort(topic.size); output.write(topic); output.write(payload); output.flush()
+                    readPacket()
+                }
+            }
+            val client = MqttClient("127.0.0.1", server.localPort, "command-test")
+            client.connect()
+            client.subscribe("device/set")
+            assertEquals(null, client.receive())
+            assertEquals(null, client.receive())
+            assertEquals(MqttClient.Message("device/set", "{\"camera_mode\":\"disabled\"}"), client.receive())
+            client.disconnect()
+            broker.join(3000)
+            assertFalse(broker.isAlive)
+        }
+    }
+
+    @Test
     fun `test successful connect and disconnect with mock broker`() = runBlocking {
         val server = ServerSocket(0)
         val port = server.localPort

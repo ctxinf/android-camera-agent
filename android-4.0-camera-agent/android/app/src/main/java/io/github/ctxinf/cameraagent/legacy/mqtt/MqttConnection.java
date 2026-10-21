@@ -167,6 +167,7 @@ final class MqttConnection {
         } else if (qos == 2) {
             throw new IOException("MQTT QoS 2 is not supported");
         }
+        if ((packet.header & 1) != 0) return null; // Do not replay retained commands.
         return new Incoming(topic, new String(packet.body, offset,
                 packet.body.length - offset, "UTF-8"));
     }

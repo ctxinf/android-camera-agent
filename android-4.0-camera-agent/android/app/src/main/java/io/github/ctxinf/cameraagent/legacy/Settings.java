@@ -17,6 +17,8 @@ public final class Settings {
 
     public static final String KEY_HTTP_PATH_PREFIX = "http_path_prefix";
     public static final String KEY_HTTP_ENABLED = "http_enabled";
+    public void setHttpEnabled(boolean enabled) { prefs.edit().putBoolean(KEY_HTTP_ENABLED, enabled).commit(); }
+    public void setMcpEnabled(boolean enabled) { prefs.edit().putBoolean(KEY_MCP_ENABLED, enabled).commit(); }
     public boolean httpEnabled() { return prefs.getBoolean(KEY_HTTP_ENABLED, true); }
     public boolean backgroundEnabled() { return prefs.getBoolean("background_enabled", true); }
     public void setBackgroundEnabled(boolean enabled) { prefs.edit().putBoolean("background_enabled", enabled).commit(); }

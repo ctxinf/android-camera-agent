@@ -221,7 +221,8 @@ public class StandbyActivity extends Activity {
 
     private void setDimmed(boolean dim) {
         WindowManager.LayoutParams lp = getWindow().getAttributes();
-        lp.screenBrightness = dim ? settings.dimBrightness() : -1f;
+        lp.screenBrightness = ((CameraAgentApp) getApplication()).screenBrightnessOverride(dim ? settings.dimBrightness() : -1f);
+        ((CameraAgentApp) getApplication()).reportWindowBrightness(lp.screenBrightness);
         getWindow().setAttributes(lp);
         int visibility = dim ? View.INVISIBLE : View.VISIBLE;
         findViewById(R.id.service_bar).setVisibility(visibility);

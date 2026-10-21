@@ -71,7 +71,29 @@ class CameraAgentApp : Application(), Application.ActivityLifecycleCallbacks {
         handler.postDelayed(backgroundCheck, 500) // don't stop during transitions between our own pages
     }
     override fun onActivityDestroyed(activity: Activity) { activities.remove(activity) }
-    override fun onActivityResumed(activity: Activity) {}
-    override fun onActivityPaused(activity: Activity) {}
+    private var resumedActivity: Activity? = null
+    private var requestedBrightness: Int? = null
+
+    fun currentScreenBrightness(): Int {
+        val value = resumedActivity?.window?.attributes?.screenBrightness ?: -1f
+        return if (value >= 0f) (value * 100).toInt().coerceIn(0, 100)
+        else (android.provider.Settings.System.getInt(contentResolver,
+            android.provider.Settings.System.SCREEN_BRIGHTNESS, 128) * 100 / 255).coerceIn(0, 100)
+    }
+
+    fun setScreenBrightness(percent: Int) {
+        requestedBrightness = percent
+        activities.forEach { activity ->
+            activity.window.attributes = activity.window.attributes.apply { screenBrightness = percent / 100f }
+        }
+    }
+
+    fun screenBrightnessOverride(): Float? = requestedBrightness?.let { it / 100f }
+
+    override fun onActivityResumed(activity: Activity) {
+        resumedActivity = activity
+        requestedBrightness?.let { setScreenBrightness(it) }
+    }
+    override fun onActivityPaused(activity: Activity) { if (resumedActivity == activity) resumedActivity = null }
     override fun onActivitySaveInstanceState(activity: Activity, state: Bundle) {}
 }

@@ -75,6 +75,46 @@ class AppGraph(
             context = context,
             cameraController = cameraController,
             settingsRepository = settingsRepository,
+            applyCommand = { command ->
+                fun boolean(key: String): Boolean? = command[key]?.let {
+                    require(it is kotlinx.serialization.json.JsonPrimitive && !it.isString) { "$key must be boolean" }
+                    it.content.toBooleanStrictOrNull() ?: error("$key must be boolean")
+                }
+                val http = boolean("http_enabled")
+                val mcp = boolean("mcp_enabled")
+                val mode = command["camera_mode"]?.let {
+                    (it as? kotlinx.serialization.json.JsonPrimitive)?.content ?: error("Invalid camera_mode")
+                }
+                require(mode == null || mode in listOf("back", "front", "disabled")) { "Invalid camera_mode" }
+                val rotation = command["rotation"]?.let {
+                    (it as? kotlinx.serialization.json.JsonPrimitive)?.content?.toIntOrNull() ?: error("Invalid rotation")
+                }
+                require(rotation == null || rotation in listOf(0, 90, 180, 270)) { "Invalid rotation" }
+                val brightness = command["screen_brightness"]?.let {
+                    (it as? kotlinx.serialization.json.JsonPrimitive)?.content?.toIntOrNull() ?: error("Invalid brightness")
+                }
+                require(brightness == null || brightness in 0..100) { "Brightness must be 0..100" }
+                require(command.isNotEmpty() && command.keys.all {
+                    it in setOf("http_enabled", "mcp_enabled", "camera_mode", "rotation", "screen_brightness")
+                }) { "Unknown or empty command" }
+                if (mode != null || rotation != null) cameraAccess.updateLocal { config ->
+                    config.copy(
+                        enabled = mode?.let { it != "disabled" } ?: config.enabled,
+                        facing = when (mode) {
+                            "front" -> io.github.ctxinf.cameraagent.domain.LensFacing.FRONT
+                            "back" -> io.github.ctxinf.cameraagent.domain.LensFacing.BACK
+                            else -> config.facing
+                        },
+                        rotationOffset = rotation ?: config.rotationOffset,
+                    )
+                }
+                http?.let(settingsRepository::setHttpEnabled)
+                mcp?.let(settingsRepository::setMcpEnabled)
+                if (http != null || mcp != null) refreshNetworkListener()
+                brightness?.let {
+                    withContext(Dispatchers.Main) { (context.applicationContext as CameraAgentApp).setScreenBrightness(it) }
+                }
+            },
             scope = appScope,
         )
 

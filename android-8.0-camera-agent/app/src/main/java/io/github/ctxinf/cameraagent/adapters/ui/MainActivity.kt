@@ -747,7 +747,7 @@ class MainActivity : AppCompatActivity() {
         isDimmed = dim
         val appGraph = (application as CameraAgentApp).appGraph
         val lp = window.attributes
-        lp.screenBrightness = if (dim) appGraph.settingsRepository.dimBrightness else -1f
+        lp.screenBrightness = (application as CameraAgentApp).screenBrightnessOverride() ?: if (dim) appGraph.settingsRepository.dimBrightness else -1f
         window.attributes = lp
         contentLayout.visibility = if (dim) View.INVISIBLE else View.VISIBLE
     }

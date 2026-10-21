@@ -190,15 +190,11 @@ public final class MqttStatusPublisher implements Runnable {
                 "{{ value_json.storage_available_mb }}", true, true));
         components.put("camera", sensor("Camera state", deviceId + "_camera", null, null,
                 "{{ value_json.state }}", true, false));
-        components.put("camera_service", sensor("Camera access (device-only)", deviceId + "_camera_service",
-                null, null, "{{ value_json.camera_enabled }}", false, false));
-        Map<String, Object> lens = Json.map();
-        lens.put("p", "select"); lens.put("name", "Camera facing");
-        lens.put("unique_id", deviceId + "_camera_facing"); lens.put("command_topic", commandTopic);
-        java.util.List<Object> options = Json.list(); options.add("front"); options.add("back");
-        lens.put("options", options); lens.put("command_template", "{\"facing\":\"{{ value }}\"}");
-        lens.put("state_topic", stateTopic); lens.put("value_template", "{{ value_json.facing }}");
-        components.put("camera_facing", lens);
+        components.put("http_enabled", control(deviceId, stateTopic, commandTopic, "http_enabled", "HTTP", "switch", null));
+        components.put("mcp_enabled", control(deviceId, stateTopic, commandTopic, "mcp_enabled", "MCP", "switch", null));
+        components.put("camera_mode", control(deviceId, stateTopic, commandTopic, "camera_mode", "Camera", "select", new String[]{"back", "front", "disabled"}));
+        components.put("rotation", control(deviceId, stateTopic, commandTopic, "rotation", "Rotation", "select", new String[]{"0", "90", "180", "270"}));
+        components.put("screen_brightness", control(deviceId, stateTopic, commandTopic, "screen_brightness", "Screen brightness", "number", null));
         root.put("cmps", components);
 
         String discoveryTopic = "homeassistant/device/" + deviceId + "/config";
@@ -208,21 +204,78 @@ public final class MqttStatusPublisher implements Runnable {
     private void handleCameraCommand(String payload) {
         try {
             Map<String, Object> command = Json.parseObject(payload);
-            Object enabled = command.get("enabled");
-            if (enabled != null || !settings.cameraEnabled())
-                throw new SecurityException("Camera enable/disable is device-only");
-            String facing = Json.str(command, "facing");
+            if (command.isEmpty()) throw new IllegalArgumentException("Empty command");
+            for (String key : command.keySet()) {
+                if (!java.util.Arrays.asList("http_enabled", "mcp_enabled", "camera_mode", "rotation", "screen_brightness", "enabled", "facing").contains(key))
+                    throw new IllegalArgumentException("Unknown command: " + key);
+            }
+            String mode = command.containsKey("camera_mode") ? Json.str(command, "camera_mode") : null;
+            if (mode != null && !"back".equals(mode) && !"front".equals(mode) && !"disabled".equals(mode))
+                throw new IllegalArgumentException("Invalid camera_mode");
+            String facing = mode == null ? Json.str(command, "facing") : mode;
             if ("front".equals(facing) && settings.frontCameraDisabled())
                 throw new SecurityException("Front camera is disabled on the device");
-            if ("back".equals(facing) || "front".equals(facing)) {
-                settings.setCameraFacing("front".equals(facing) ? 1 : 0);
-                cameraManager.setFacing(settings.cameraFacing());
+            Integer rotation = integer(command, "rotation", 0, 270);
+            if (rotation != null && rotation.intValue() % 90 != 0) throw new IllegalArgumentException("Invalid rotation");
+            Integer brightness = integer(command, "screen_brightness", 0, 100);
+            Boolean http = bool(command, "http_enabled"), mcp = bool(command, "mcp_enabled");
+            Boolean enabled = bool(command, "enabled");
+            if (enabled != null) settings.setCameraEnabled(enabled.booleanValue());
+            if (mode != null) settings.setCameraEnabled(!"disabled".equals(mode));
+            if ("back".equals(facing) || "front".equals(facing)) settings.setCameraFacing("front".equals(facing) ? 1 : 0);
+            if (rotation != null) settings.setRotationOffset(rotation.intValue());
+            cameraManager.setFacing(settings.cameraFacing());
+            cameraManager.setAccessPolicy(settings.cameraEnabled(), settings.frontCameraDisabled());
+            cameraManager.setRotationOffset(settings.rotationOffset());
+            if (http != null) settings.setHttpEnabled(http.booleanValue());
+            if (mcp != null) settings.setMcpEnabled(mcp.booleanValue());
+            if (http != null || mcp != null) {
+                io.github.ctxinf.cameraagent.legacy.AgentService service = io.github.ctxinf.cameraagent.legacy.AgentService.get();
+                if (service != null) service.restartHttpServer();
             }
+            if (brightness != null) ((io.github.ctxinf.cameraagent.legacy.CameraAgentApp) context).setScreenBrightness(brightness.intValue());
             cameraManager.reconfigure();
             deviceStatus.invalidate();
         } catch (Exception e) {
             Log.w("invalid mqtt camera command: " + e);
         }
+    }
+
+    static Boolean bool(Map<String, Object> command, String key) {
+        if (!command.containsKey(key)) return null;
+        if (!(command.get(key) instanceof Boolean)) throw new IllegalArgumentException(key + " must be boolean");
+        return (Boolean) command.get(key);
+    }
+
+    static Integer integer(Map<String, Object> command, String key, int min, int max) {
+        if (!command.containsKey(key)) return null;
+        int value;
+        try { value = Integer.parseInt(String.valueOf(command.get(key))); }
+        catch (Exception e) { throw new IllegalArgumentException("Invalid " + key); }
+        if (value < min || value > max) throw new IllegalArgumentException("Invalid " + key);
+        return Integer.valueOf(value);
+    }
+
+    private Map<String, Object> control(String id, String state, String topic, String key,
+                                       String name, String type, String[] choices) {
+        Map<String, Object> out = Json.map();
+        out.put("p", type); out.put("name", name); out.put("unique_id", id + "_" + key);
+        out.put("state_topic", state); out.put("command_topic", topic);
+        out.put("value_template", "{{ value_json." + key + " }}");
+        if ("switch".equals(type)) {
+            out.put("payload_on", "{\"" + key + "\":true}"); out.put("payload_off", "{\"" + key + "\":false}");
+            out.put("state_on", "True"); out.put("state_off", "False");
+        } else if ("select".equals(type)) {
+            java.util.List<Object> options = Json.list();
+            for (String choice : choices) options.add(choice);
+            out.put("options", options);
+            out.put("command_template", "{\"" + key + "\":\"{{ value }}\"}");
+        } else {
+            out.put("min", Integer.valueOf(0)); out.put("max", Integer.valueOf(100)); out.put("step", Integer.valueOf(1));
+            out.put("unit_of_measurement", "%");
+            out.put("command_template", "{\"" + key + "\":{{ value }}}");
+        }
+        return out;
     }
 
     private Map<String, Object> sensor(String name, String uniqueId, String deviceClass,

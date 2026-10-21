@@ -50,7 +50,40 @@ public class CameraAgentApp extends Application implements Application.ActivityL
         handler.postDelayed(backgroundCheck, 500);
     }
     @Override public void onActivityDestroyed(Activity activity) { activities.remove(activity); }
-    @Override public void onActivityResumed(Activity activity) {}
-    @Override public void onActivityPaused(Activity activity) {}
+    private Activity resumedActivity;
+    private volatile Integer brightnessOverride;
+    private volatile int currentBrightness = -1;
+    public float screenBrightnessOverride(float fallback) {
+        Integer value = brightnessOverride;
+        return value == null ? fallback : value.intValue() / 100f;
+    }
+    public int currentScreenBrightness() {
+        int value = currentBrightness;
+        return value >= 0 ? value : android.provider.Settings.System.getInt(getContentResolver(),
+                android.provider.Settings.System.SCREEN_BRIGHTNESS, 128) * 100 / 255;
+    }
+    public void setScreenBrightness(final int percent) {
+        handler.post(new Runnable() {
+            @Override public void run() {
+                brightnessOverride = Integer.valueOf(percent);
+                for (Activity activity : activities) applyBrightness(activity);
+                if (resumedActivity != null) currentBrightness = percent;
+            }
+        });
+    }
+    private void applyBrightness(Activity activity) {
+        if (brightnessOverride == null) return;
+        android.view.WindowManager.LayoutParams params = activity.getWindow().getAttributes();
+        params.screenBrightness = screenBrightnessOverride(-1f);
+        activity.getWindow().setAttributes(params);
+    }
+    @Override public void onActivityResumed(Activity activity) {
+        resumedActivity = activity;
+        applyBrightness(activity);
+        float value = activity.getWindow().getAttributes().screenBrightness;
+        currentBrightness = value < 0 ? -1 : Math.round(value * 100);
+    }
+    public void reportWindowBrightness(float value) { currentBrightness = value < 0 ? -1 : Math.round(value * 100); }
+    @Override public void onActivityPaused(Activity activity) { if (resumedActivity == activity) { resumedActivity = null; currentBrightness = -1; } }
     @Override public void onActivitySaveInstanceState(Activity activity, Bundle state) {}
 }

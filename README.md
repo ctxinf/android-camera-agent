@@ -91,3 +91,21 @@ Both editions share the original camera-and-network mark in
 Run `python assets/branding/generate-icons.py` with ImageMagick installed to
 regenerate density-specific launcher PNGs, native adaptive icons and monochrome
 layers. The legacy app keeps raster fallbacks for Android 4.0.
+
+### Legacy MQTT 控制
+
+Legacy（Android 4.0）控制主题保持 `<prefix>/<deviceId>/camera/set`，状态主题保持
+`<prefix>/<deviceId>/state`。Home Assistant 自动发现提供 HTTP、MCP 开关、
+摄像头模式、旋转与亮度控件。发送非保留 JSON 消息，例如：
+
+```json
+{"http_enabled":true,"mcp_enabled":false,"camera_mode":"back","rotation":90,"screen_brightness":50}
+```
+
+`camera_mode` 支持 `back` / `front` / `disabled`，选择镜头同时启用摄像头，
+本地禁用前置的限制仍有效。`rotation` 支持 0/90/180/270 度。
+`screen_brightness` 支持 0–100%，仅控制本应用窗口、优先于待机调暗，
+进程结束后恢复默认，不修改系统亮度或唤醒屏幕。
+状态包含以上五个同名字段；没有前台窗口时亮度报告系统设置。
+旧 `facing`、`enabled` 指令仍支持。无效指令记录日志，处理后发布状态；
+组合操作不提供事务回滚，HTTP/MCP 重配置及亮度应用异步完成。

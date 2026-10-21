@@ -166,6 +166,7 @@ class MqttClient(
             throw IOException("CONNACK rejected: $reason")
         }
 
+        s.soTimeout = 60_000
         socket = s
         outputStream = out
         inputStream = inp
@@ -193,6 +194,65 @@ class MqttClient(
             out.flush()
         }
         AppLog.d("MqttClient: Published to $topic (${payloadBytes.size} bytes)")
+    }
+
+    data class Message(val topic: String, val payload: String)
+
+    suspend fun subscribe(topic: String) = withContext(Dispatchers.IO) {
+        val out = outputStream ?: throw IOException("Not connected")
+        val body = ByteArrayOutputStream()
+        body.write(0); body.write(1)
+        writeUtf8(body, topic)
+        body.write(0)
+        synchronized(out) {
+            out.write(0x82)
+            writeRemainingLength(out, body.size())
+            out.write(body.toByteArray()); out.flush()
+        }
+    }
+
+    // A single reader handles subscriptions, incoming commands and heartbeat replies.
+    suspend fun receive(): Message? = withContext(Dispatchers.IO) {
+        val inp = inputStream ?: throw IOException("Not connected")
+        val header = inp.readUnsignedByte()
+        val length = readRemainingLength(inp)
+        if (length > 1024 * 1024) throw IOException("MQTT packet too large")
+        val body = ByteArray(length)
+        inp.readFully(body)
+        when (header and 0xf0) {
+            0x90 -> {
+                if (body.size < 3 || body.drop(2).any { it.toInt() and 0xff == 0x80 })
+                    throw IOException("MQTT subscription rejected")
+                null
+            }
+            PACKET_PUBLISH -> {
+                val data = DataInputStream(body.inputStream())
+                val topicLength = data.readUnsignedShort()
+                val topicBytes = ByteArray(topicLength)
+                data.readFully(topicBytes)
+                when ((header shr 1) and 3) {
+                    0 -> Unit
+                    1 -> {
+                        val id = data.readUnsignedShort()
+                        val out = outputStream ?: throw IOException("Not connected")
+                        synchronized(out) {
+                            out.write(byteArrayOf(0x40, 2, (id shr 8).toByte(), id.toByte()))
+                            out.flush()
+                        }
+                    }
+                    else -> throw IOException("Unsupported MQTT QoS")
+                }
+                // Retained commands must not reapply settings after reconnecting.
+                if (header and 1 != 0) null
+                else Message(topicBytes.toString(Charsets.UTF_8), data.readBytes().toString(Charsets.UTF_8))
+            }
+            else -> null
+        }
+    }
+
+    suspend fun sendPing() = withContext(Dispatchers.IO) {
+        val out = outputStream ?: throw IOException("Not connected")
+        synchronized(out) { out.write(byteArrayOf(0xc0.toByte(), 0)); out.flush() }
     }
 
     suspend fun ping(): Boolean = withContext(Dispatchers.IO) {
