@@ -11,12 +11,26 @@ android {
         // API 14 floor per the compatibility target; the test device is API 18.
         minSdk 14
         targetSdk 18
-        versionCode 9
-        versionName '0.5.4'
+        versionCode (findProperty('releaseVersionCode') ?: '9').toInteger()
+        versionName (findProperty('releaseVersionName') ?: '0.5.4')
+    }
+
+    signingConfigs {
+        if (System.getenv('ANDROID_KEYSTORE_PATH')) {
+            ciRelease {
+                storeFile file(System.getenv('ANDROID_KEYSTORE_PATH'))
+                storePassword System.getenv('ANDROID_KEYSTORE_PASSWORD')
+                keyAlias System.getenv('ANDROID_KEY_ALIAS')
+                keyPassword System.getenv('ANDROID_KEY_PASSWORD')
+            }
+        }
     }
 
     buildTypes {
         release {
+            if (System.getenv('ANDROID_KEYSTORE_PATH')) {
+                signingConfig signingConfigs.ciRelease
+            }
             minifyEnabled false
         }
     }

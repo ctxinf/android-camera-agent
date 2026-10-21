@@ -1,0 +1,93 @@
+name: Release APKs
+
+on:
+  push:
+    tags: ['v[0-9]*']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      ANDROID_KEYSTORE_PATH: ${{ runner.temp }}/release.jks
+      ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+      ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+      ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+      - name: Prepare version and signing key
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$GITHUB_REF_NAME" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]] || { echo 'Expected vMAJOR.MINOR.PATCH[-prerelease]'; exit 1; }
+          for name in KEYSTORE_BASE64 ANDROID_KEYSTORE_PASSWORD ANDROID_KEY_ALIAS ANDROID_KEY_PASSWORD; do
+            [[ -n "${!name}" ]] || { echo "Missing signing secret: $name"; exit 1; }
+          done
+          umask 077
+          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > "$ANDROID_KEYSTORE_PATH"
+          echo "RELEASE_VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
+          echo "RELEASE_CODE=$((GITHUB_RUN_NUMBER + 100))" >> "$GITHUB_ENV"
+      - name: Install Android SDK packages
+        run: '"$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-36" "build-tools;35.0.0" > /dev/null'
+      - name: Test and build both variants
+        shell: bash
+        run: |
+          set -euo pipefail
+          for project in android-8.0-camera-agent android-4.0-camera-agent/android; do
+            (cd "$project" && bash ./gradlew --no-daemon testReleaseUnitTest assembleRelease \
+              -PreleaseVersionName="$RELEASE_VERSION" -PreleaseVersionCode="$RELEASE_CODE")
+          done
+          mkdir -p dist
+          cp android-8.0-camera-agent/app/build/outputs/apk/release/app-release.apk "dist/camera-agent-android8-${GITHUB_REF_NAME}.apk"
+          cp android-4.0-camera-agent/android/app/build/outputs/apk/release/app-release.apk "dist/camera-agent-android4-${GITHUB_REF_NAME}.apk"
+          for apk in dist/*.apk; do
+            "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify "$apk"
+          done
+          (cd dist && sha256sum *.apk > SHA256SUMS.txt)
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-apks
+          path: dist/*
+          if-no-files-found: error
+      - name: Remove signing key
+        if: always()
+        run: rm -f "$ANDROID_KEYSTORE_PATH"
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-apks
+          path: dist
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ github.ref_name }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          options=()
+          if [[ "$TAG" == *-* ]]; then options+=(--prerelease); fi
+          gh release create "$TAG" dist/* --verify-tag --title "$TAG" --generate-notes "${options[@]}"

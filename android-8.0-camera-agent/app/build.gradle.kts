@@ -12,14 +12,26 @@ android {
         applicationId = "io.github.ctxinf.cameraagent"
         minSdk = 26
         targetSdk = 26
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = providers.gradleProperty("releaseVersionCode").orNull?.toInt() ?: 1
+        versionName = providers.gradleProperty("releaseVersionName").orNull ?: "1.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        if (System.getenv("ANDROID_KEYSTORE_PATH") != null) {
+            create("ciRelease") {
+                storeFile = file(System.getenv("ANDROID_KEYSTORE_PATH"))
+                storePassword = System.getenv("ANDROID_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("ANDROID_KEY_ALIAS")
+                keyPassword = System.getenv("ANDROID_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
+            signingConfigs.findByName("ciRelease")?.let { signingConfig = it }
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
