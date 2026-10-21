@@ -94,7 +94,7 @@ class PreviewActivity : AppCompatActivity() {
                 btnTogglePreview.setTextColor(getColor(R.color.control_selected_text))
             } catch (e: Exception) {
                 AppLog.e("Failed to attach preview: ${e.message}", e)
-                tvPreviewStatus.text = "Preview Error: ${e.message}"
+                tvPreviewStatus.text = getString(R.string.preview_error, e.message)
                 tvPreviewStatus.visibility = View.VISIBLE
             }
         }
@@ -110,7 +110,7 @@ class PreviewActivity : AppCompatActivity() {
                 val appGraph = (application as CameraAgentApp).appGraph
                 appGraph.coordinator.detachPreview(surface)
                 isPreviewAttached = false
-                tvPreviewStatus.text = "Preview Stopped"
+                tvPreviewStatus.text = getString(R.string.ui_preview_stopped)
                 tvPreviewStatus.visibility = View.VISIBLE
                 btnTogglePreview.text = getString(R.string.preview_off)
                 btnTogglePreview.backgroundTintList = android.content.res.ColorStateList.valueOf(getColor(R.color.control_normal_bg))
@@ -149,10 +149,10 @@ class PreviewActivity : AppCompatActivity() {
         val graph = (application as CameraAgentApp).appGraph
         val config = graph.coordinator.config.value
         val state = graph.coordinator.state.value
-        tvPreviewInfo.text = "${if (config.facing == io.github.ctxinf.cameraagent.domain.LensFacing.FRONT) "前置" else "后置"} · " +
+        tvPreviewInfo.text = "${if (config.facing == io.github.ctxinf.cameraagent.domain.LensFacing.FRONT) getString(R.string.facing_front) else getString(R.string.facing_back)} · " +
             "${config.targetWidth}×${config.targetHeight} · ${config.targetFps} fps · " +
-            "旋转 ${config.rotationOffset}° · ${state::class.simpleName}"
-        btnRotate.text = "顺时针 ${config.rotationOffset}°"
+            getString(R.string.ui_rotation, config.rotationOffset, state::class.simpleName)
+        btnRotate.text = getString(R.string.ui_clockwise, config.rotationOffset)
         updatePreviewGeometry()
     }
 

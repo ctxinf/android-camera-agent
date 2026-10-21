@@ -85,9 +85,45 @@ class SettingsActivity : AppCompatActivity() {
 
         findViewById<ImageButton>(R.id.btnSettingsBack).setOnClickListener { finish() }
 
+        setupAbout()
+        setupLanguage()
         initViews()
         setupClickListeners()
         refreshUi()
+    }
+
+    private fun setupAbout() {
+        findViewById<TextView>(R.id.aboutVersion).text = getString(
+            R.string.about_version, packageManager.getPackageInfo(packageName, 0).versionName
+        )
+        val project = "https://github.com/ctxinf/android-camera-agent"
+        findViewById<View>(R.id.aboutGithub).setOnClickListener {
+                try {
+                    startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(project)))
+                } catch (_: android.content.ActivityNotFoundException) {
+                    Toast.makeText(this, R.string.about_no_browser, Toast.LENGTH_SHORT).show()
+                }
+        }
+    }
+
+    private fun setupLanguage() {
+        val tags = resources.getStringArray(R.array.language_tags)
+        val names = resources.getStringArray(R.array.language_names)
+        val selected = androidx.appcompat.app.AppCompatDelegate.getApplicationLocales().toLanguageTags()
+        val current = tags.indexOf(selected).coerceAtLeast(0)
+        findViewById<TextView>(R.id.tvLanguageValue).text = names[current]
+        findViewById<View>(R.id.itemLanguage).setOnClickListener {
+            MaterialAlertDialogBuilder(this)
+                .setTitle(R.string.pref_language)
+                .setSingleChoiceItems(names, current) { dialog, which ->
+                    dialog.dismiss()
+                    androidx.appcompat.app.AppCompatDelegate.setApplicationLocales(
+                        androidx.core.os.LocaleListCompat.forLanguageTags(tags[which])
+                    )
+                }
+                .setNegativeButton(android.R.string.cancel, null)
+                .show()
+        }
     }
 
     private fun initViews() {
@@ -132,7 +168,7 @@ class SettingsActivity : AppCompatActivity() {
                 title = getString(R.string.pref_dim_timeout),
                 currentValue = repo.dimTimeoutSec,
                 range = 5..3600,
-                unit = "秒"
+                unit = getString(R.string.ui_seconds)
             ) { value ->
                 repo.setDimTimeoutSec(value)
                 refreshUi()
@@ -157,13 +193,13 @@ class SettingsActivity : AppCompatActivity() {
 
         findViewById<View>(R.id.itemThemeMode).setOnClickListener {
             val themes = listOf(
-                "跟随系统 (默认)" to "system",
-                "浅色模式" to "light",
-                "深色模式" to "dark"
+                getString(R.string.ui_follow_the_system_default) to "system",
+                getString(R.string.ui_light_mode) to "light",
+                getString(R.string.ui_dark_mode) to "dark"
             )
             val currentIndex = themes.indexOfFirst { it.second == repo.themeMode }.coerceAtLeast(0)
             MaterialAlertDialogBuilder(this)
-                .setTitle("外观与深色模式")
+                .setTitle(getString(R.string.ui_appearance_and_dark_mode))
                 .setSingleChoiceItems(themes.map { it.first }.toTypedArray(), currentIndex) { dialog, which ->
                     val selectedMode = themes[which].second
                     repo.setThemeMode(selectedMode)
@@ -182,7 +218,7 @@ class SettingsActivity : AppCompatActivity() {
                 graph.cameraAccess.setFrontDisabled(disabled)
                 refreshUi()
             }
-            if (disabled) Toast.makeText(this, "前置摄像头已禁用", Toast.LENGTH_SHORT).show()
+            if (disabled) Toast.makeText(this, getString(R.string.ui_front_camera_disabled), Toast.LENGTH_SHORT).show()
         }
 
         findViewById<View>(R.id.itemCameraFacing).setOnClickListener {
@@ -196,7 +232,7 @@ class SettingsActivity : AppCompatActivity() {
                 .setSingleChoiceItems(labels.toTypedArray(), currentIdx) { dialog, which ->
                     val chosen = facings[which]
                     if (chosen == LensFacing.FRONT && repo.frontCameraDisabled) {
-                        Toast.makeText(this, "前置摄像头已在设置中禁用", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this, getString(R.string.ui_the_front_camera_is_disabled_in_settings), Toast.LENGTH_SHORT).show()
                     } else {
                         updateCamera { it.copy(facing = chosen) }
                         refreshUi()
@@ -234,7 +270,7 @@ class SettingsActivity : AppCompatActivity() {
                 title = getString(R.string.pref_target_fps),
                 currentValue = repo.config.value.targetFps,
                 range = 1..30,
-                unit = "帧/秒"
+                unit = getString(R.string.ui_frames_second)
             ) { fps ->
                 updateCamera { it.copy(targetFps = fps) }
                 refreshUi()
@@ -258,7 +294,7 @@ class SettingsActivity : AppCompatActivity() {
                 title = getString(R.string.pref_retention_grace_period),
                 currentValue = repo.config.value.retentionGracePeriodSec,
                 range = 0..3600,
-                unit = "秒"
+                unit = getString(R.string.ui_seconds)
             ) { seconds ->
                 updateCamera { it.copy(retentionGracePeriodSec = seconds) }
                 refreshUi()
@@ -306,7 +342,7 @@ class SettingsActivity : AppCompatActivity() {
             showTextDialog(
                 title = getString(R.string.pref_auth_username),
                 currentValue = repo.authUsername,
-                hint = "输入用户名"
+                hint = getString(R.string.ui_enter_username)
             ) { username ->
                 if (username.isNotBlank()) {
                     repo.setAuthUsername(username)
@@ -319,7 +355,7 @@ class SettingsActivity : AppCompatActivity() {
             showTextDialog(
                 title = getString(R.string.pref_auth_password),
                 currentValue = repo.authPassword,
-                hint = "输入访问密码",
+                hint = getString(R.string.ui_enter_access_code),
                 isPassword = true
             ) { password ->
                 if (password.isNotBlank()) {
@@ -355,7 +391,7 @@ class SettingsActivity : AppCompatActivity() {
             showTextDialog(
                 title = getString(R.string.pref_mqtt_host),
                 currentValue = repo.mqttHost,
-                hint = "例如: 192.168.1.5 或 broker.emqx.io"
+                hint = getString(R.string.ui_for_example_192_168_1_5_or_broker_emqx_io)
             ) { host ->
                 repo.setMqttHost(host)
                 graph.mqttManager.restart()
@@ -380,7 +416,7 @@ class SettingsActivity : AppCompatActivity() {
             showTextDialog(
                 title = getString(R.string.pref_mqtt_client_id),
                 currentValue = repo.mqttClientId,
-                hint = "客户端唯一标识"
+                hint = getString(R.string.ui_client_unique_identifier)
             ) { id ->
                 if (id.isNotBlank()) {
                     repo.setMqttClientId(id)
@@ -394,7 +430,7 @@ class SettingsActivity : AppCompatActivity() {
             showTextDialog(
                 title = getString(R.string.pref_mqtt_topic_prefix),
                 currentValue = repo.mqttTopicPrefix,
-                hint = "例如: camera_agent"
+                hint = getString(R.string.ui_for_example_camera_agent)
             ) { prefix ->
                 repo.setMqttTopicPrefix(prefix.ifBlank { "camera_agent" })
                 graph.mqttManager.restart()
@@ -418,10 +454,10 @@ class SettingsActivity : AppCompatActivity() {
         // Danger Exit
         findViewById<Button>(R.id.btnExitApp).setOnClickListener {
             MaterialAlertDialogBuilder(this)
-                .setTitle("强制退出程序")
-                .setMessage("停止所有连接和相机，退出进程并禁止自启动，直到你再次手动打开应用。")
+                .setTitle(getString(R.string.ui_force_quit))
+                .setMessage(getString(R.string.ui_stops_all_connections_and_cameras_exits_the_process_and_disables_))
                 .setNegativeButton(android.R.string.cancel, null)
-                .setPositiveButton("退出") { _, _ ->
+                .setPositiveButton(getString(R.string.ui_exit)) { _, _ ->
                     (application as CameraAgentApp).forceExit()
                 }
                 .show()
@@ -432,13 +468,13 @@ class SettingsActivity : AppCompatActivity() {
         isBinding = true
 
         // Display
-        tvDimTimeoutValue.text = "${repo.dimTimeoutSec} 秒"
+        tvDimTimeoutValue.text = getString(R.string.ui_seconds_2, repo.dimTimeoutSec)
         tvDimBrightnessValue.text = "${(repo.dimBrightness * 100).toInt()}%"
         tvBatteryValue.text = if (ignoresBatteryOptimization()) getString(R.string.battery_opt_enabled) else getString(R.string.battery_opt_hint)
         tvThemeModeValue.text = when (repo.themeMode) {
-            "light" -> "浅色模式"
-            "dark" -> "深色模式"
-            else -> "跟随系统 (默认)"
+            "light" -> getString(R.string.ui_light_mode)
+            "dark" -> getString(R.string.ui_dark_mode)
+            else -> getString(R.string.ui_follow_the_system_default)
         }
 
         // Camera
@@ -446,9 +482,9 @@ class SettingsActivity : AppCompatActivity() {
         val config = repo.config.value
         tvCameraFacingValue.text = if (config.facing == LensFacing.FRONT) getString(R.string.facing_front) else getString(R.string.facing_back)
         tvResolutionValue.text = "${config.targetWidth} × ${config.targetHeight}"
-        tvTargetFpsValue.text = "${config.targetFps} 帧/秒"
+        tvTargetFpsValue.text = getString(R.string.ui_frames_second_2, config.targetFps)
         tvJpegQualityValue.text = "${config.jpegQuality}"
-        tvRetentionGraceValue.text = "${config.retentionGracePeriodSec} 秒"
+        tvRetentionGraceValue.text = getString(R.string.ui_seconds_2, config.retentionGracePeriodSec)
 
         // Network
         findViewById<TextView>(R.id.tvHttpBindAddressValue).text = repo.httpBindAddress
@@ -519,7 +555,7 @@ class SettingsActivity : AppCompatActivity() {
                 graph.cameraAccess.updateLocal(change)
                 refreshUi()
             } catch (e: SecurityException) {
-                Toast.makeText(this@SettingsActivity, e.message ?: "相机访问被禁用", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@SettingsActivity, e.message ?: getString(R.string.ui_camera_access_is_disabled), Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -549,7 +585,7 @@ class SettingsActivity : AppCompatActivity() {
                 inputType = InputType.TYPE_CLASS_NUMBER
                 filters = arrayOf(InputFilter.LengthFilter(3))
                 gravity = android.view.Gravity.CENTER
-                contentDescription = "IPv4 第 ${index + 1} 段"
+                contentDescription = getString(R.string.ui_ipv4_segment, index + 1)
                 setText(parts.getOrElse(index) { "0" })
                 row.addView(this, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
             }
@@ -560,7 +596,7 @@ class SettingsActivity : AppCompatActivity() {
                 .flatMap { Collections.list(it.inetAddresses) }
                 .filterIsInstance<Inet4Address>().mapNotNull { it.hostAddress }.distinct().sorted()
         }.getOrDefault(emptyList())
-        val options = listOf("选择本机 IP…", "0.0.0.0（所有接口）") + addresses
+        val options = listOf(getString(R.string.ui_select_local_ip), getString(R.string.ui_0_0_0_0_all_interfaces)) + addresses
         container.addView(Spinner(this).apply {
             adapter = ArrayAdapter(this@SettingsActivity, android.R.layout.simple_spinner_dropdown_item, options)
             onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
@@ -574,7 +610,7 @@ class SettingsActivity : AppCompatActivity() {
         })
         val dialog = MaterialAlertDialogBuilder(this)
             .setTitle(R.string.pref_http_bind_address)
-            .setMessage("0.0.0.0 监听所有接口；HTTP 与 MCP 共用此监听地址。")
+            .setMessage(getString(R.string.ui_0_0_0_0_listens_on_all_interfaces_http_and_mcp_share_this_listeni))
             .setView(container)
             .setPositiveButton(android.R.string.ok, null)
             .setNegativeButton(android.R.string.cancel, null).create()
@@ -583,7 +619,7 @@ class SettingsActivity : AppCompatActivity() {
                 val values = inputs.map { it.text.toString().toIntOrNull() }
                 if (values.any { it == null || it !in 0..255 }) {
                     inputs.forEachIndexed { index, input ->
-                        if (values[index] == null || values[index] !in 0..255) input.error = "请输入 0–255"
+                        if (values[index] == null || values[index] !in 0..255) input.error = getString(R.string.ui_please_enter_0_255)
                     }
                 } else {
                     repo.setHttpBindAddress(values.joinToString("."))
@@ -621,7 +657,7 @@ class SettingsActivity : AppCompatActivity() {
 
         MaterialAlertDialogBuilder(this)
             .setTitle(title)
-            .setMessage(if (unit.isNotEmpty()) "范围: ${range.first} ~ ${range.last} $unit" else "范围: ${range.first} ~ ${range.last}")
+            .setMessage(if (unit.isNotEmpty()) getString(R.string.ui_range, range.first, range.last, unit) else getString(R.string.ui_range_2, range.first, range.last))
             .setView(container)
             .setPositiveButton(android.R.string.ok) { _, _ ->
                 val num = input.text.toString().toIntOrNull()

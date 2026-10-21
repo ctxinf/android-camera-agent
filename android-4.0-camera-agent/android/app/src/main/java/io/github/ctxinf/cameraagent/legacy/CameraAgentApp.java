@@ -9,6 +9,10 @@ import java.util.HashSet;
 
 /** Process-wide visibility and explicit-exit policy, including Settings and Preview. API 14+. */
 public class CameraAgentApp extends Application implements Application.ActivityLifecycleCallbacks {
+    @Override protected void attachBaseContext(android.content.Context base) {
+        super.attachBaseContext(LanguageSettings.wrap(base));
+    }
+
     private final Handler handler = new Handler();
     private final HashSet<Activity> activities = new HashSet<Activity>();
     private int started;

@@ -20,7 +20,7 @@
             android:layout_width="44dp"
             android:layout_height="44dp"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="返回"
+            android:contentDescription="@string/ui_return"
             android:padding="10dp"
             android:src="@drawable/ic_arrow_back"
             app:tint="@color/ui_text" />
@@ -44,7 +44,7 @@
         android:layout_marginTop="12dp"
         android:textColor="@color/ui_text_secondary"
         android:textSize="12sp"
-        android:text="Device: Loading..." />
+        android:text="@string/ui_device_loading" />
 
     <TextView
         android:id="@+id/tvStatus"
@@ -53,7 +53,7 @@
         android:layout_marginTop="8dp"
         android:background="@drawable/surface_card"
         android:padding="12dp"
-        android:text="Status: Ready"
+        android:text="@string/ui_status_ready"
         android:textColor="@color/ui_primary"
         android:textSize="13sp" />
 
@@ -64,7 +64,7 @@
         android:layout_marginTop="8dp"
         android:background="@drawable/surface_field"
         android:padding="12dp"
-        android:text="Cameras: Probing..."
+        android:text="@string/ui_cameras_probing"
         android:textColor="@color/ui_text"
         android:textSize="12sp" />
 
@@ -80,7 +80,7 @@
             android:layout_width="0dp"
             android:layout_height="46dp"
             android:layout_weight="1"
-            android:text="Probe"
+            android:text="@string/ui_probe"
             android:textSize="13sp"
             android:textStyle="bold"
             android:background="@drawable/control_button"
@@ -92,7 +92,7 @@
             android:layout_height="46dp"
             android:layout_marginStart="6dp"
             android:layout_weight="1"
-            android:text="Service"
+            android:text="@string/ui_service_2"
             android:textSize="13sp"
             android:textStyle="bold"
             android:background="@drawable/control_button"
@@ -104,7 +104,7 @@
             android:layout_height="46dp"
             android:layout_marginStart="6dp"
             android:layout_weight="1"
-            android:text="Snapshot"
+            android:text="@string/ui_snapshot"
             android:textSize="13sp"
             android:textStyle="bold"
             android:background="@drawable/control_button"
@@ -115,7 +115,7 @@
             android:layout_width="wrap_content"
             android:layout_height="46dp"
             android:layout_marginStart="6dp"
-            android:text="Clear"
+            android:text="@string/ui_clear"
             android:textSize="13sp"
             android:textStyle="bold"
             android:background="@drawable/control_button"
@@ -126,7 +126,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="14dp"
-        android:text="Live Diagnostic Logs:"
+        android:text="@string/ui_live_diagnostic_logs"
         android:textColor="@color/ui_text_secondary"
         android:textSize="12sp"
         android:textStyle="bold" />

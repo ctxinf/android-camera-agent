@@ -21,7 +21,7 @@
             android:layout_width="44dp"
             android:layout_height="44dp"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="返回"
+            android:contentDescription="@string/ui_return"
             android:padding="10dp"
             android:src="@drawable/ic_arrow_back"
             app:tint="@color/ui_text" />
@@ -51,6 +51,73 @@
             android:paddingEnd="16dp"
             android:paddingTop="8dp"
             android:paddingBottom="32dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:layout_marginBottom="8dp"
+                android:text="@string/cat_appearance"
+                android:textColor="@color/ui_primary"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="20dp"
+                android:paddingHorizontal="16dp"
+                android:background="@drawable/surface_card"
+                android:orientation="vertical">
+                <!-- Language -->
+                <LinearLayout
+                    android:id="@+id/itemLanguage"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:background="?attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:src="@drawable/ic_globe"
+                        app:tint="@color/ui_text" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="14dp"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/pref_language"
+                            android:textColor="@color/ui_text"
+                            android:textSize="15sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/tvLanguageValue"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:text="@string/language_follow_system"
+                            android:textColor="@color/ui_text_secondary"
+                            android:textSize="13sp" />
+                    </LinearLayout>
+
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:src="@drawable/ic_chevron_right"
+                        app:tint="@color/ui_text_tertiary" />
+                </LinearLayout>
+
+            </LinearLayout>
 
             <!-- Category: 显示 (Display) -->
             <TextView
@@ -106,7 +173,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="2dp"
-                            android:text="30 秒"
+                            android:text="@string/ui_30_seconds"
                             android:textColor="@color/ui_text_secondary"
                             android:textSize="13sp" />
                     </LinearLayout>
@@ -262,7 +329,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="外观与深色模式"
+                            android:text="@string/ui_appearance_and_dark_mode"
                             android:textColor="@color/ui_text"
                             android:textSize="15sp"
                             android:textStyle="bold" />
@@ -272,7 +339,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="2dp"
-                            android:text="跟随系统 (默认)"
+                            android:text="@string/ui_follow_the_system_default"
                             android:textColor="@color/ui_text_secondary"
                             android:textSize="13sp" />
                     </LinearLayout>
@@ -375,7 +442,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="2dp"
-                            android:text="后置"
+                            android:text="@string/facing_back"
                             android:textColor="@color/ui_text_secondary"
                             android:textSize="13sp" />
                     </LinearLayout>
@@ -483,7 +550,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="2dp"
-                            android:text="15 帧/秒"
+                            android:text="@string/ui_15_frames_second"
                             android:textColor="@color/ui_text_secondary"
                             android:textSize="13sp" />
                     </LinearLayout>
@@ -591,7 +658,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="2dp"
-                            android:text="5 秒"
+                            android:text="@string/ui_5_seconds"
                             android:textColor="@color/ui_text_secondary"
                             android:textSize="13sp" />
                     </LinearLayout>
@@ -1339,7 +1406,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="2dp"
-                            android:text="点击开始测试"
+                            android:text="@string/ui_click_to_start_testing"
                             android:textColor="@color/ui_text_secondary"
                             android:textSize="13sp" />
                     </LinearLayout>
@@ -1459,10 +1526,12 @@
                 android:gravity="center"
                 android:paddingStart="16dp"
                 android:paddingEnd="16dp"
-                android:text="强制退出程序"
+                android:text="@string/ui_force_quit"
                 android:textColor="#FFFFFF"
                 android:textSize="15sp"
                 android:textStyle="bold" />
+
+            <include layout="@layout/settings_about" />
 
         </LinearLayout>
     </ScrollView>

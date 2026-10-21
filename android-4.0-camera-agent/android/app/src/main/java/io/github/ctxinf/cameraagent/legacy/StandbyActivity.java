@@ -18,6 +18,20 @@ import io.github.ctxinf.cameraagent.legacy.util.NetworkUtil;
 
 /** Home page: service gate, endpoints and lens selection. */
 public class StandbyActivity extends Activity {
+    private String appliedLanguage;
+
+    @Override protected void attachBaseContext(android.content.Context base) {
+        appliedLanguage = LanguageSettings.selected(base);
+        super.attachBaseContext(LanguageSettings.wrap(base));
+    }
+
+    private void refreshLanguage() {
+        if (!LanguageSettings.selected(this).equals(appliedLanguage)) {
+            appliedLanguage = LanguageSettings.selected(this);
+            recreate();
+        }
+    }
+
     private static final long STATUS_POLL_MS = 1000;
     private final Handler handler = new Handler();
     private Settings settings;
@@ -112,7 +126,7 @@ public class StandbyActivity extends Activity {
     private void selectFacing(int facing) {
         if (facing == 1 && (!CameraManager.hasFacing(1) || settings.frontCameraDisabled())) {
             android.widget.Toast.makeText(this, settings.frontCameraDisabled()
-                    ? "前置摄像头已在设置中禁用" : "设备没有前置摄像头", android.widget.Toast.LENGTH_SHORT).show();
+                    ? getString(R.string.ui_the_front_camera_is_disabled_in_settings) : getString(R.string.ui_device_has_no_front_camera), android.widget.Toast.LENGTH_SHORT).show();
             return;
         }
         settings.setCameraEnabled(true);
@@ -145,21 +159,21 @@ public class StandbyActivity extends Activity {
                 new BanDrawable(getResources().getDisplayMetrics().density,
                         settings.cameraEnabled() ? 0xffe0e0e0 : 0xff111318), null, null, null);
         frontButton.setAlpha(CameraManager.hasFacing(1) && !settings.frontCameraDisabled() ? 1f : 0.4f);
-        statusText.setText(settings.backgroundEnabled() ? "后台服务 · 开启" : "后台服务 · 关闭");
+        statusText.setText(settings.backgroundEnabled() ? getString(R.string.ui_background_service_enable) : getString(R.string.ui_background_service_close));
         statusText.setTextColor(getResources().getColor(settings.backgroundEnabled()
                 ? R.color.ui_success : R.color.ui_text_secondary));
         AgentService svc = AgentService.get();
         boolean running = svc != null && svc.isHttpRunning();
         setStatusIndicator(R.id.http_status, serviceLine("HTTP", settings.httpEnabled(), running && settings.httpEnabled()));
         setStatusIndicator(R.id.mcp_status, serviceLine("MCP", settings.mcpEnabled(), running && settings.mcpEnabled()));
-        ((TextView) findViewById(R.id.http_connections)).setText((svc == null ? 0 : svc.httpConnections()) + " 个连接");
-        ((TextView) findViewById(R.id.mcp_connections)).setText((svc == null ? 0 : svc.mcpConnections()) + " 个连接");
+        ((TextView) findViewById(R.id.http_connections)).setText((svc == null ? 0 : svc.httpConnections()) + getString(R.string.ui_connections));
+        ((TextView) findViewById(R.id.mcp_connections)).setText((svc == null ? 0 : svc.mcpConnections()) + getString(R.string.ui_connections));
         setStatusIndicator(R.id.mqtt_status,
                 (svc != null && svc.isMqttConnected() ? "🟢" : settings.mqttEnabled() ? "🟠" : "⚪")
-                + " MQTT · " + (!settings.mqttEnabled() ? "已停用" : svc != null && svc.isMqttConnected() ? "已连接" : "未连接"));
+                + " MQTT · " + (!settings.mqttEnabled() ? getString(R.string.ui_deactivated) : svc != null && svc.isMqttConnected() ? getString(R.string.ui_connected) : getString(R.string.ui_not_connected)));
         CameraManager.State state = svc == null ? CameraManager.State.CLOSED : svc.getCameraManager().getState();
         setStatusIndicator(R.id.camera_status, (state == CameraManager.State.OPEN ? "🟢" : state == CameraManager.State.OPENING ? "🟠" : "⚪")
-                + " 摄像头 · " + (!settings.cameraEnabled() ? "已禁用" : front ? "前置" : "后置"));
+                + getString(R.string.ui_camera_2) + (!settings.cameraEnabled() ? getString(R.string.ui_disabled) : front ? getString(R.string.ui_prefix) : getString(R.string.ui_rear)));
         ((TextView) findViewById(R.id.camera_status)).setTextColor(settings.cameraEnabled() ? getResources().getColor(R.color.ui_text) : 0xffe6a5a5);
         ((TextView) findViewById(R.id.cameraRuntime)).setText(state == CameraManager.State.OPEN ? "Active"
                 : state == CameraManager.State.OPENING ? "Opening" : "Standby");
@@ -168,7 +182,7 @@ public class StandbyActivity extends Activity {
         rotation.setText(settings.rotationOffset() + "°");
         rotation.setCompoundDrawablesWithIntrinsicBounds(getResources().getIdentifier(
                 "ic_rotation_" + settings.rotationOffset(), "drawable", getPackageName()), 0, 0, 0);
-        rotation.setContentDescription("顺时针旋转，当前 " + settings.rotationOffset() + " 度");
+        rotation.setContentDescription(getString(R.string.ui_rotate_clockwise_current) + settings.rotationOffset() + getString(R.string.ui_degree));
         refreshInfo();
     }
 
@@ -187,7 +201,7 @@ public class StandbyActivity extends Activity {
 
     private String serviceLine(String name, boolean enabled, boolean running) {
         return (running ? "🟢" : enabled ? "🟠" : "⚪")
-                + " " + name + " · " + (!enabled ? "已停用" : running ? "运行中" : "未运行");
+                + " " + name + " · " + (!enabled ? getString(R.string.ui_deactivated) : running ? getString(R.string.ui_running) : getString(R.string.ui_not_running));
     }
 
     private void refreshInfo() {
@@ -195,14 +209,14 @@ public class StandbyActivity extends Activity {
         if ("0.0.0.0".equals(ip)) ip = NetworkUtil.getLocalIpAddress();
         AgentService service = AgentService.get();
         int port = service == null ? settings.httpPort() : service.getHttpPort();
-        if (ip == null) { infoView.setText("no network"); return; }
+        if (ip == null) { infoView.setText(R.string.notif_no_network); return; }
         final String base = "http://" + ip + ":" + port + settings.httpPathPrefix();
         android.text.SpannableStringBuilder text = new android.text.SpannableStringBuilder(base + "\n");
-        addEndpoint(text, base, "/snapshot.jpg", "JPEG 实时抓图", "GET, HEAD", "image/jpeg", "获取单张实时照片。接入 Home Assistant 时，建议使用“MJPEG IP Camera”集成，而不是“通用摄像头（Generic Camera）”，将此地址填入 Still Image URL。");
-        addEndpoint(text, base, "/video.mjpeg", "MJPEG 视频流", "GET, HEAD", "multipart/x-mixed-replace", "连续 JPEG 视频流，支持浏览器和 VLC。接入 Home Assistant 时，建议使用“MJPEG IP Camera”集成，而不是“通用摄像头（Generic Camera）”，将此地址填入 MJPEG URL。");
-        addEndpoint(text, base, "/api/status", "设备状态", "GET, HEAD", "application/json", "查询摄像头、分辨率、连接数及设备运行状态。");
-        addEndpoint(text, base, "/api/camera", "相机配置", "GET, POST, HEAD", "application/json", "读取或修改镜头、分辨率、FPS、JPEG 质量与保活设置。");
-        if (settings.mcpEnabled()) addEndpoint(text, base, "/mcp", "MCP", "POST", "application/json", "通过 JSON-RPC 调用相机工具。HTTP 与 MCP 共用绑定地址及 Basic Auth 设置。");
+        addEndpoint(text, base, "/snapshot.jpg", getString(R.string.ui_jpeg_real_time_capture), "GET, HEAD", "image/jpeg", getString(R.string.ui_get_a_single_live_photo_when_connecting_to_home_assistant_it_is_r));
+        addEndpoint(text, base, "/video.mjpeg", getString(R.string.ui_mjpeg_video_stream), "GET, HEAD", "multipart/x-mixed-replace", getString(R.string.ui_continuous_jpeg_video_streaming_browser_and_vlc_supported_when_co));
+        addEndpoint(text, base, "/api/status", getString(R.string.ui_device_status), "GET, HEAD", "application/json", getString(R.string.ui_query_the_camera_resolution_number_of_connections_and_device_runn));
+        addEndpoint(text, base, "/api/camera", getString(R.string.ui_camera_configuration), "GET, POST, HEAD", "application/json", getString(R.string.ui_read_or_modify_lens_resolution_fps_jpeg_quality_and_keepalive_set));
+        if (settings.mcpEnabled()) addEndpoint(text, base, "/mcp", "MCP", "POST", "application/json", getString(R.string.ui_call_the_camera_tool_via_json_rpc_http_and_mcp_share_the_bind_add));
         // Avoid replacing spans during polling while the user is pressing a link.
         if (!text.toString().equals(infoView.getText().toString())) infoView.setText(text);
     }
@@ -216,15 +230,15 @@ public class StandbyActivity extends Activity {
             @Override public void onClick(View view) {
                 final String url = base + path;
                 new android.app.AlertDialog.Builder(StandbyActivity.this).setTitle(title)
-                        .setMessage(url + "\n\n方法：" + method + "\n类型：" + type
-                                + "\n认证：" + (settings.authEnabled() ? "需要 Basic Auth" : "免密访问")
+                        .setMessage(url + getString(R.string.ui_n_n_method) + method + getString(R.string.ui_n_type) + type
+                                + getString(R.string.ui_n_certification) + (settings.authEnabled() ? getString(R.string.ui_basic_auth_required) : getString(R.string.ui_password_free_access))
                                 + "\n\n" + description)
                         .setPositiveButton(android.R.string.ok, null)
-                        .setNeutralButton("复制 URL", new android.content.DialogInterface.OnClickListener() {
+                        .setNeutralButton(getString(R.string.ui_copy_url), new android.content.DialogInterface.OnClickListener() {
                             @Override public void onClick(android.content.DialogInterface dialog, int which) {
                                 android.content.ClipboardManager clipboard = (android.content.ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
                                 clipboard.setPrimaryClip(android.content.ClipData.newPlainText(title, url));
-                                android.widget.Toast.makeText(StandbyActivity.this, "已复制 URL", android.widget.Toast.LENGTH_SHORT).show();
+                                android.widget.Toast.makeText(StandbyActivity.this, getString(R.string.ui_url_copied), android.widget.Toast.LENGTH_SHORT).show();
                             }
                         }).show();
             }
@@ -253,6 +267,7 @@ public class StandbyActivity extends Activity {
 
     @Override protected void onResume() {
         super.onResume();
+        refreshLanguage();
         if (!settings.manuallyExited()) startService(new Intent(this, AgentService.class));
         wake();
         handler.removeCallbacks(statusTask);

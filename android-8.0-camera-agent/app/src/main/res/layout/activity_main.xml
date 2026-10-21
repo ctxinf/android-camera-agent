@@ -54,7 +54,7 @@
                     android:src="@drawable/ic_dark_mode"
                     app:tint="@color/ui_text"
                     android:padding="10dp"
-                    android:contentDescription="切换深色模式" />
+                    android:contentDescription="@string/ui_toggle_dark_mode" />
 
                 <!-- Settings Button -->
                 <ImageButton
@@ -79,7 +79,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="服务"
+                    android:text="@string/ui_service"
                     android:textColor="@color/ui_text"
                     android:textSize="17sp"
                     android:textStyle="bold"
@@ -125,7 +125,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginStart="6dp"
-                            android:text="运行中"
+                            android:text="@string/ui_running"
                             android:textColor="@color/ui_text_secondary"
                             android:textSize="13sp" />
                     </LinearLayout>
@@ -137,7 +137,7 @@
                         android:layout_weight="1"
                         android:layout_marginEnd="10dp"
                         android:gravity="end"
-                        android:text="0 个连接"
+                        android:text="@string/ui_0_connections"
                         android:textColor="@color/ui_text_tertiary"
                         android:textSize="13sp" />
 
@@ -194,7 +194,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginStart="6dp"
-                            android:text="已停用"
+                            android:text="@string/ui_deactivated"
                             android:textColor="@color/ui_text_secondary"
                             android:textSize="13sp" />
                     </LinearLayout>
@@ -206,7 +206,7 @@
                         android:layout_weight="1"
                         android:layout_marginEnd="10dp"
                         android:gravity="end"
-                        android:text="0 个连接"
+                        android:text="@string/ui_0_connections"
                         android:textColor="@color/ui_text_tertiary"
                         android:textSize="13sp" />
 
@@ -264,7 +264,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginStart="6dp"
-                            android:text="已停用"
+                            android:text="@string/ui_deactivated"
                             android:textColor="@color/ui_text_secondary"
                             android:textSize="13sp" />
                     </LinearLayout>
@@ -276,7 +276,7 @@
                         android:layout_weight="1"
                         android:layout_marginEnd="10dp"
                         android:gravity="end"
-                        android:text="0 个连接"
+                        android:text="@string/ui_0_connections"
                         android:textColor="@color/ui_text_tertiary"
                         android:textSize="13sp" />
 
@@ -313,7 +313,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
-                        android:text="摄像头"
+                        android:text="@string/cat_camera"
                         android:textColor="@color/ui_text"
                         android:textSize="17sp"
                         android:textStyle="bold" />
@@ -334,7 +334,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="6dp"
-                        android:text="待机"
+                        android:text="@string/ui_standby"
                         android:textColor="@color/ui_success"
                         android:textSize="13sp" />
                 </LinearLayout>
@@ -363,7 +363,7 @@
                         android:insetTop="0dp"
                         android:insetBottom="0dp"
                         android:padding="0dp"
-                        android:text="后置"
+                        android:text="@string/facing_back"
                         android:textColor="@color/ui_text"
                         android:textSize="14sp"
                         android:textStyle="bold" />
@@ -386,7 +386,7 @@
                         android:insetTop="0dp"
                         android:insetBottom="0dp"
                         android:padding="0dp"
-                        android:text="前置"
+                        android:text="@string/facing_front"
                         android:textColor="@color/ui_text"
                         android:textSize="14sp"
                         android:textStyle="bold" />
@@ -409,7 +409,7 @@
                         android:insetTop="0dp"
                         android:insetBottom="0dp"
                         android:padding="0dp"
-                        android:text="禁用"
+                        android:text="@string/ui_disable"
                         android:textColor="@color/ui_text"
                         android:textSize="14sp"
                         android:textStyle="bold" />
@@ -440,7 +440,7 @@
                         android:insetBottom="0dp"
                         android:paddingStart="14dp"
                         android:paddingEnd="10dp"
-                        android:text="旋转 0°"
+                        android:text="@string/ui_rotate_0"
                         android:textColor="@color/ui_text"
                         android:textSize="13sp" />
 
@@ -463,7 +463,7 @@
                         android:insetBottom="0dp"
                         android:paddingStart="14dp"
                         android:paddingEnd="14dp"
-                        android:text="本地预览"
+                        android:text="@string/ui_local_preview"
                         android:textColor="@color/ui_text"
                         android:textSize="13sp"
                         android:textStyle="bold" />
@@ -501,7 +501,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="连接与接口"
+                            android:text="@string/ui_connections_and_interfaces"
                             android:textColor="@color/ui_text"
                             android:textSize="17sp"
                             android:textStyle="bold" />
@@ -510,7 +510,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="2dp"
-                            android:text="同一局域网内可访问"
+                            android:text="@string/ui_accessible_within_the_same_lan"
                             android:textColor="@color/ui_text_secondary"
                             android:textSize="12sp" />
                     </LinearLayout>
@@ -524,7 +524,7 @@
                         android:paddingEnd="8dp"
                         android:paddingTop="3dp"
                         android:paddingBottom="3dp"
-                        android:text="已启用认证"
+                        android:text="@string/ui_authentication_enabled"
                         android:textColor="@color/ui_warning"
                         android:textSize="11sp"
                         android:visibility="gone" />
@@ -556,7 +556,7 @@
                         android:layout_width="36dp"
                         android:layout_height="36dp"
                         android:background="?attr/selectableItemBackgroundBorderless"
-                        android:contentDescription="复制链接"
+                        android:contentDescription="@string/ui_copy_link"
                         android:padding="6dp"
                         android:src="@drawable/ic_content_copy"
                         app:tint="@color/ui_text_secondary" />
@@ -590,7 +590,7 @@
                             android:insetTop="0dp"
                             android:insetBottom="0dp"
                             android:padding="0dp"
-                            android:contentDescription="打开快照链接"
+                            android:contentDescription="@string/ui_open_snapshot_link"
                             app:backgroundTint="@color/chip_bg_color"
                             app:strokeColor="@color/chip_stroke_color"
                             app:strokeWidth="1dp"
@@ -623,7 +623,7 @@
                             android:insetTop="0dp"
                             android:insetBottom="0dp"
                             android:padding="0dp"
-                            android:contentDescription="打开视频链接"
+                            android:contentDescription="@string/ui_open_video_link"
                             app:backgroundTint="@color/chip_bg_color"
                             app:strokeColor="@color/chip_stroke_color"
                             app:strokeWidth="1dp"
@@ -677,7 +677,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
                     android:lineSpacingExtra="4dp"
-                    android:text="点击接口查看说明与参数"
+                    android:text="@string/ui_click_on_the_interface_to_view_the_description_and_parameters"
                     android:textColor="@color/ui_text_secondary"
                     android:textSize="12sp"
                     android:focusable="false"
@@ -716,7 +716,7 @@
                     android:layout_marginStart="16dp"
                     android:layout_marginEnd="8dp"
                     android:layout_weight="1"
-                    android:text="后台服务已开启"
+                    android:text="@string/ui_background_service_is_enabled"
                     android:textColor="@color/ui_text"
                     android:textSize="17sp"
                     android:textStyle="bold" />

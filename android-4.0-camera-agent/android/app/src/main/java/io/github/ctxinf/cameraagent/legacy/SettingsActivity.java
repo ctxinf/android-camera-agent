@@ -28,6 +28,20 @@ import java.util.List;
 @SuppressWarnings("deprecation")
 public class SettingsActivity extends PreferenceActivity
         implements SharedPreferences.OnSharedPreferenceChangeListener {
+    private String appliedLanguage;
+
+    @Override protected void attachBaseContext(android.content.Context base) {
+        appliedLanguage = LanguageSettings.selected(base);
+        super.attachBaseContext(LanguageSettings.wrap(base));
+    }
+
+    private void refreshLanguage() {
+        if (!LanguageSettings.selected(this).equals(appliedLanguage)) {
+            appliedLanguage = LanguageSettings.selected(this);
+            recreate();
+        }
+    }
+
 
     private final Handler handler = new Handler();
     private Settings settings;
@@ -36,17 +50,17 @@ public class SettingsActivity extends PreferenceActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         android.widget.Button exit = new android.widget.Button(this);
-        exit.setText("强制退出程序");
+        exit.setText(getString(R.string.ui_force_quit));
         exit.setTextColor(android.graphics.Color.WHITE);
         exit.setBackgroundColor(0xffb3261e);
         exit.setCompoundDrawablesWithIntrinsicBounds(android.R.drawable.ic_lock_power_off, 0, 0, 0);
         exit.setPadding(24, 16, 24, 16);
         exit.setOnClickListener(new android.view.View.OnClickListener() {
             @Override public void onClick(android.view.View view) {
-                new AlertDialog.Builder(SettingsActivity.this).setTitle("强制退出程序")
-                        .setMessage("停止所有连接和相机，退出进程并禁止自启动，直到你再次手动打开应用。")
+                new AlertDialog.Builder(SettingsActivity.this).setTitle(getString(R.string.ui_force_quit))
+                        .setMessage(getString(R.string.ui_stops_all_connections_and_cameras_exits_the_process_and_disables_))
                         .setNegativeButton(android.R.string.cancel, null)
-                        .setPositiveButton("退出", new android.content.DialogInterface.OnClickListener() {
+                        .setPositiveButton(getString(R.string.ui_exit), new android.content.DialogInterface.OnClickListener() {
                             @Override public void onClick(android.content.DialogInterface dialog, int which) {
                                 ((CameraAgentApp) getApplication()).forceExit();
                             }
@@ -55,6 +69,13 @@ public class SettingsActivity extends PreferenceActivity
         });
         // Footer must be registered before the preference adapter on older Android releases.
         getListView().addFooterView(exit, null, false);
+
+        android.view.View about = getLayoutInflater().inflate(R.layout.settings_about, getListView(), false);
+        ((android.widget.TextView) about.findViewById(R.id.aboutVersion)).setText(
+                getString(R.string.about_version, appVersion()));
+        String project = "https://github.com/ctxinf/android-camera-agent";
+        setupAboutLink(about, R.id.aboutGithub, project);
+        getListView().addFooterView(about, null, false);
 
         addPreferencesFromResource(R.xml.preferences);
         getListView().setBackgroundColor(android.graphics.Color.rgb(17, 19, 24));
@@ -86,7 +107,7 @@ public class SettingsActivity extends PreferenceActivity
         if (facing != null) facing.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
             @Override public boolean onPreferenceChange(Preference preference, Object value) {
                 if ("1".equals(value.toString()) && settings.frontCameraDisabled()) {
-                    android.widget.Toast.makeText(SettingsActivity.this, "前置摄像头已在设置中禁用", android.widget.Toast.LENGTH_SHORT).show();
+                    android.widget.Toast.makeText(SettingsActivity.this, getString(R.string.ui_the_front_camera_is_disabled_in_settings), android.widget.Toast.LENGTH_SHORT).show();
                     return false;
                 }
                 return true;
@@ -96,7 +117,7 @@ public class SettingsActivity extends PreferenceActivity
             @Override public boolean onPreferenceChange(Preference preference, Object value) {
                 if (Boolean.TRUE.equals(value)) {
                     if (settings.cameraFacing() == 1) settings.setCameraFacing(0);
-                    android.widget.Toast.makeText(SettingsActivity.this, "前置摄像头已禁用", android.widget.Toast.LENGTH_SHORT).show();
+                    android.widget.Toast.makeText(SettingsActivity.this, getString(R.string.ui_front_camera_disabled), android.widget.Toast.LENGTH_SHORT).show();
                 }
                 return true;
             }
@@ -111,6 +132,27 @@ public class SettingsActivity extends PreferenceActivity
         populateResolutions();
         setupMqttVerifier();
         refreshAllSummaries();
+    }
+
+    private String appVersion() {
+        try {
+            return getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
+        } catch (android.content.pm.PackageManager.NameNotFoundException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    private void setupAboutLink(android.view.View footer, int id, final String url) {
+        footer.findViewById(id).setOnClickListener(new android.view.View.OnClickListener() {
+            @Override public void onClick(android.view.View view) {
+                try {
+                    startActivity(new android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(url)));
+                } catch (android.content.ActivityNotFoundException e) {
+                    android.widget.Toast.makeText(SettingsActivity.this, R.string.about_no_browser,
+                            android.widget.Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
     }
 
     private android.widget.EditText field(android.widget.LinearLayout layout, String hint, String value, int type) {
@@ -133,7 +175,7 @@ public class SettingsActivity extends PreferenceActivity
 
     private void refreshHttpSummaries() {
         findPreference(Settings.KEY_HTTP_BIND_ADDRESS).setSummary(settings.httpBindAddress());
-        findPreference("http_auth").setSummary(settings.authEnabled() ? "已启用 · " + settings.authUser() : "未启用");
+        findPreference("http_auth").setSummary(settings.authEnabled() ? getString(R.string.ui_enabled) + settings.authUser() : getString(R.string.ui_not_enabled));
     }
 
     private void setupHttpDialogs() {
@@ -141,9 +183,9 @@ public class SettingsActivity extends PreferenceActivity
         findPreference(Settings.KEY_HTTP_BIND_ADDRESS).setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
             @Override public boolean onPreferenceClick(Preference preference) {
                 android.widget.LinearLayout layout = dialogLayout();
-                final android.widget.EditText input = field(layout, "绑定 IPv4 地址", settings.httpBindAddress(), android.text.InputType.TYPE_CLASS_TEXT);
+                final android.widget.EditText input = field(layout, getString(R.string.ui_bind_ipv4_address), settings.httpBindAddress(), android.text.InputType.TYPE_CLASS_TEXT);
                 android.widget.Button choose = new android.widget.Button(SettingsActivity.this);
-                choose.setText("选择本机 IP…");
+                choose.setText(getString(R.string.ui_select_local_ip));
                 layout.addView(choose);
                 choose.setOnClickListener(new android.view.View.OnClickListener() {
                     @Override public void onClick(android.view.View v) {
@@ -160,15 +202,15 @@ public class SettingsActivity extends PreferenceActivity
                                 }
                             }
                         } catch (java.net.SocketException e) { Log.w("local address lookup failed: " + e); }
-                        new AlertDialog.Builder(SettingsActivity.this).setTitle("选择本机 IP")
+                        new AlertDialog.Builder(SettingsActivity.this).setTitle(getString(R.string.ui_select_local_ip_2))
                                 .setItems(addresses.toArray(new String[addresses.size()]), new android.content.DialogInterface.OnClickListener() {
                                     @Override public void onClick(android.content.DialogInterface d, int which) { input.setText(addresses.get(which)); }
                                 }).show();
                     }
                 });
-                final AlertDialog dialog = new AlertDialog.Builder(SettingsActivity.this).setTitle("HTTP 绑定 IP")
-                        .setMessage("0.0.0.0 监听所有接口；HTTP 与 MCP 共用此地址。")
-                        .setView(layout).setNegativeButton(android.R.string.cancel, null).setPositiveButton("保存", null).create();
+                final AlertDialog dialog = new AlertDialog.Builder(SettingsActivity.this).setTitle(getString(R.string.ui_http_binding_ip))
+                        .setMessage(getString(R.string.ui_0_0_0_0_listens_on_all_interfaces_http_and_mcp_share_this_address))
+                        .setView(layout).setNegativeButton(android.R.string.cancel, null).setPositiveButton(getString(R.string.ui_save), null).create();
                 dialog.show();
                 dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(new android.view.View.OnClickListener() {
                     @Override public void onClick(android.view.View v) {
@@ -179,7 +221,7 @@ public class SettingsActivity extends PreferenceActivity
                             try { if (!part.matches("[0-9]{1,3}") || Integer.parseInt(part) > 255) valid = false; }
                             catch (NumberFormatException e) { valid = false; }
                         }
-                        if (!valid) { input.setError("请输入有效的 IPv4 地址"); return; }
+                        if (!valid) { input.setError(getString(R.string.ui_please_enter_a_valid_ipv4_address)); return; }
                         value = Integer.parseInt(parts[0]) + "." + Integer.parseInt(parts[1]) + "." + Integer.parseInt(parts[2]) + "." + Integer.parseInt(parts[3]);
                         settings.raw().edit().putString(Settings.KEY_HTTP_BIND_ADDRESS, value).commit();
                         refreshHttpSummaries();
@@ -193,19 +235,19 @@ public class SettingsActivity extends PreferenceActivity
             @Override public boolean onPreferenceClick(Preference preference) {
                 android.widget.LinearLayout layout = dialogLayout();
                 final android.widget.CheckBox enabled = new android.widget.CheckBox(SettingsActivity.this);
-                enabled.setText("启用 Basic Auth");
+                enabled.setText(getString(R.string.ui_enable_basic_auth));
                 enabled.setChecked(settings.authEnabled());
                 layout.addView(enabled);
-                final android.widget.EditText user = field(layout, "用户名", settings.authUser(), android.text.InputType.TYPE_CLASS_TEXT);
-                final android.widget.EditText pass = field(layout, "密码", settings.authPass(), android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD);
+                final android.widget.EditText user = field(layout, getString(R.string.pref_auth_user), settings.authUser(), android.text.InputType.TYPE_CLASS_TEXT);
+                final android.widget.EditText pass = field(layout, getString(R.string.pref_auth_pass), settings.authPass(), android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD);
                 final AlertDialog dialog = new AlertDialog.Builder(SettingsActivity.this).setTitle("HTTP Basic Auth")
-                        .setView(layout).setNegativeButton(android.R.string.cancel, null).setPositiveButton("保存", null).create();
+                        .setView(layout).setNegativeButton(android.R.string.cancel, null).setPositiveButton(getString(R.string.ui_save), null).create();
                 dialog.show();
                 dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(new android.view.View.OnClickListener() {
                     @Override public void onClick(android.view.View v) {
                         String name = user.getText().toString();
                         if (enabled.isChecked() && (name.trim().length() == 0 || name.indexOf(':') >= 0)) {
-                            user.setError("请输入非空且不含冒号的用户名"); return;
+                            user.setError(getString(R.string.ui_please_enter_a_non_empty_username_without_colons)); return;
                         }
                         settings.raw().edit().putBoolean(Settings.KEY_AUTH_ENABLED, enabled.isChecked())
                                 .putString(Settings.KEY_AUTH_USER, name).putString(Settings.KEY_AUTH_PASS, pass.getText().toString()).commit();
@@ -228,7 +270,7 @@ public class SettingsActivity extends PreferenceActivity
             public boolean onPreferenceClick(Preference preference) {
                 verify.setEnabled(false);
                 verify.setSummary(getString(R.string.pref_mqtt_verify_running));
-                MqttVerifier.verify(settings, new MqttVerifier.Callback() {
+                MqttVerifier.verify(getApplicationContext(), settings, new MqttVerifier.Callback() {
                     @Override
                     public void onResult(final boolean success, final String message) {
                         handler.post(new Runnable() {
@@ -300,6 +342,9 @@ public class SettingsActivity extends PreferenceActivity
     @Override
     protected void onResume() {
         super.onResume();
+        android.preference.ListPreference language = (android.preference.ListPreference) findPreference(LanguageSettings.KEY);
+        language.setSummary(language.getEntry());
+        refreshLanguage();
         String[] toggles = { Settings.KEY_HTTP_ENABLED, Settings.KEY_MCP_ENABLED, Settings.KEY_MQTT_ENABLED };
         for (String key : toggles) {
             android.preference.CheckBoxPreference toggle = (android.preference.CheckBoxPreference) findPreference(key);
@@ -319,6 +364,14 @@ public class SettingsActivity extends PreferenceActivity
 
     @Override
     public void onSharedPreferenceChanged(SharedPreferences prefs, String key) {
+        if (LanguageSettings.KEY.equals(key)) {
+            // Persisted by ListPreference before this listener runs.
+            getApplication().getResources().updateConfiguration(
+                    LanguageSettings.wrap(this).getResources().getConfiguration(),
+                    getResources().getDisplayMetrics());
+            recreate();
+            return;
+        }
         refreshHttpSummaries();
         Preference p = findPreference(key);
         if (p != null) {

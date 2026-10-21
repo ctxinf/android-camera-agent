@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string-array name="facing_entries">
-        <item>后置 / Back</item>
-        <item>前置 / Front</item>
+        <item>@string/ui_rear</item>
+        <item>@string/ui_prefix</item>
     </string-array>
     <!-- Values match android.hardware.Camera.CameraInfo.CAMERA_FACING_*. -->
     <string-array name="facing_values">

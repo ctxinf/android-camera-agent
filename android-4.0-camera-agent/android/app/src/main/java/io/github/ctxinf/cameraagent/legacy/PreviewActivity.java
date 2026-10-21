@@ -16,6 +16,20 @@ import io.github.ctxinf.cameraagent.legacy.camera.CameraManager;
 
 /** Dedicated local preview, rotation and image-configuration page. */
 public class PreviewActivity extends Activity {
+    private String appliedLanguage;
+
+    @Override protected void attachBaseContext(android.content.Context base) {
+        appliedLanguage = LanguageSettings.selected(base);
+        super.attachBaseContext(LanguageSettings.wrap(base));
+    }
+
+    private void refreshLanguage() {
+        if (!LanguageSettings.selected(this).equals(appliedLanguage)) {
+            appliedLanguage = LanguageSettings.selected(this);
+            recreate();
+        }
+    }
+
     private static final long ACQUIRE_TIMEOUT_MS = 8000;
     private final Handler handler = new Handler();
     private Settings settings;
@@ -120,7 +134,7 @@ public class PreviewActivity extends Activity {
         String resolution = camera == null ? null : camera.getActiveResolution();
         String info = (resolution == null ? settings.resolution() : resolution)
                 + "  ·  JPEG q" + settings.jpegQuality() + "  ·  " + settings.mjpegFps() + " fps\n"
-                + "旋转 " + settings.rotationOffset() + "°";
+                + getString(R.string.ui_rotate) + settings.rotationOffset() + "°";
         if (!info.contentEquals(infoView.getText())) infoView.setText(info);
         String label = getString(R.string.rotate_button_fmt, Integer.valueOf(settings.rotationOffset()));
         if (!label.contentEquals(rotateButton.getText())) rotateButton.setText(label);
@@ -152,7 +166,8 @@ public class PreviewActivity extends Activity {
     private final Runnable refreshTask = new Runnable() {
         @Override public void run() { refreshInfo(); handler.postDelayed(this, 500); }
     };
-    @Override protected void onResume() { super.onResume(); handler.post(refreshTask); }
+    @Override protected void onResume() { super.onResume();
+        refreshLanguage(); handler.post(refreshTask); }
     @Override protected void onPause() {
         handler.removeCallbacks(refreshTask);
         if (previewToggle.isChecked()) previewToggle.setChecked(false);

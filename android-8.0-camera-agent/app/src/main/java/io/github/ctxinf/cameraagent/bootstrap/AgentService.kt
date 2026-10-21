@@ -278,14 +278,14 @@ class AgentService : LifecycleService() {
         val switchAction = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             Notification.Action.Builder(
                 android.graphics.drawable.Icon.createWithResource(this, android.R.drawable.ic_menu_rotate),
-                "切换镜头",
+                getString(R.string.ui_switch_camera),
                 switchFacingIntent
             ).build()
         } else {
             @Suppress("DEPRECATION")
             Notification.Action.Builder(
                 android.R.drawable.ic_menu_rotate,
-                "切换镜头",
+                getString(R.string.ui_switch_camera),
                 switchFacingIntent
             ).build()
         }
@@ -295,14 +295,14 @@ class AgentService : LifecycleService() {
         val stopAction = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             Notification.Action.Builder(
                 android.graphics.drawable.Icon.createWithResource(this, android.R.drawable.ic_menu_close_clear_cancel),
-                "停止服务",
+                getString(R.string.ui_stop_service),
                 stopIntent
             ).build()
         } else {
             @Suppress("DEPRECATION")
             Notification.Action.Builder(
                 android.R.drawable.ic_menu_close_clear_cancel,
-                "停止服务",
+                getString(R.string.ui_stop_service),
                 stopIntent
             ).build()
         }
@@ -328,20 +328,20 @@ class AgentService : LifecycleService() {
         val batteryStr = if (battery >= 0) "$battery%" else "--"
 
         val camStateStr = when (state) {
-            is CameraState.Disabled -> "已停用 (Disabled)"
-            is CameraState.Closed -> "待机低功耗 (Standby)"
-            is CameraState.Opening -> "打开中... (Opening)"
-            is CameraState.Active -> "采集中 (Active)"
-            is CameraState.Retained -> "预热保持 (Retained)"
-            is CameraState.Closing -> "关闭中 (Closing)"
-            is CameraState.Failed -> "错误 (Failed)"
+            is CameraState.Disabled -> getString(R.string.ui_disabled)
+            is CameraState.Closed -> getString(R.string.ui_low_power_consumption_in_standby_standby)
+            is CameraState.Opening -> getString(R.string.ui_opening_opening)
+            is CameraState.Active -> getString(R.string.ui_collecting_active)
+            is CameraState.Retained -> getString(R.string.ui_preheat_retained_retained)
+            is CameraState.Closing -> getString(R.string.ui_closing)
+            is CameraState.Failed -> getString(R.string.ui_error)
         }
 
-        val facingStr = if (config.facing == LensFacing.FRONT) "前摄" else "后摄"
+        val facingStr = if (config.facing == LensFacing.FRONT) getString(R.string.ui_front_camera) else getString(R.string.ui_back_camera)
         val activeStreams = (state as? CameraState.Active)?.activeStreams ?: 0
-        val subText = if (activeStreams > 0) "$activeStreams 个流活跃" else null
+        val subText = if (activeStreams > 0) getString(R.string.ui_streams_are_active, activeStreams) else null
 
-        val statusText = "相机: $camStateStr | $facingStr | 电池: $batteryStr"
+        val statusText = getString(R.string.ui_camera_battery, camStateStr, facingStr, batteryStr)
         updateNotification(statusText, subText)
     }
 }

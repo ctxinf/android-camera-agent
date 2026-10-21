@@ -12,6 +12,20 @@ import android.widget.TextView;
 
 /** A short launcher-only animation: distinguishes a resident service from a cold launch. */
 public class LaunchActivity extends Activity {
+    private String appliedLanguage;
+
+    @Override protected void attachBaseContext(android.content.Context base) {
+        appliedLanguage = LanguageSettings.selected(base);
+        super.attachBaseContext(LanguageSettings.wrap(base));
+    }
+
+    private void refreshLanguage() {
+        if (!LanguageSettings.selected(this).equals(appliedLanguage)) {
+            appliedLanguage = LanguageSettings.selected(this);
+            recreate();
+        }
+    }
+
     private static boolean hasLaunched;
     private boolean showAnimation;
     private final Handler handler = new Handler();
@@ -56,6 +70,7 @@ public class LaunchActivity extends Activity {
         panel.setScaleY(0.96f);
         panel.animate().alpha(1f).scaleX(1f).scaleY(1f).setDuration(350).start();
     }
-    @Override public void onResume() { super.onResume(); if (showAnimation) handler.postDelayed(open, 900); }
+    @Override public void onResume() { super.onResume();
+        refreshLanguage(); if (showAnimation) handler.postDelayed(open, 900); }
     @Override public void onPause() { handler.removeCallbacks(open); super.onPause(); }
 }

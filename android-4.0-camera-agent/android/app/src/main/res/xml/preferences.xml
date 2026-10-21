@@ -1,6 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <PreferenceCategory android:title="@string/cat_appearance">
+        <ListPreference
+            android:key="app_language"
+            android:title="@string/pref_language"
+            android:defaultValue=""
+            android:entries="@array/language_names"
+            android:entryValues="@array/language_tags" />
+    </PreferenceCategory>
+
     <PreferenceCategory android:title="@string/cat_display">
         <EditTextPreference
             android:key="dim_brightness"
@@ -58,7 +67,7 @@
     </PreferenceCategory>
 
     <PreferenceCategory android:title="@string/cat_network">
-        <CheckBoxPreference android:key="http_enabled" android:title="启用 HTTP 服务" android:defaultValue="true" />
+        <CheckBoxPreference android:key="http_enabled" android:title="@string/ui_enable_http_service" android:defaultValue="true" />
         <EditTextPreference
             android:key="http_path_prefix"
             android:title="@string/pref_http_path_prefix"
@@ -71,7 +80,7 @@
             android:summary="@string/pref_port_sum"
             android:defaultValue="8080"
             android:inputType="number" />
-        <Preference android:key="http_bind_address" android:title="HTTP 绑定 IP" />
+        <Preference android:key="http_bind_address" android:title="@string/ui_http_binding_ip" />
         <Preference android:key="http_auth" android:title="HTTP Basic Auth" />
     </PreferenceCategory>
 
@@ -117,7 +126,7 @@
             android:summary="@string/pref_mqtt_verify_sum" />
     </PreferenceCategory>
 
-    <PreferenceCategory android:title="工具">
-        <Preference android:key="preview" android:title="画面预览" />
+    <PreferenceCategory android:title="@string/ui_tools">
+        <Preference android:key="preview" android:title="@string/ui_screen_preview" />
     </PreferenceCategory>
 </PreferenceScreen>

@@ -153,10 +153,10 @@ class DiagnosticsActivity : AppCompatActivity() {
             Manifest.permission.CAMERA
         ) == PackageManager.PERMISSION_GRANTED
 
-        val serviceStatus = if (AgentService.isRunning) "RUNNING" else "STOPPED"
-        tvStatus.text = "Service: $serviceStatus | Camera Permission: ${if (hasCamPermission) "GRANTED" else "DENIED"}"
+        val serviceStatus = getString(if (AgentService.isRunning) R.string.service_running else R.string.service_stopped)
+        tvStatus.text = getString(R.string.diagnostics_status, serviceStatus, getString(if (hasCamPermission) R.string.permission_granted else R.string.permission_denied))
 
-        btnStartService.text = if (AgentService.isRunning) "Stop Service" else "Start Service"
+        btnStartService.text = if (AgentService.isRunning) getString(R.string.ui_stop_service_2) else getString(R.string.ui_start_service)
 
         val appGraph = (application as CameraAgentApp).appGraph
         val caps = if (appGraph.capabilities.isEmpty()) {
@@ -169,16 +169,16 @@ class DiagnosticsActivity : AppCompatActivity() {
 
     private fun renderCameraInfo(caps: List<CameraCapabilities>) {
         if (caps.isEmpty()) {
-            tvCameraInfo.text = "Cameras: None found or permission denied"
+            tvCameraInfo.text = getString(R.string.no_cameras)
             return
         }
 
         val sb = StringBuilder()
-        sb.append("Cameras detected: ${caps.size}\n")
+        sb.append(getString(R.string.cameras_detected, caps.size)).append("\n")
         for (c in caps) {
             val topSizes = c.supportedSizes.take(3).joinToString(", ") { "${it.width}x${it.height}" }
-            sb.append("• Camera [${c.cameraId}] ${c.facing} (Level: ${c.hardwareLevel}, Orientation: ${c.sensorOrientation}°)\n")
-            sb.append("  Resolutions (${c.supportedSizes.size}): $topSizes...\n")
+            sb.append("• ").append(getString(R.string.camera_details, c.cameraId, getString(if (c.facing == io.github.ctxinf.cameraagent.domain.LensFacing.FRONT) R.string.facing_front else R.string.facing_back), c.hardwareLevel, c.sensorOrientation)).append("\n")
+            sb.append("  ").append(getString(R.string.camera_resolutions, c.supportedSizes.size, topSizes)).append("…\n")
         }
         tvCameraInfo.text = sb.toString().trimEnd()
     }

@@ -17,7 +17,7 @@
             android:padding="20dp">
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:layout_marginBottom="24dp">
                 <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="Camera Agent (Legacy)" android:textSize="26sp" android:textColor="@color/ui_text" android:textStyle="bold" />
-                <Button android:id="@+id/settings" android:layout_width="64dp" android:layout_height="48dp" android:text="设置" android:textColor="@color/control_text" android:background="@drawable/control_button" />
+                <Button android:id="@+id/settings" android:layout_width="64dp" android:layout_height="48dp" android:text="@string/settings_button" android:textColor="@color/control_text" android:background="@drawable/control_button" />
             </LinearLayout>
             <LinearLayout android:id="@+id/service_bar" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:background="@drawable/surface_card">
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:paddingTop="12dp">
@@ -34,15 +34,15 @@
                     <TextView android:id="@+id/cameraRuntime" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="@color/ui_text_secondary" android:textSize="12sp" />
                 </LinearLayout>
                 <LinearLayout android:id="@+id/facing_row" android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:layout_marginTop="16dp">
-                    <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="摄像头:" android:textColor="@color/ui_text" android:textSize="14sp" />
+                    <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="@string/ui_camera" android:textColor="@color/ui_text" android:textSize="14sp" />
                     <Button android:id="@+id/rotation" android:layout_width="64dp" android:layout_height="48dp" android:padding="2dp" android:minWidth="0dp" android:text="0°" android:textSize="12sp" android:singleLine="true" android:textColor="@color/control_text" android:background="@drawable/control_button" />
-                    <Button android:id="@+id/facing_back" android:layout_width="52dp" android:layout_height="48dp" android:layout_marginLeft="4dp" android:padding="4dp" android:minWidth="0dp" android:text="后置" android:textSize="14sp" android:textColor="@color/control_text" android:background="@drawable/control_button"  />
-                    <Button android:id="@+id/facing_front" android:layout_width="52dp" android:layout_height="48dp" android:layout_marginLeft="4dp" android:padding="4dp" android:minWidth="0dp" android:text="前置" android:textSize="14sp" android:textColor="@color/control_text" android:background="@drawable/control_button"  />
-                    <Button android:id="@+id/facing_disabled" android:layout_width="60dp" android:layout_height="48dp" android:layout_marginLeft="4dp" android:padding="4dp" android:minWidth="0dp" android:text="禁用" android:textSize="12sp" android:singleLine="true" android:textColor="@color/control_text" android:background="@drawable/control_button"  />
+                    <Button android:id="@+id/facing_back" android:layout_width="52dp" android:layout_height="48dp" android:layout_marginLeft="4dp" android:padding="4dp" android:minWidth="0dp" android:text="@string/ui_rear" android:textSize="14sp" android:textColor="@color/control_text" android:background="@drawable/control_button"  />
+                    <Button android:id="@+id/facing_front" android:layout_width="52dp" android:layout_height="48dp" android:layout_marginLeft="4dp" android:padding="4dp" android:minWidth="0dp" android:text="@string/ui_prefix" android:textSize="14sp" android:textColor="@color/control_text" android:background="@drawable/control_button"  />
+                    <Button android:id="@+id/facing_disabled" android:layout_width="60dp" android:layout_height="48dp" android:layout_marginLeft="4dp" android:padding="4dp" android:minWidth="0dp" android:text="@string/ui_disable" android:textSize="12sp" android:singleLine="true" android:textColor="@color/control_text" android:background="@drawable/control_button"  />
                 </LinearLayout>
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:layout_marginTop="16dp">
                     <View android:id="@+id/status_led" android:layout_width="16dp" android:layout_height="16dp" android:layout_marginRight="10dp" android:background="@drawable/led_green" />
-                    <TextView android:id="@+id/status_text" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="后台服务 · 开启" android:textColor="@color/ui_text" android:textStyle="bold" android:textSize="16sp" android:layout_marginRight="8dp" />
+                    <TextView android:id="@+id/status_text" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="@string/ui_background_service_enable" android:textColor="@color/ui_text" android:textStyle="bold" android:textSize="16sp" android:layout_marginRight="8dp" />
                     <ToggleButton android:id="@+id/camera_service_toggle" android:layout_width="64dp" android:layout_height="48dp" android:textOn="开启" android:textOff="关闭" android:checked="true" android:background="@drawable/control_button" android:textColor="@color/control_text" />
                 </LinearLayout>
             </LinearLayout>
@@ -55,14 +55,14 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="连接与接口"
+                    android:text="@string/ui_connections_and_interfaces"
                     android:textSize="18sp"
                     android:textColor="@color/ui_text"
                     android:textStyle="bold" />
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="同一局域网内可访问以下服务"
+                    android:text="@string/ui_the_following_services_can_be_accessed_within_the_same_lan"
                     android:textSize="12sp"
                     android:textColor="@color/ui_text_secondary"
                     android:layout_marginTop="6dp"

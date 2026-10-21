@@ -20,7 +20,7 @@
             android:layout_width="44dp"
             android:layout_height="44dp"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="返回"
+            android:contentDescription="@string/ui_return"
             android:padding="10dp"
             android:src="@drawable/ic_arrow_back"
             app:tint="@color/ui_text" />
@@ -53,7 +53,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:gravity="center"
-            android:text="Preview Stopped"
+            android:text="@string/ui_preview_stopped"
             android:textColor="@color/ui_text"
             android:textSize="18sp"
             android:visibility="gone" />
@@ -66,7 +66,7 @@
         android:layout_marginTop="12dp"
         android:textColor="@color/ui_primary"
         android:textSize="13sp"
-        android:text="Camera: Initializing..." />
+        android:text="@string/ui_camera_initializing" />
 
     <LinearLayout
         android:layout_width="match_parent"
