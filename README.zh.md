@@ -43,3 +43,5 @@
 | 相机使用方式 | 按需打开，空闲释放 | 摄像头会话 | 推流与录像 |
 
 参考：[DroidCam](https://www.dev47apps.com/)、[HTTP 视频](https://www.dev47apps.com/droidcam/connect/)、[Android IP Camera](https://github.com/DigitallyRefined/android-ip-camera)。[对比说明](DETAIL.zh.md#应用对比)
+
+项目代码与原创素材采用 [Apache-2.0](LICENSE) 许可。参见[版权声明](NOTICE.md)和[源码构建 / F-Droid 发布流程](RELEASING.md)。

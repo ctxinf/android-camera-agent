@@ -1,0 +1,11 @@
+Turn a spare Android phone into an on-demand camera.
+
+• HTTP snapshots, MJPEG streaming, status and camera controls.
+• MCP server for AI agents.
+• Home Assistant integration through MJPEG and MQTT discovery.
+• Releases the camera when idle to reduce battery use and heat.
+• Runs locally without an account, analytics or a hosted service.
+
+Grant camera permission, start the service and use the URLs shown in the app.
+Use a trusted network or VPN; configure HTTP authentication before sharing access.
+Separate Android 8.0+ and Legacy Android 4.0+ APKs are available.

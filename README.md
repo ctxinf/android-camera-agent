@@ -43,3 +43,5 @@ Install, grant camera permission, and use the connection URLs shown in the app. 
 | Camera use | Opens on demand, releases when idle | Webcam sessions | Streaming & recording |
 
 References: [DroidCam](https://www.dev47apps.com/), [HTTP video](https://www.dev47apps.com/droidcam/connect/), [Android IP Camera](https://github.com/DigitallyRefined/android-ip-camera). [More comparison notes](DETAIL.md#comparison).
+
+Project code and original assets: [Apache-2.0](LICENSE). See [notices](NOTICE.md) and [source build / F-Droid release instructions](RELEASING.md).

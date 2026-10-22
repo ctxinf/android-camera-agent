@@ -1,7 +1,13 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.serialization)
+}
+
+val releaseVersion = Properties().apply {
+    rootProject.file("../version.properties").inputStream().use { load(it) }
 }
 
 android {
@@ -12,8 +18,9 @@ android {
         applicationId = "io.github.ctxinf.cameraagent"
         minSdk = 26
         targetSdk = 26
-        versionCode = providers.gradleProperty("releaseVersionCode").orNull?.toInt() ?: 1
-        versionName = providers.gradleProperty("releaseVersionName").orNull ?: "1.0.0"
+        versionCode = releaseVersion.getProperty("versionCode").toInt()
+        versionName = releaseVersion.getProperty("versionName")
+        resValue("string", "build_ref", "v${versionName}")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -39,6 +46,8 @@ android {
             )
         }
         debug {
+            versionNameSuffix = "-dev"
+            resValue("string", "build_ref", "v${releaseVersion.getProperty("versionName")}-dev")
             isMinifyEnabled = false
         }
     }

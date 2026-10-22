@@ -96,6 +96,7 @@ class SettingsActivity : AppCompatActivity() {
         findViewById<TextView>(R.id.aboutVersion).text = getString(
             R.string.about_version, packageManager.getPackageInfo(packageName, 0).versionName
         )
+        findViewById<TextView>(R.id.aboutRef).text = "ref: ${getString(R.string.build_ref)}"
         val project = "https://github.com/ctxinf/android-camera-agent"
         findViewById<View>(R.id.aboutGithub).setOnClickListener {
                 try {

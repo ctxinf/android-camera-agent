@@ -2,6 +2,9 @@ plugins {
     id 'com.android.application'
 }
 
+def releaseVersion = new Properties()
+rootProject.file('../../version.properties').withInputStream { releaseVersion.load(it) }
+
 android {
     namespace 'io.github.ctxinf.cameraagent.legacy'
     compileSdk 36
@@ -11,8 +14,9 @@ android {
         // API 14 floor per the compatibility target; the test device is API 18.
         minSdk 14
         targetSdk 18
-        versionCode = providers.gradleProperty('releaseVersionCode').getOrElse('9').toInteger()
-        versionName = providers.gradleProperty('releaseVersionName').getOrElse('0.5.4')
+        versionCode = releaseVersion.getProperty('versionCode').toInteger()
+        versionName = releaseVersion.getProperty('versionName')
+        resValue 'string', 'build_ref', 'v' + versionName
     }
 
     signingConfigs {
@@ -27,6 +31,10 @@ android {
     }
 
     buildTypes {
+        debug {
+            versionNameSuffix '-dev'
+            resValue 'string', 'build_ref', 'v' + releaseVersion.getProperty('versionName') + '-dev'
+        }
         release {
             if (System.getenv('ANDROID_KEYSTORE_PATH')) {
                 signingConfig signingConfigs.ciRelease

@@ -1,0 +1,1 @@
+通过 HTTP、MCP 和 Home Assistant 按需访问手机摄像头

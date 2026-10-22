@@ -1,0 +1,1 @@
+On-demand camera for HTTP, MCP and Home Assistant

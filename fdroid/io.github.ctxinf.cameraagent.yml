@@ -1,0 +1,30 @@
+Categories:
+  - Connectivity
+License: Apache-2.0
+AuthorName: ctxinf
+SourceCode: https://github.com/ctxinf/android-camera-agent
+IssueTracker: https://github.com/ctxinf/android-camera-agent/issues
+AutoName: Camera Agent
+Summary: On-demand camera with HTTP, MCP and Home Assistant support
+Description: |-
+  Turn a spare Android phone into an on-demand network camera.
+  Access snapshots and MJPEG video over HTTP, give AI agents access through
+  MCP, or integrate with Home Assistant using MQTT discovery.
+  Camera access is released when idle. No account or hosted service is required.
+
+RepoType: git
+Repo: https://github.com/ctxinf/android-camera-agent.git
+
+Builds:
+  - versionName: 1.0.5
+    versionCode: 10005
+    commit: v1.0.5
+    subdir: android-8.0-camera-agent
+    gradle:
+      - yes
+
+AutoUpdateMode: Version v%v
+UpdateCheckMode: Tags ^v[0-9]+\.[0-9]+\.[0-9]+$
+UpdateCheckData: 'version.properties|versionCode=([0-9]+)|.|versionName=([0-9.]+)'
+CurrentVersion: 1.0.5
+CurrentVersionCode: 10005

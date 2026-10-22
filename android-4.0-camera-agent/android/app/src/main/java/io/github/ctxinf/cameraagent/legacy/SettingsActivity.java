@@ -73,6 +73,8 @@ public class SettingsActivity extends PreferenceActivity
         android.view.View about = getLayoutInflater().inflate(R.layout.settings_about, getListView(), false);
         ((android.widget.TextView) about.findViewById(R.id.aboutVersion)).setText(
                 getString(R.string.about_version, appVersion()));
+        ((android.widget.TextView) about.findViewById(R.id.aboutRef)).setText(
+                "ref: " + getString(R.string.build_ref));
         String project = "https://github.com/ctxinf/android-camera-agent";
         setupAboutLink(about, R.id.aboutGithub, project);
         getListView().addFooterView(about, null, false);

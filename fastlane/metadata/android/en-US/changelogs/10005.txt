@@ -1,0 +1,1 @@
+Unify app versions and settings source refs. Prepare source builds and store metadata for F-Droid.
